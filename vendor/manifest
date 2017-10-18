@@ -1,0 +1,382 @@
+{
+	"version": 0,
+	"dependencies": [
+		{
+			"importpath": "github.com/armon/consul-api",
+			"repository": "https://github.com/armon/consul-api",
+			"vcs": "git",
+			"revision": "dcfedd50ed5334f96adee43fc88518a4f095e15c",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/coreos/etcd/client",
+			"repository": "https://github.com/coreos/etcd",
+			"vcs": "git",
+			"revision": "a8f9de2abf824db8a3aa7358227653ca00d9f755",
+			"branch": "master",
+			"path": "/client",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/coreos/etcd/pkg/pathutil",
+			"repository": "https://github.com/coreos/etcd",
+			"vcs": "git",
+			"revision": "a8f9de2abf824db8a3aa7358227653ca00d9f755",
+			"branch": "master",
+			"path": "pkg/pathutil",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/coreos/etcd/pkg/srv",
+			"repository": "https://github.com/coreos/etcd",
+			"vcs": "git",
+			"revision": "a8f9de2abf824db8a3aa7358227653ca00d9f755",
+			"branch": "master",
+			"path": "pkg/srv",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/coreos/etcd/pkg/types",
+			"repository": "https://github.com/coreos/etcd",
+			"vcs": "git",
+			"revision": "a8f9de2abf824db8a3aa7358227653ca00d9f755",
+			"branch": "master",
+			"path": "pkg/types",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/coreos/etcd/version",
+			"repository": "https://github.com/coreos/etcd",
+			"vcs": "git",
+			"revision": "a8f9de2abf824db8a3aa7358227653ca00d9f755",
+			"branch": "master",
+			"path": "version",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/coreos/go-semver/semver",
+			"repository": "https://github.com/coreos/go-semver",
+			"vcs": "git",
+			"revision": "1817cd4bea52af76542157eeabd74b057d1a199e",
+			"branch": "master",
+			"path": "/semver",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/cpuguy83/go-md2man/md2man",
+			"repository": "https://github.com/cpuguy83/go-md2man",
+			"vcs": "git",
+			"revision": "1d903dcb749992f3741d744c0f8376b4bd7eb3e1",
+			"branch": "master",
+			"path": "/md2man",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/cpuguy83/go-md2man/vendor/github.com/russross/blackfriday",
+			"repository": "https://github.com/cpuguy83/go-md2man",
+			"vcs": "git",
+			"revision": "1d903dcb749992f3741d744c0f8376b4bd7eb3e1",
+			"branch": "master",
+			"path": "vendor/github.com/russross/blackfriday",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/fsnotify/fsnotify",
+			"repository": "https://github.com/fsnotify/fsnotify",
+			"vcs": "git",
+			"revision": "4da3e2cfbabc9f751898f250b49f2439785783a1",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/hashicorp/hcl",
+			"repository": "https://github.com/hashicorp/hcl",
+			"vcs": "git",
+			"revision": "23c074d0eceb2b8a5bfdbb271ab780cde70f05a8",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/inconshreveable/mousetrap",
+			"repository": "https://github.com/inconshreveable/mousetrap",
+			"vcs": "git",
+			"revision": "76626ae9c91c4f2a10f34cad8ce83ea42c93bb75",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/kr/fs",
+			"repository": "https://github.com/kr/fs",
+			"vcs": "git",
+			"revision": "2788f0dbd16903de03cb8186e5c7d97b69ad387b",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/magiconair/properties",
+			"repository": "https://github.com/magiconair/properties",
+			"vcs": "git",
+			"revision": "8d7837e64d3c1ee4e54a880c5a920ab4316fc90a",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/mitchellh/go-homedir",
+			"repository": "https://github.com/mitchellh/go-homedir",
+			"vcs": "git",
+			"revision": "b8bc1bf767474819792c23f32d8286a45736f1c6",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/mitchellh/mapstructure",
+			"repository": "https://github.com/mitchellh/mapstructure",
+			"vcs": "git",
+			"revision": "06020f85339e21b2478f756a78e295255ffa4d6a",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/pelletier/go-toml",
+			"repository": "https://github.com/pelletier/go-toml",
+			"vcs": "git",
+			"revision": "2009e44b6f182e34d8ce081ac2767622937ea3d4",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/pkg/errors",
+			"repository": "https://github.com/pkg/errors",
+			"vcs": "git",
+			"revision": "2b3a18b5f0fb6b4f9190549597d3f962c02bc5eb",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/pkg/sftp",
+			"repository": "https://github.com/pkg/sftp",
+			"vcs": "git",
+			"revision": "7c1f7a370726a2457b33b29baefc2402b4965c65",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/spf13/afero",
+			"repository": "https://github.com/spf13/afero",
+			"vcs": "git",
+			"revision": "e67d870304c4bca21331b02f414f970df13aa694",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/spf13/cast",
+			"repository": "https://github.com/spf13/cast",
+			"vcs": "git",
+			"revision": "acbeb36b902d72a7a4c18e8f3241075e7ab763e4",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/spf13/cobra",
+			"repository": "https://github.com/spf13/cobra",
+			"vcs": "git",
+			"revision": "7b2c5ac9fc04fc5efafb60700713d4fa609b777b",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/spf13/jwalterweatherman",
+			"repository": "https://github.com/spf13/jwalterweatherman",
+			"vcs": "git",
+			"revision": "12bd96e66386c1960ab0f74ced1362f66f552f7b",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/spf13/pflag",
+			"repository": "https://github.com/spf13/pflag",
+			"vcs": "git",
+			"revision": "1f33b80956cde38911d1f23d764deb8d77a649ce",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/spf13/viper",
+			"repository": "https://github.com/spf13/viper",
+			"vcs": "git",
+			"revision": "d9cca5ef33035202efb1586825bdbb15ff9ec3ba",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/ugorji/go/codec",
+			"repository": "https://github.com/ugorji/go",
+			"vcs": "git",
+			"revision": "f26fc641ec9d52a2161443cf9bb9fd53b9062a22",
+			"branch": "master",
+			"path": "/codec",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/xordataexchange/crypt/backend",
+			"repository": "https://github.com/xordataexchange/crypt",
+			"vcs": "git",
+			"revision": "b2862e3d0a775f18c7cfe02273500ae307b61218",
+			"branch": "master",
+			"path": "backend",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/xordataexchange/crypt/config",
+			"repository": "https://github.com/xordataexchange/crypt",
+			"vcs": "git",
+			"revision": "b2862e3d0a775f18c7cfe02273500ae307b61218",
+			"branch": "master",
+			"path": "/config",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/xordataexchange/crypt/encoding/secconf",
+			"repository": "https://github.com/xordataexchange/crypt",
+			"vcs": "git",
+			"revision": "b2862e3d0a775f18c7cfe02273500ae307b61218",
+			"branch": "master",
+			"path": "encoding/secconf",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/zquestz/go-ucl",
+			"repository": "https://github.com/zquestz/go-ucl",
+			"vcs": "git",
+			"revision": "ec59c7af0062f62671cdc1e974aa857771f105d2",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "golang.org/x/crypto/cast5",
+			"repository": "https://go.googlesource.com/crypto",
+			"vcs": "git",
+			"revision": "9419663f5a44be8b34ca85f08abc5fe1be11f8a3",
+			"branch": "master",
+			"path": "cast5",
+			"notests": true
+		},
+		{
+			"importpath": "golang.org/x/crypto/curve25519",
+			"repository": "https://go.googlesource.com/crypto",
+			"vcs": "git",
+			"revision": "9419663f5a44be8b34ca85f08abc5fe1be11f8a3",
+			"branch": "master",
+			"path": "curve25519",
+			"notests": true
+		},
+		{
+			"importpath": "golang.org/x/crypto/ed25519",
+			"repository": "https://go.googlesource.com/crypto",
+			"vcs": "git",
+			"revision": "9419663f5a44be8b34ca85f08abc5fe1be11f8a3",
+			"branch": "master",
+			"path": "ed25519",
+			"notests": true
+		},
+		{
+			"importpath": "golang.org/x/crypto/openpgp",
+			"repository": "https://go.googlesource.com/crypto",
+			"vcs": "git",
+			"revision": "9419663f5a44be8b34ca85f08abc5fe1be11f8a3",
+			"branch": "master",
+			"path": "/openpgp",
+			"notests": true
+		},
+		{
+			"importpath": "golang.org/x/crypto/ssh",
+			"repository": "https://go.googlesource.com/crypto",
+			"vcs": "git",
+			"revision": "9419663f5a44be8b34ca85f08abc5fe1be11f8a3",
+			"branch": "master",
+			"path": "ssh",
+			"notests": true
+		},
+		{
+			"importpath": "golang.org/x/sys/unix",
+			"repository": "https://go.googlesource.com/sys",
+			"vcs": "git",
+			"revision": "8dbc5d05d6edcc104950cc299a1ce6641235bc86",
+			"branch": "master",
+			"path": "/unix",
+			"notests": true
+		},
+		{
+			"importpath": "golang.org/x/sys/windows",
+			"repository": "https://go.googlesource.com/sys",
+			"vcs": "git",
+			"revision": "8dbc5d05d6edcc104950cc299a1ce6641235bc86",
+			"branch": "master",
+			"path": "windows",
+			"notests": true
+		},
+		{
+			"importpath": "golang.org/x/text/internal/gen",
+			"repository": "https://go.googlesource.com/text",
+			"vcs": "git",
+			"revision": "c01e4764d870b77f8abe5096ee19ad20d80e8075",
+			"branch": "master",
+			"path": "internal/gen",
+			"notests": true
+		},
+		{
+			"importpath": "golang.org/x/text/internal/triegen",
+			"repository": "https://go.googlesource.com/text",
+			"vcs": "git",
+			"revision": "c01e4764d870b77f8abe5096ee19ad20d80e8075",
+			"branch": "master",
+			"path": "internal/triegen",
+			"notests": true
+		},
+		{
+			"importpath": "golang.org/x/text/internal/ucd",
+			"repository": "https://go.googlesource.com/text",
+			"vcs": "git",
+			"revision": "c01e4764d870b77f8abe5096ee19ad20d80e8075",
+			"branch": "master",
+			"path": "internal/ucd",
+			"notests": true
+		},
+		{
+			"importpath": "golang.org/x/text/transform",
+			"repository": "https://go.googlesource.com/text",
+			"vcs": "git",
+			"revision": "c01e4764d870b77f8abe5096ee19ad20d80e8075",
+			"branch": "master",
+			"path": "/transform",
+			"notests": true
+		},
+		{
+			"importpath": "golang.org/x/text/unicode/cldr",
+			"repository": "https://go.googlesource.com/text",
+			"vcs": "git",
+			"revision": "c01e4764d870b77f8abe5096ee19ad20d80e8075",
+			"branch": "master",
+			"path": "unicode/cldr",
+			"notests": true
+		},
+		{
+			"importpath": "golang.org/x/text/unicode/norm",
+			"repository": "https://go.googlesource.com/text",
+			"vcs": "git",
+			"revision": "c01e4764d870b77f8abe5096ee19ad20d80e8075",
+			"branch": "master",
+			"path": "unicode/norm",
+			"notests": true
+		},
+		{
+			"importpath": "gopkg.in/yaml.v2",
+			"repository": "https://gopkg.in/yaml.v2",
+			"vcs": "git",
+			"revision": "eb3733d160e74a9c7e442f435eb3bea458e1d19f",
+			"branch": "v2",
+			"notests": true
+		}
+	]
+}
