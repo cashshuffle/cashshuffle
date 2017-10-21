@@ -10,7 +10,7 @@ os:
   - linux
   - osx
 install:
-  - go get -v github.com/bitcoincashorg/cashshuffle
+  - go get -v github.com/cashshuffle/cashshuffle
 script:
   - go build
   - go fmt ./...
@@ -21,4 +21,4 @@ after_script:
   - if [ "$TRAVIS_GO_VERSION" = "1.9" ] && [ "$TRAVIS_OS_NAME" = "linux" ] && [ "$TRAVIS_TAG" != "" ]; then go get github.com/inconshreveable/mousetrap; fi
   - if [ "$TRAVIS_GO_VERSION" = "1.9" ] && [ "$TRAVIS_OS_NAME" = "linux" ] && [ "$TRAVIS_TAG" != "" ]; then go get github.com/mitchellh/gox; fi
   - if [ "$TRAVIS_GO_VERSION" = "1.9" ] && [ "$TRAVIS_OS_NAME" = "linux" ] && [ "$TRAVIS_TAG" != "" ]; then go get github.com/tcnksm/ghr; fi
-  - if [ "$TRAVIS_GO_VERSION" = "1.9" ] && [ "$TRAVIS_OS_NAME" = "linux" ] && [ "$TRAVIS_TAG" != "" ]; then make compile; ghr --username bitcoincashorg --token $GITHUB_TOKEN --replace $TRAVIS_TAG pkg/; fi
+  - if [ "$TRAVIS_GO_VERSION" = "1.9" ] && [ "$TRAVIS_OS_NAME" = "linux" ] && [ "$TRAVIS_TAG" != "" ]; then make compile; ghr --username cashshuffle --token $GITHUB_TOKEN --replace $TRAVIS_TAG pkg/; fi

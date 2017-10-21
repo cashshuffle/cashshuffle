@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/bitcoincashorg/cashshuffle/cmd"
+	"github.com/cashshuffle/cashshuffle/cmd"
 )
 
 func main() {

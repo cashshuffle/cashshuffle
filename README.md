@@ -6,8 +6,8 @@ A CoinShuffle server implented in Go. For more information on CoinShuffle visit 
 ## Install
 
 ```
-go get -v github.com/bitcoincashorg/cashshuffle
-cd $GOPATH/src/github.com/bitcoincashorg/cashshuffle
+go get -v github.com/cashshuffle/cashshuffle
+cd $GOPATH/src/github.com/cashshuffle/cashshuffle
 make
 make install
 ```
@@ -16,7 +16,7 @@ If you have issues building `cashshuffle`, you can vendor the dependencies by us
 
 ```
 go get -u github.com/FiloSottile/gvt
-cd $GOPATH/src/github.com/bitcoincashorg/cashshuffle
+cd $GOPATH/src/github.com/cashshuffle/cashshuffle
 gvt restore
 ```
 
@@ -26,7 +26,7 @@ cashshuffle is released under the MIT license.
 
 [License-URL]: http://opensource.org/licenses/MIT
 [License-Image]: https://img.shields.io/npm/l/express.svg
-[ReportCard-URL]: http://goreportcard.com/report/bitcoincashorg/cashshuffle
-[ReportCard-Image]: https://goreportcard.com/badge/github.com/bitcoincashorg/cashshuffle
-[Build-Status-URL]: http://travis-ci.org/bitcoincashorg/cashshuffle
-[Build-Status-Image]: https://travis-ci.org/bitcoincashorg/cashshuffle.svg?branch=master
+[ReportCard-URL]: http://goreportcard.com/report/cashshuffle/cashshuffle
+[ReportCard-Image]: https://goreportcard.com/badge/github.com/cashshuffle/cashshuffle
+[Build-Status-URL]: http://travis-ci.org/cashshuffle/cashshuffle
+[Build-Status-Image]: https://travis-ci.org/cashshuffle/cashshuffle.svg?branch=master

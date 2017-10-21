@@ -5,10 +5,10 @@ FROM golang
 MAINTAINER Josh Ellithorpe <quest@mac.com>
 
 # Copy the local package files to the container's workspace.
-ADD . /go/src/github.com/bitcoincashorg/cashshuffle
+ADD . /go/src/github.com/cashshuffle/cashshuffle
 
 # Switch to the correct working directory.
-WORKDIR /go/src/github.com/bitcoincashorg/cashshuffle
+WORKDIR /go/src/github.com/cashshuffle/cashshuffle
 
 # Restore vendored packages.
 RUN go get -u github.com/FiloSottile/gvt
