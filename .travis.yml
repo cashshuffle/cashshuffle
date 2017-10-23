@@ -15,10 +15,10 @@ install:
 script:
   - gvt restore
   - go build
-  - go fmt ./...
-  - go vet ./...
-  - go test -i -race ./...
-  - go test -v -race ./...
+  - go fmt $(go list ./... | grep -v /vendor/)
+  - go vet $(go list ./... | grep -v /vendor/)
+  - go test -i -race $(go list ./... | grep -v /vendor/)
+  - go test -v -race $(go list ./... | grep -v /vendor/)
 after_script:
   - if [ "$TRAVIS_GO_VERSION" = "1.9" ] && [ "$TRAVIS_OS_NAME" = "linux" ] && [ "$TRAVIS_TAG" != "" ]; then go get github.com/inconshreveable/mousetrap; fi
   - if [ "$TRAVIS_GO_VERSION" = "1.9" ] && [ "$TRAVIS_OS_NAME" = "linux" ] && [ "$TRAVIS_TAG" != "" ]; then go get github.com/mitchellh/gox; fi
