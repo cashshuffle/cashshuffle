@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/cashshuffle/cashshuffle/server"
+
 	"github.com/spf13/cobra"
 )
 
@@ -48,6 +50,10 @@ func prepareFlags() {
 		config.Port = defaultPort
 	}
 
+	MainCmd.PersistentFlags().StringVarP(
+		&config.Cert, "cert", "c", config.Cert, "path to server.crt for TLS")
+	MainCmd.PersistentFlags().StringVarP(
+		&config.Key, "key", "k", config.Key, "path to server.key for TLS")
 	MainCmd.PersistentFlags().BoolVarP(
 		&config.DisplayVersion, "version", "v", false, "display version")
 	MainCmd.PersistentFlags().IntVarP(
@@ -60,6 +66,8 @@ func performCommand(cmd *cobra.Command, args []string) error {
 		fmt.Printf("%s %s\n", appName, version)
 		return nil
 	}
+
+	server.Start(config.Port, config.Cert, config.Key)
 
 	return nil
 }

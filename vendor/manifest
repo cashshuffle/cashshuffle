@@ -13,7 +13,7 @@
 			"importpath": "github.com/coreos/etcd/client",
 			"repository": "https://github.com/coreos/etcd",
 			"vcs": "git",
-			"revision": "a8f9de2abf824db8a3aa7358227653ca00d9f755",
+			"revision": "2ae10a8184bc49e6140edce0fe026af8965a6fdc",
 			"branch": "master",
 			"path": "/client",
 			"notests": true
@@ -22,7 +22,7 @@
 			"importpath": "github.com/coreos/etcd/pkg/pathutil",
 			"repository": "https://github.com/coreos/etcd",
 			"vcs": "git",
-			"revision": "a8f9de2abf824db8a3aa7358227653ca00d9f755",
+			"revision": "2ae10a8184bc49e6140edce0fe026af8965a6fdc",
 			"branch": "master",
 			"path": "pkg/pathutil",
 			"notests": true
@@ -31,7 +31,7 @@
 			"importpath": "github.com/coreos/etcd/pkg/srv",
 			"repository": "https://github.com/coreos/etcd",
 			"vcs": "git",
-			"revision": "a8f9de2abf824db8a3aa7358227653ca00d9f755",
+			"revision": "2ae10a8184bc49e6140edce0fe026af8965a6fdc",
 			"branch": "master",
 			"path": "pkg/srv",
 			"notests": true
@@ -40,7 +40,7 @@
 			"importpath": "github.com/coreos/etcd/pkg/types",
 			"repository": "https://github.com/coreos/etcd",
 			"vcs": "git",
-			"revision": "a8f9de2abf824db8a3aa7358227653ca00d9f755",
+			"revision": "2ae10a8184bc49e6140edce0fe026af8965a6fdc",
 			"branch": "master",
 			"path": "pkg/types",
 			"notests": true
@@ -49,7 +49,7 @@
 			"importpath": "github.com/coreos/etcd/version",
 			"repository": "https://github.com/coreos/etcd",
 			"vcs": "git",
-			"revision": "a8f9de2abf824db8a3aa7358227653ca00d9f755",
+			"revision": "2ae10a8184bc49e6140edce0fe026af8965a6fdc",
 			"branch": "master",
 			"path": "version",
 			"notests": true
@@ -141,7 +141,7 @@
 			"importpath": "github.com/pelletier/go-toml",
 			"repository": "https://github.com/pelletier/go-toml",
 			"vcs": "git",
-			"revision": "2009e44b6f182e34d8ce081ac2767622937ea3d4",
+			"revision": "8c31c2ec65b208cc2ad1608bf25a3ff91adf1944",
 			"branch": "master",
 			"notests": true
 		},
@@ -149,7 +149,7 @@
 			"importpath": "github.com/pkg/errors",
 			"repository": "https://github.com/pkg/errors",
 			"vcs": "git",
-			"revision": "2b3a18b5f0fb6b4f9190549597d3f962c02bc5eb",
+			"revision": "f15c970de5b76fac0b59abb32d62c17cc7bed265",
 			"branch": "master",
 			"notests": true
 		},
@@ -165,7 +165,7 @@
 			"importpath": "github.com/spf13/afero",
 			"repository": "https://github.com/spf13/afero",
 			"vcs": "git",
-			"revision": "e67d870304c4bca21331b02f414f970df13aa694",
+			"revision": "5660eeed305fe5f69c8fc6cf899132a459a97064",
 			"branch": "master",
 			"notests": true
 		},
@@ -197,7 +197,7 @@
 			"importpath": "github.com/spf13/pflag",
 			"repository": "https://github.com/spf13/pflag",
 			"vcs": "git",
-			"revision": "1f33b80956cde38911d1f23d764deb8d77a649ce",
+			"revision": "97afa5e7ca8a08a383cb259e06636b5e2cc7897f",
 			"branch": "master",
 			"notests": true
 		},
@@ -205,7 +205,7 @@
 			"importpath": "github.com/spf13/viper",
 			"repository": "https://github.com/spf13/viper",
 			"vcs": "git",
-			"revision": "d9cca5ef33035202efb1586825bdbb15ff9ec3ba",
+			"revision": "8ef37cbca71638bf32f3d5e194117d4cb46da163",
 			"branch": "master",
 			"notests": true
 		},
@@ -213,7 +213,7 @@
 			"importpath": "github.com/ugorji/go/codec",
 			"repository": "https://github.com/ugorji/go",
 			"vcs": "git",
-			"revision": "f26fc641ec9d52a2161443cf9bb9fd53b9062a22",
+			"revision": "bdcc60b419d136a85cdf2e7cbcac34b3f1cd6e57",
 			"branch": "master",
 			"path": "/codec",
 			"notests": true
@@ -257,7 +257,7 @@
 			"importpath": "golang.org/x/crypto/cast5",
 			"repository": "https://go.googlesource.com/crypto",
 			"vcs": "git",
-			"revision": "9419663f5a44be8b34ca85f08abc5fe1be11f8a3",
+			"revision": "edd5e9b0879d13ee6970a50153d85b8fec9f7686",
 			"branch": "master",
 			"path": "cast5",
 			"notests": true
@@ -266,7 +266,7 @@
 			"importpath": "golang.org/x/crypto/curve25519",
 			"repository": "https://go.googlesource.com/crypto",
 			"vcs": "git",
-			"revision": "9419663f5a44be8b34ca85f08abc5fe1be11f8a3",
+			"revision": "edd5e9b0879d13ee6970a50153d85b8fec9f7686",
 			"branch": "master",
 			"path": "curve25519",
 			"notests": true
@@ -275,7 +275,7 @@
 			"importpath": "golang.org/x/crypto/ed25519",
 			"repository": "https://go.googlesource.com/crypto",
 			"vcs": "git",
-			"revision": "9419663f5a44be8b34ca85f08abc5fe1be11f8a3",
+			"revision": "edd5e9b0879d13ee6970a50153d85b8fec9f7686",
 			"branch": "master",
 			"path": "ed25519",
 			"notests": true
@@ -284,18 +284,18 @@
 			"importpath": "golang.org/x/crypto/openpgp",
 			"repository": "https://go.googlesource.com/crypto",
 			"vcs": "git",
-			"revision": "9419663f5a44be8b34ca85f08abc5fe1be11f8a3",
+			"revision": "edd5e9b0879d13ee6970a50153d85b8fec9f7686",
 			"branch": "master",
-			"path": "/openpgp",
+			"path": "openpgp",
 			"notests": true
 		},
 		{
 			"importpath": "golang.org/x/crypto/ssh",
 			"repository": "https://go.googlesource.com/crypto",
 			"vcs": "git",
-			"revision": "9419663f5a44be8b34ca85f08abc5fe1be11f8a3",
+			"revision": "edd5e9b0879d13ee6970a50153d85b8fec9f7686",
 			"branch": "master",
-			"path": "ssh",
+			"path": "/ssh",
 			"notests": true
 		},
 		{

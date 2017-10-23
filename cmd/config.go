@@ -11,8 +11,10 @@ import (
 
 // Config stores all the application configuration.
 type Config struct {
-	DisplayVersion bool `json:"-"`
-	Port           int  `json:"port,string"`
+	DisplayVersion bool   `json:"-"`
+	Port           int    `json:"port,string"`
+	Cert           string `json:"cert"`
+	Key            string `json:"key"`
 }
 
 // Load reads the configuration from ~/.cashshuffle/config and loads it into the Config struct.
