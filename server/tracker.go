@@ -9,7 +9,7 @@ import (
 
 // tracker is used to track connections to the server.
 type tracker struct {
-	connections map[*net.Conn]*trackerData
+	connections map[string]*trackerData
 	mutex       sync.Mutex
 }
 
@@ -18,6 +18,7 @@ type trackerData struct {
 	mutex     sync.Mutex
 	sessionID string
 	number    int64
+	conn      *net.Conn
 }
 
 // createSessionID generates a unique session id.
@@ -31,27 +32,27 @@ func (td *trackerData) createSessionID() {
 
 // init initializes the tracker.
 func (t *tracker) init() {
-	t.connections = make(map[*net.Conn]*trackerData)
+	t.connections = make(map[string]*trackerData)
 
 	return
 }
 
 // add adds a connection to the tracker.
-func (t *tracker) add(conn *net.Conn, data *trackerData) {
+func (t *tracker) add(sessionID string, data *trackerData) {
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
 
-	t.connections[conn] = data
+	t.connections[sessionID] = data
 
 	return
 }
 
 // remove removes the connection.
-func (t *tracker) remove(conn *net.Conn) {
+func (t *tracker) remove(sessionID string) {
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
 
-	delete(t.connections, conn)
+	delete(t.connections, sessionID)
 
 	return
 }

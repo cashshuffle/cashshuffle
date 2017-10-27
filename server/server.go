@@ -41,10 +41,6 @@ func Start(port int, cert string, key string) (err error) {
 
 func handleConnection(conn net.Conn, c chan *signedConn, tracker *tracker) {
 	defer conn.Close()
-	defer tracker.remove(&conn)
-
-	data := &trackerData{}
-	tracker.add(&conn, data)
 
 	processMessages(&conn, c)
 

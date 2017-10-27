@@ -35,7 +35,7 @@ func processReceivedData(data *signedConn) {
 }
 
 // processMessages reads messages from the connection and converts
-// them message.Signed for processing.
+// them to message.Signed for processing.
 func processMessages(conn *net.Conn, c chan *signedConn) {
 	var buf bytes.Buffer
 	_, err := io.Copy(&buf, *conn)
