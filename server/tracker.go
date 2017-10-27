@@ -4,6 +4,7 @@ import (
 	"net"
 	"sync"
 
+	"github.com/cashshuffle/cashshuffle/message"
 	"github.com/nats-io/nuid"
 )
 
@@ -15,10 +16,11 @@ type tracker struct {
 
 // trackerData is data needed about each connection.
 type trackerData struct {
-	mutex     sync.Mutex
-	sessionID string
-	number    int64
-	conn      *net.Conn
+	mutex           sync.Mutex
+	sessionID       string
+	number          int64
+	conn            *net.Conn
+	verificationKey message.VerificationKey
 }
 
 // createSessionID generates a unique session id.
