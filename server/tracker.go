@@ -3,22 +3,35 @@ package server
 import (
 	"net"
 	"sync"
+
+	"github.com/nats-io/nuid"
 )
 
 // tracker is used to track connections to the server.
 type tracker struct {
 	connections map[*net.Conn]*trackerData
-	mutex       *sync.Mutex
+	mutex       sync.Mutex
 }
 
 // trackerData is data needed about each connection.
 type trackerData struct {
+	mutex     sync.Mutex
+	sessionID string
+	number    int64
+}
+
+// createSessionID generates a unique session id.
+func (td *trackerData) createSessionID() {
+	td.mutex.Lock()
+	defer td.mutex.Unlock()
+
+	n := nuid.New()
+	td.sessionID = n.Next()
 }
 
 // init initializes the tracker.
 func (t *tracker) init() {
 	t.connections = make(map[*net.Conn]*trackerData)
-	t.mutex = &sync.Mutex{}
 
 	return
 }
