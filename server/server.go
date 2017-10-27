@@ -23,18 +23,26 @@ func Start(port int, cert string, key string) (err error) {
 
 	defer listener.Close()
 
+	t := &tracker{}
+	t.init()
+
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
 			continue
 		}
 
-		go handleConnection(conn)
+		go handleConnection(conn, t)
 	}
 }
 
-func handleConnection(conn net.Conn) {
+func handleConnection(conn net.Conn, tracker *tracker) {
 	defer conn.Close()
+	defer tracker.remove(&conn)
+
+	data := &trackerData{}
+
+	tracker.add(&conn, data)
 
 	return
 }

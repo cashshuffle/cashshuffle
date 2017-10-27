@@ -67,7 +67,10 @@ func performCommand(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	server.Start(config.Port, config.Cert, config.Key)
+	err := server.Start(config.Port, config.Cert, config.Key)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
