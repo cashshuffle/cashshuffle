@@ -11,8 +11,15 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
+// signedConn is a type to represent the signed message
+// and the current connection.
+type signedConn struct {
+	message *message.Signed
+	conn    *net.Conn
+}
+
 // startSignedChan starts a loop reading messages.
-func startSignedChan(c chan *message.Signed) {
+func startSignedChan(c chan *signedConn) {
 	for {
 		message := <-c
 		processReceivedData(message)
@@ -20,8 +27,8 @@ func startSignedChan(c chan *message.Signed) {
 }
 
 // processReceivedData reads the message and processes it.
-func processReceivedData(data *message.Signed) {
-	p := data.GetPacket()
+func processReceivedData(data *signedConn) {
+	p := data.message.GetPacket()
 
 	// Data processing goes here. Right now we just print each message.
 	fmt.Println(p)
@@ -29,9 +36,9 @@ func processReceivedData(data *message.Signed) {
 
 // processMessages reads messages from the connection and converts
 // them message.Signed for processing.
-func processMessages(conn net.Conn, c chan *message.Signed) {
+func processMessages(conn *net.Conn, c chan *signedConn) {
 	var buf bytes.Buffer
-	_, err := io.Copy(&buf, conn)
+	_, err := io.Copy(&buf, *conn)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "[Error] %s", err.Error())
 		return
@@ -44,5 +51,10 @@ func processMessages(conn net.Conn, c chan *message.Signed) {
 		return
 	}
 
-	c <- pdata
+	data := &signedConn{
+		message: pdata,
+		conn:    conn,
+	}
+
+	c <- data
 }

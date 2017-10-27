@@ -3,8 +3,6 @@ package server
 import (
 	"fmt"
 	"net"
-
-	"github.com/cashshuffle/cashshuffle/message"
 )
 
 // Start brings up the TCP server.
@@ -28,7 +26,7 @@ func Start(port int, cert string, key string) (err error) {
 	t := &tracker{}
 	t.init()
 
-	signedChan := make(chan *message.Signed)
+	signedChan := make(chan *signedConn)
 	go startSignedChan(signedChan)
 
 	for {
@@ -41,14 +39,14 @@ func Start(port int, cert string, key string) (err error) {
 	}
 }
 
-func handleConnection(conn net.Conn, c chan *message.Signed, tracker *tracker) {
+func handleConnection(conn net.Conn, c chan *signedConn, tracker *tracker) {
 	defer conn.Close()
 	defer tracker.remove(&conn)
 
 	data := &trackerData{}
 	tracker.add(&conn, data)
 
-	processMessages(conn, c)
+	processMessages(&conn, c)
 
 	return
 }
