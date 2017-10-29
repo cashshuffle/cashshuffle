@@ -3,6 +3,8 @@ package server
 import (
 	"net"
 	"sync"
+
+	"github.com/nats-io/nuid"
 )
 
 // tracker is used to track connections to the server.
@@ -30,12 +32,16 @@ func (t *tracker) init() {
 }
 
 // add adds a connection to the tracker.
-func (t *tracker) add(conn net.Conn, data *trackerData) {
+func (t *tracker) add(data *trackerData) {
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
 
-	t.verificationKeyLookup[data.verificationKey] = conn
-	t.connections[conn] = data
+	t.verificationKeyLookup[data.verificationKey] = data.conn
+
+	data.number = t.generateNumber()
+	data.sessionID = t.generateSessionID()
+
+	t.connections[data.conn] = data
 
 	return
 }
@@ -70,4 +76,18 @@ func (t *tracker) getTrackerData(c net.Conn) *trackerData {
 	defer t.mutex.Unlock()
 
 	return t.connections[c]
+}
+
+// generateNumber gets the connections number in the pool.
+// This method assumes the caller is holding the mutex.
+func (t *tracker) generateNumber() uint32 {
+	return 0
+}
+
+// generateSessionID generates a unique session id.
+// This method assumes the caller is holding the mutex.
+func (t *tracker) generateSessionID() []byte {
+	n := nuid.New()
+
+	return []byte(n.Next())
 }

@@ -4,7 +4,6 @@ import (
 	"errors"
 
 	"github.com/cashshuffle/cashshuffle/message"
-	"github.com/nats-io/nuid"
 )
 
 // registerClient registers a new session.
@@ -12,15 +11,12 @@ func (sc *signedConn) registerClient() error {
 	if sc.message.GetSignature().String() == "" {
 		p := sc.message.GetPacket()
 		if p.From.String() != "" {
-			n := nuid.New()
 
 			td := trackerData{
 				verificationKey: p.From.String(),
-				sessionID:       []byte(n.Next()),
 				conn:            sc.conn,
-				number:          0,
 			}
-			sc.tracker.add(sc.conn, &td)
+			sc.tracker.add(&td)
 
 			err := sc.registrationSuccess(&td)
 			return err
