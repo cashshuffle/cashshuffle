@@ -1,14 +1,20 @@
 package server
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
-	"io"
 	"net"
 	"os"
 
 	"github.com/cashshuffle/cashshuffle/message"
 	"github.com/golang/protobuf/proto"
+)
+
+var (
+	// breakBytes are the bytes that delimit each protobuf message
+	// This represents the character ⏎
+	breakBytes = []byte{226, 143, 142}
 )
 
 // signedConn is a type to represent the signed message
@@ -22,33 +28,63 @@ type signedConn struct {
 func startSignedChan(c chan *signedConn) {
 	for {
 		message := <-c
-		processReceivedData(message)
+		processReceivedMessage(message)
 	}
 }
 
-// processReceivedData reads the message and processes it.
-func processReceivedData(data *signedConn) {
+// processReceivedMessage reads the message and processes it.
+func processReceivedMessage(data *signedConn) {
 	p := data.message.GetPacket()
 
 	// Data processing goes here. Right now we just print each message.
 	fmt.Println(p)
 }
 
-// processMessages reads messages from the connection and converts
-// them to message.Signed for processing.
+// processMessages reads messages from the connection and begins processing.
 func processMessages(conn *net.Conn, c chan *signedConn) {
-	var buf bytes.Buffer
-	_, err := io.Copy(&buf, *conn)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "[Error] %s", err.Error())
-		return
+	scanner := bufio.NewScanner(*conn)
+	scanner.Split(bufio.ScanRunes)
+
+	var b bytes.Buffer
+
+	for {
+		for scanner.Scan() {
+			scanBytes := scanner.Bytes()
+
+			if breakScan(scanBytes) {
+				break
+			}
+
+			b.Write(scanBytes)
+		}
+
+		if err := scanner.Err(); err != nil {
+			fmt.Fprintf(os.Stderr, "[Error] %s\n", err.Error())
+			break
+		}
+
+		// We should not receive empty messages.
+		if b.String() == "" {
+			break
+		}
+
+		if err := sendToSignedChan(&b, conn, c); err != nil {
+			fmt.Fprintf(os.Stderr, "[Error] %s\n", err.Error())
+			break
+		}
 	}
+}
+
+// sendToSignedChannel takes a byte buffer containing a protobuf message,
+// converts it to message.Signed and sends it over signedChan.
+func sendToSignedChan(b *bytes.Buffer, conn *net.Conn, c chan *signedConn) error {
+	defer b.Reset()
 
 	pdata := new(message.Signed)
-	err = proto.Unmarshal(buf.Bytes(), pdata)
+
+	err := proto.Unmarshal(b.Bytes(), pdata)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "[Error] %s", err.Error())
-		return
+		return err
 	}
 
 	data := &signedConn{
@@ -57,4 +93,21 @@ func processMessages(conn *net.Conn, c chan *signedConn) {
 	}
 
 	c <- data
+
+	return nil
+}
+
+// breakScan checks if a byte sequence is the break point on the scanner.
+func breakScan(bs []byte) bool {
+	if len(bs) == 3 {
+		for i := range bs {
+			if bs[i] != breakBytes[i] {
+				return false
+			}
+		}
+
+		return true
+	}
+
+	return false
 }
