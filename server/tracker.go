@@ -64,7 +64,7 @@ func (t *tracker) count() int {
 	return len(t.connections)
 }
 
-// getConn returns trackerdata associated with the connection
+// getTrackerdData returns trackerdata associated with a connection
 func (t *tracker) getTrackerData(c net.Conn) *trackerData {
 	t.mutex.Lock()
 	defer t.mutex.Unlock()

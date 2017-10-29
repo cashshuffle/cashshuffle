@@ -17,36 +17,36 @@ var (
 	breakBytes = []byte{226, 143, 142}
 )
 
-// signedConn is a type to represent the signed message
-// and the current connection.
-type signedConn struct {
-	message *message.Signed
-	conn    net.Conn
-	tracker *tracker
-}
-
 // startSignedChan starts a loop reading messages.
 func startSignedChan(c chan *signedConn) {
 	for {
-		data := <-c
-		err := processReceivedMessage(data)
+		sc := <-c
+		err := sc.processReceivedMessage()
 		if err != nil {
-			data.conn.Close()
+			sc.conn.Close()
 			fmt.Fprintf(os.Stderr, "[Error] %s\n", err.Error())
 		}
 	}
 }
 
 // processReceivedMessage reads the message and processes it.
-func processReceivedMessage(data *signedConn) error {
+func (sc *signedConn) processReceivedMessage() error {
 	// If we are not tracking the connection yet, the user must be
 	// registering with the server.
-	if data.tracker.getTrackerData(data.conn) == nil {
-		if err := registerClient(data); err != nil {
+	if sc.tracker.getTrackerData(sc.conn) == nil {
+		if err := sc.registerClient(); err != nil {
 			return err
 		}
 
 		return nil
+	}
+
+	if err := sc.verifyMessage(); err != nil {
+		return err
+	}
+
+	if err := sc.broadcastMessage(); err != nil {
+		return err
 	}
 
 	return nil

@@ -8,26 +8,26 @@ import (
 )
 
 // registerClient registers a new session.
-func registerClient(data *signedConn) error {
-	if data.message.GetSignature().String() == "" {
-		p := data.message.GetPacket()
+func (sc *signedConn) registerClient() error {
+	if sc.message.GetSignature().String() == "" {
+		p := sc.message.GetPacket()
 		if p.From.String() != "" {
 			n := nuid.New()
 
 			td := trackerData{
 				verificationKey: p.From.String(),
 				sessionID:       []byte(n.Next()),
-				conn:            data.conn,
+				conn:            sc.conn,
 				number:          0,
 			}
-			data.tracker.add(data.conn, &td)
+			sc.tracker.add(sc.conn, &td)
 
-			err := registrationSuccess(data, &td)
+			err := sc.registrationSuccess(&td)
 			return err
 		}
 	}
 
-	if err := registrationFailed(data); err != nil {
+	if err := sc.registrationFailed(); err != nil {
 		return err
 	}
 
@@ -35,7 +35,7 @@ func registerClient(data *signedConn) error {
 }
 
 // registrationSuccess sends a registration success reply.
-func registrationSuccess(data *signedConn, td *trackerData) error {
+func (sc *signedConn) registrationSuccess(td *trackerData) error {
 	m := message.Signed{
 		Packet: &message.Packet{
 			Session: td.sessionID,
@@ -43,12 +43,12 @@ func registrationSuccess(data *signedConn, td *trackerData) error {
 		},
 	}
 
-	err := writeMessage(data.conn, &m)
+	err := writeMessage(sc.conn, &m)
 	return err
 }
 
 // registrationFailed sends a registration failed reply.
-func registrationFailed(data *signedConn) error {
+func (sc *signedConn) registrationFailed() error {
 	m := message.Signed{
 		Packet: &message.Packet{
 			Message: &message.Message{
@@ -59,6 +59,6 @@ func registrationFailed(data *signedConn) error {
 		},
 	}
 
-	err := writeMessage(data.conn, &m)
+	err := writeMessage(sc.conn, &m)
 	return err
 }
