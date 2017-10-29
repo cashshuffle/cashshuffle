@@ -41,7 +41,7 @@ func startSignedChan(c chan *signedConn) {
 func processReceivedMessage(data *signedConn) error {
 	// If we are not tracking the connection yet, the user must be
 	// registering with the server.
-	if data.tracker.getTrackerData(data.conn) != nil {
+	if data.tracker.getTrackerData(data.conn) == nil {
 		if err := registerClient(data); err != nil {
 			return err
 		}
