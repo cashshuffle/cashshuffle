@@ -8,7 +8,7 @@ import (
 	"github.com/nats-io/nuid"
 )
 
-// isRegistering checks a message to see if a user is registering
+// registerClient registers a new session.
 func registerClient(data *signedConn) error {
 	if data.message.GetSignature().String() == "" {
 		p := data.message.GetPacket()
@@ -24,12 +24,7 @@ func registerClient(data *signedConn) error {
 			data.tracker.add(data.conn, &td)
 
 			err := registrationSuccess(data, &td)
-			if err != nil {
-				return err
-			}
-
-			// Required data found.
-			return nil
+			return err
 		}
 	}
 
