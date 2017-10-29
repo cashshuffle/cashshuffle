@@ -2,6 +2,7 @@ package server
 
 import (
 	"errors"
+	"net"
 
 	"github.com/cashshuffle/cashshuffle/message"
 	"github.com/golang/protobuf/proto"
@@ -36,6 +37,26 @@ func registerClient(data *signedConn) error {
 	return errors.New("registration failed")
 }
 
+// writeMessage writes a *message.Signed to the connection via protobuf.
+func writeMessage(conn net.Conn, m *message.Signed) error {
+	reply, err := proto.Marshal(m)
+	if err != nil {
+		return err
+	}
+
+	_, err = conn.Write(reply)
+	if err != nil {
+		return err
+	}
+
+	_, err = conn.Write(breakBytes)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // registrationSuccess sends a registration success reply.
 func registrationSuccess(data *signedConn, td *trackerData) error {
 	m := message.Signed{
@@ -45,15 +66,8 @@ func registrationSuccess(data *signedConn, td *trackerData) error {
 		},
 	}
 
-	reply, err := proto.Marshal(&m)
-	if err != nil {
-		return err
-	}
-
-	data.conn.Write(reply)
-	data.conn.Write(breakBytes)
-
-	return nil
+	err := writeMessage(data.conn, &m)
+	return err
 }
 
 // registrationFailed sends a registration failed reply.
@@ -68,13 +82,6 @@ func registrationFailed(data *signedConn) error {
 		},
 	}
 
-	reply, err := proto.Marshal(&m)
-	if err != nil {
-		return err
-	}
-
-	data.conn.Write(reply)
-	data.conn.Write(breakBytes)
-
-	return nil
+	err := writeMessage(data.conn, &m)
+	return err
 }
