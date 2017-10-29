@@ -28,25 +28,28 @@ type signedConn struct {
 // startSignedChan starts a loop reading messages.
 func startSignedChan(c chan *signedConn) {
 	for {
-		message := <-c
-		processReceivedMessage(message)
+		data := <-c
+		err := processReceivedMessage(data)
+		if err != nil {
+			data.conn.Close()
+			fmt.Fprintf(os.Stderr, "[Error] %s\n", err.Error())
+		}
 	}
 }
 
 // processReceivedMessage reads the message and processes it.
-func processReceivedMessage(data *signedConn) {
+func processReceivedMessage(data *signedConn) error {
 	// If we are not tracking the connection yet, the user must be
 	// registering with the server.
 	if data.tracker.getTrackerData(data.conn) != nil {
 		if err := registerClient(data); err != nil {
-			data.conn.Close()
-			fmt.Fprintf(os.Stderr, "[Error] %s\n", err.Error())
+			return err
 		}
 
-		return
+		return nil
 	}
 
-	return
+	return nil
 }
 
 // processMessages reads messages from the connection and begins processing.

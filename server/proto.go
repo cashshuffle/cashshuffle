@@ -29,8 +29,7 @@ func registerClient(data *signedConn) error {
 		}
 	}
 
-	err := registrationFailed(data)
-	if err != nil {
+	if err := registrationFailed(data); err != nil {
 		return err
 	}
 
