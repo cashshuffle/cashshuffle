@@ -41,8 +41,9 @@ func processReceivedMessage(data *signedConn) {
 		if err := registerClient(data); err != nil {
 			data.conn.Close()
 			fmt.Fprintf(os.Stderr, "[Error] %s\n", err.Error())
-			return
 		}
+
+		return
 	}
 
 	return
