@@ -21,7 +21,8 @@ var (
 // and the current connection.
 type signedConn struct {
 	message *message.Signed
-	conn    *net.Conn
+	conn    net.Conn
+	tracker *tracker
 }
 
 // startSignedChan starts a loop reading messages.
@@ -34,15 +35,22 @@ func startSignedChan(c chan *signedConn) {
 
 // processReceivedMessage reads the message and processes it.
 func processReceivedMessage(data *signedConn) {
-	p := data.message.GetPacket()
+	// If we are not tracking the connection yet, the user must be
+	// registering with the server.
+	if data.tracker.getTrackerData(data.conn) != nil {
+		if err := registerClient(data); err != nil {
+			data.conn.Close()
+			fmt.Fprintf(os.Stderr, "[Error] %s\n", err.Error())
+			return
+		}
+	}
 
-	// Data processing goes here. Right now we just print each message.
-	fmt.Println(p)
+	return
 }
 
 // processMessages reads messages from the connection and begins processing.
-func processMessages(conn *net.Conn, c chan *signedConn) {
-	scanner := bufio.NewScanner(*conn)
+func processMessages(conn net.Conn, c chan *signedConn, t *tracker) {
+	scanner := bufio.NewScanner(conn)
 	scanner.Split(bufio.ScanRunes)
 
 	var b bytes.Buffer
@@ -68,7 +76,7 @@ func processMessages(conn *net.Conn, c chan *signedConn) {
 			break
 		}
 
-		if err := sendToSignedChan(&b, conn, c); err != nil {
+		if err := sendToSignedChan(&b, conn, c, t); err != nil {
 			fmt.Fprintf(os.Stderr, "[Error] %s\n", err.Error())
 			break
 		}
@@ -77,7 +85,7 @@ func processMessages(conn *net.Conn, c chan *signedConn) {
 
 // sendToSignedChannel takes a byte buffer containing a protobuf message,
 // converts it to message.Signed and sends it over signedChan.
-func sendToSignedChan(b *bytes.Buffer, conn *net.Conn, c chan *signedConn) error {
+func sendToSignedChan(b *bytes.Buffer, conn net.Conn, c chan *signedConn, t *tracker) error {
 	defer b.Reset()
 
 	pdata := new(message.Signed)
@@ -90,6 +98,7 @@ func sendToSignedChan(b *bytes.Buffer, conn *net.Conn, c chan *signedConn) error
 	data := &signedConn{
 		message: pdata,
 		conn:    conn,
+		tracker: t,
 	}
 
 	c <- data
