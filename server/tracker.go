@@ -11,6 +11,7 @@ import (
 type tracker struct {
 	connections           map[net.Conn]*trackerData
 	verificationKeyLookup map[string]net.Conn
+	playerNumbers         map[uint32]interface{}
 	mutex                 sync.Mutex
 }
 
@@ -81,7 +82,19 @@ func (t *tracker) getTrackerData(c net.Conn) *trackerData {
 // generateNumber gets the connections number in the pool.
 // This method assumes the caller is holding the mutex.
 func (t *tracker) generateNumber() uint32 {
-	return 0
+	num := uint32(1)
+
+	for {
+		if _, ok := t.playerNumbers[num]; ok {
+			num = num + 1
+			continue
+		}
+
+		break
+	}
+
+	t.playerNumbers[num] = nil
+	return num
 }
 
 // generateSessionID generates a unique session id.
