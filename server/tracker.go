@@ -28,6 +28,7 @@ type trackerData struct {
 func (t *tracker) init() {
 	t.connections = make(map[net.Conn]*trackerData)
 	t.verificationKeys = make(map[string]net.Conn)
+	t.playerNumbers = make(map[uint32]interface{})
 
 	return
 }
