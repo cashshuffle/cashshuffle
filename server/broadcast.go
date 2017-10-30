@@ -29,6 +29,16 @@ func (sc *signedConn) broadcastMessage() error {
 
 // broadcastAll broadcasts to all participants.
 func (sc *signedConn) broadcastAll() error {
+	for conn := range sc.tracker.connections {
+		if conn == sc.conn {
+			continue
+		}
+
+		err := writeMessage(conn, sc.message)
+		if err != nil {
+			return err
+		}
+	}
 
 	return nil
 }
