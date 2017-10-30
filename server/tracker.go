@@ -9,10 +9,10 @@ import (
 
 // tracker is used to track connections to the server.
 type tracker struct {
-	connections           map[net.Conn]*trackerData
-	verificationKeyLookup map[string]net.Conn
-	playerNumbers         map[uint32]interface{}
-	mutex                 sync.Mutex
+	connections      map[net.Conn]*trackerData
+	verificationKeys map[string]net.Conn
+	playerNumbers    map[uint32]interface{}
+	mutex            sync.Mutex
 }
 
 // trackerData is data needed about each connection.
@@ -27,7 +27,7 @@ type trackerData struct {
 // init initializes the tracker.
 func (t *tracker) init() {
 	t.connections = make(map[net.Conn]*trackerData)
-	t.verificationKeyLookup = make(map[string]net.Conn)
+	t.verificationKeys = make(map[string]net.Conn)
 
 	return
 }
@@ -37,7 +37,7 @@ func (t *tracker) add(data *trackerData) {
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
 
-	t.verificationKeyLookup[data.verificationKey] = data.conn
+	t.verificationKeys[data.verificationKey] = data.conn
 
 	data.number = t.generateNumber()
 	data.sessionID = t.generateSessionID()
@@ -58,7 +58,7 @@ func (t *tracker) remove(conn net.Conn) {
 		}
 
 		if t.connections[conn].verificationKey != "" {
-			delete(t.verificationKeyLookup, t.connections[conn].verificationKey)
+			delete(t.verificationKeys, t.connections[conn].verificationKey)
 		}
 
 		delete(t.connections, conn)
@@ -75,7 +75,19 @@ func (t *tracker) count() int {
 	return len(t.connections)
 }
 
-// getTrackerdData returns trackerdata associated with a connection
+// getVerifcationKeyConn gets the connection for a verification key.
+func (t *tracker) getVerificationKeyData(key string) *trackerData {
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
+
+	if _, ok := t.verificationKeys[key]; ok {
+		return t.connections[t.verificationKeys[key]]
+	}
+
+	return nil
+}
+
+// getTrackerdData returns trackerdata associated with a connection.
 func (t *tracker) getTrackerData(c net.Conn) *trackerData {
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
