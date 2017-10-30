@@ -34,22 +34,17 @@ func (sc *signedConn) processReceivedMessage() error {
 	// If we are not tracking the connection yet, the user must be
 	// registering with the server.
 	if sc.tracker.getTrackerData(sc.conn) == nil {
-		if err := sc.registerClient(); err != nil {
-			return err
-		}
+		err := sc.registerClient()
 
-		return nil
+		return err
 	}
 
 	if err := sc.verifyMessage(); err != nil {
 		return err
 	}
 
-	if err := sc.broadcastMessage(); err != nil {
-		return err
-	}
-
-	return nil
+	err := sc.broadcastMessage()
+	return err
 }
 
 // processMessages reads messages from the connection and begins processing.
