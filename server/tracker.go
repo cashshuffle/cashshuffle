@@ -53,6 +53,10 @@ func (t *tracker) remove(conn net.Conn) {
 	defer t.mutex.Unlock()
 
 	if t.connections[conn] != nil {
+		if t.connections[conn].number != 0 {
+			delete(t.playerNumbers, t.connections[conn].number)
+		}
+
 		if t.connections[conn].verificationKey != "" {
 			delete(t.verificationKeyLookup, t.connections[conn].verificationKey)
 		}
