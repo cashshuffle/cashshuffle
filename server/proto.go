@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"net"
 
 	"github.com/cashshuffle/cashshuffle/message"
@@ -9,17 +10,16 @@ import (
 
 // writeMessage writes a *message.Signed to the connection via protobuf.
 func writeMessage(conn net.Conn, m *message.Signed) error {
-	reply, err := proto.Marshal(m)
+	packets := &message.Packets{
+		Packet: []*message.Signed{m},
+	}
+
+	reply, err := proto.Marshal(packets)
 	if err != nil {
 		return err
 	}
 
-	_, err = conn.Write(reply)
-	if err != nil {
-		return err
-	}
-
-	_, err = conn.Write(breakBytes)
+	_, err = conn.Write([]byte(fmt.Sprintf("%s%s", reply, breakBytes)))
 	if err != nil {
 		return err
 	}

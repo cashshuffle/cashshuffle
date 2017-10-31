@@ -8,7 +8,7 @@ import (
 
 // registerClient registers a new session.
 func (sc *signedConn) registerClient() error {
-	if sc.message.GetSignature().String() == "" {
+	if sc.message.GetSignature() == nil {
 		p := sc.message.GetPacket()
 		if p.From.String() != "" {
 

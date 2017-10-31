@@ -87,20 +87,22 @@ func processMessages(conn net.Conn, c chan *signedConn, t *tracker) {
 func sendToSignedChan(b *bytes.Buffer, conn net.Conn, c chan *signedConn, t *tracker) error {
 	defer b.Reset()
 
-	pdata := new(message.Signed)
+	pdata := new(message.Packets)
 
 	err := proto.Unmarshal(b.Bytes(), pdata)
 	if err != nil {
 		return err
 	}
 
-	data := &signedConn{
-		message: pdata,
-		conn:    conn,
-		tracker: t,
-	}
+	for _, signed := range pdata.Packet {
+		data := &signedConn{
+			message: signed,
+			conn:    conn,
+			tracker: t,
+		}
 
-	c <- data
+		c <- data
+	}
 
 	return nil
 }
