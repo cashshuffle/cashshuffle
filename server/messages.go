@@ -11,6 +11,10 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
+const (
+	maxMessageLength = 256 * 1024
+)
+
 var (
 	// breakBytes are the bytes that delimit each protobuf message
 	// This represents the character ⏎
@@ -60,6 +64,11 @@ func processMessages(conn net.Conn, c chan *signedConn, t *tracker) {
 
 			if breakScan(scanBytes) {
 				break
+			}
+
+			if len(scanBytes) > maxMessageLength {
+				fmt.Fprintln(os.Stderr, "[Error] message too long")
+				return
 			}
 
 			b.Write(scanBytes)
