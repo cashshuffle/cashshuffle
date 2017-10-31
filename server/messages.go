@@ -66,7 +66,7 @@ func processMessages(conn net.Conn, c chan *signedConn, t *tracker) {
 				break
 			}
 
-			if len(scanBytes) > maxMessageLength {
+			if len(b.String()) > maxMessageLength {
 				fmt.Fprintln(os.Stderr, "[Error] message too long")
 				return
 			}
