@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	maxMessageLength = 256 * 1024
+	maxMessageLength = 64 * 1024
 )
 
 var (
