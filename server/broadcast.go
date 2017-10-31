@@ -1,6 +1,10 @@
 package server
 
-import "errors"
+import (
+	"errors"
+
+	"github.com/cashshuffle/cashshuffle/message"
+)
 
 // broadcastMessage processes messages and either broadcasts
 // them to all connected users, or to a single user.
@@ -10,7 +14,10 @@ func (sc *signedConn) broadcastMessage() error {
 	if to == "" {
 		err := sc.broadcastAll()
 		if err != nil {
-			return err
+			sc.broadcastNewRound()
+
+			// Don't disconnect, we broadcasted a new round.
+			return nil
 		}
 	} else {
 		td := sc.tracker.getVerificationKeyData(to)
@@ -20,7 +27,10 @@ func (sc *signedConn) broadcastMessage() error {
 
 		err := writeMessage(td.conn, sc.message)
 		if err != nil {
-			return err
+			sc.broadcastNewRound()
+
+			// Don't disconnect
+			return nil
 		}
 	}
 
@@ -41,4 +51,32 @@ func (sc *signedConn) broadcastAll() error {
 	}
 
 	return nil
+}
+
+// broadcastNewRound broadcasts a new round.
+func (sc *signedConn) broadcastNewRound() {
+	for conn := range sc.tracker.connections {
+		if conn == sc.conn {
+			continue
+		}
+
+		td := sc.tracker.getTrackerData(conn)
+
+		m := message.Signed{
+			Packet: &message.Packet{
+				Session: td.sessionID,
+				Number:  td.number,
+				Message: &message.Message{
+					Str: "New round",
+				},
+			},
+		}
+
+		err := writeMessage(conn, &m)
+		if err != nil {
+			continue
+		}
+	}
+
+	return
 }
