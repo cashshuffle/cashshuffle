@@ -20,9 +20,9 @@ func (sc *signedConn) verifyMessage() error {
 		return errors.New("invalid user number")
 	}
 
-	to := packet.GetTo().String()
-	if to != "" {
-		if sc.tracker.getVerificationKeyData(to) == nil {
+	to := packet.GetTo()
+	if to != nil {
+		if sc.tracker.getVerificationKeyData(to.String()) == nil {
 			return errors.New("invalid destination")
 		}
 	}

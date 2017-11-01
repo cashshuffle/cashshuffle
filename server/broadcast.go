@@ -9,9 +9,9 @@ import (
 // broadcastMessage processes messages and either broadcasts
 // them to all connected users, or to a single user.
 func (sc *signedConn) broadcastMessage() error {
-	to := sc.message.GetPacket().GetTo().String()
+	to := sc.message.GetPacket().GetTo()
 
-	if to == "" {
+	if to == nil {
 		err := sc.broadcastAll()
 		if err != nil {
 			sc.broadcastNewRound()
@@ -20,7 +20,7 @@ func (sc *signedConn) broadcastMessage() error {
 			return nil
 		}
 	} else {
-		td := sc.tracker.getVerificationKeyData(to)
+		td := sc.tracker.getVerificationKeyData(to.String())
 		if td == nil {
 			return errors.New("peer disconnected")
 		}
@@ -40,10 +40,6 @@ func (sc *signedConn) broadcastMessage() error {
 // broadcastAll broadcasts to all participants.
 func (sc *signedConn) broadcastAll() error {
 	for conn := range sc.tracker.connections {
-		if conn == sc.conn {
-			continue
-		}
-
 		err := writeMessage(conn, sc.message)
 		if err != nil {
 			return err
@@ -56,10 +52,6 @@ func (sc *signedConn) broadcastAll() error {
 // broadcastNewRound broadcasts a new round.
 func (sc *signedConn) broadcastNewRound() {
 	for conn := range sc.tracker.connections {
-		if conn == sc.conn {
-			continue
-		}
-
 		td := sc.tracker.getTrackerData(conn)
 
 		m := message.Signed{
