@@ -10,9 +10,10 @@ import (
 )
 
 const (
-	appName     = "cashshuffle"
-	version     = "0.0.1"
-	defaultPort = 8080
+	appName         = "cashshuffle"
+	version         = "0.0.1"
+	defaultPort     = 8080
+	defaultPoolSize = 5
 )
 
 // Stores configuration data.
@@ -50,6 +51,10 @@ func prepareFlags() {
 		config.Port = defaultPort
 	}
 
+	if config.PoolSize == 0 {
+		config.PoolSize = defaultPoolSize
+	}
+
 	MainCmd.PersistentFlags().StringVarP(
 		&config.Cert, "cert", "c", config.Cert, "path to server.crt for TLS")
 	MainCmd.PersistentFlags().StringVarP(
@@ -58,6 +63,8 @@ func prepareFlags() {
 		&config.DisplayVersion, "version", "v", false, "display version")
 	MainCmd.PersistentFlags().IntVarP(
 		&config.Port, "port", "p", config.Port, "server port")
+	MainCmd.PersistentFlags().IntVarP(
+		&config.PoolSize, "pool-size", "s", config.PoolSize, "pool size")
 }
 
 // Where all the work happens.
@@ -67,7 +74,7 @@ func performCommand(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	err := server.Start(config.Port, config.Cert, config.Key)
+	err := server.Start(config.Port, config.Cert, config.Key, config.PoolSize)
 	if err != nil {
 		return err
 	}

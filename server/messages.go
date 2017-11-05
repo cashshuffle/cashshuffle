@@ -39,8 +39,17 @@ func (sc *signedConn) processReceivedMessage() error {
 	// registering with the server.
 	if sc.tracker.getTrackerData(sc.conn) == nil {
 		err := sc.registerClient()
+		if err != nil {
+			return err
+		}
 
-		return err
+		playerData := sc.tracker.getTrackerData(sc.conn)
+
+		if sc.tracker.getPoolSize(playerData.pool) == sc.tracker.poolSize {
+			sc.announceStart()
+		}
+
+		return nil
 	}
 
 	if err := sc.verifyMessage(); err != nil {

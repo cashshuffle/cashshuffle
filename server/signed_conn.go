@@ -12,4 +12,5 @@ type signedConn struct {
 	message *message.Signed
 	conn    net.Conn
 	tracker *tracker
+	pool    int
 }

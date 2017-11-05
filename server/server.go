@@ -6,7 +6,7 @@ import (
 )
 
 // Start brings up the TCP server.
-func Start(port int, cert string, key string) (err error) {
+func Start(port int, cert string, key string, poolSize int) (err error) {
 	var listener net.Listener
 
 	if tlsEnabled(cert, key) {
@@ -23,7 +23,9 @@ func Start(port int, cert string, key string) (err error) {
 
 	defer listener.Close()
 
-	t := &tracker{}
+	t := &tracker{
+		poolSize: poolSize,
+	}
 	t.init()
 
 	signedChan := make(chan *signedConn)

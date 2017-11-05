@@ -39,7 +39,16 @@ func (sc *signedConn) broadcastMessage() error {
 
 // broadcastAll broadcasts to all participants.
 func (sc *signedConn) broadcastAll() error {
-	for conn := range sc.tracker.connections {
+	sc.tracker.mutex.Lock()
+	defer sc.tracker.mutex.Unlock()
+
+	playerData := sc.tracker.connections[sc.conn]
+
+	for conn, td := range sc.tracker.connections {
+		if playerData.pool != td.pool {
+			continue
+		}
+
 		err := writeMessage(conn, sc.message)
 		if err != nil {
 			return err
@@ -51,8 +60,15 @@ func (sc *signedConn) broadcastAll() error {
 
 // broadcastNewRound broadcasts a new round.
 func (sc *signedConn) broadcastNewRound() {
-	for conn := range sc.tracker.connections {
-		td := sc.tracker.getTrackerData(conn)
+	sc.tracker.mutex.Lock()
+	defer sc.tracker.mutex.Unlock()
+
+	playerData := sc.tracker.connections[sc.conn]
+
+	for conn, td := range sc.tracker.connections {
+		if playerData.pool != td.pool {
+			continue
+		}
 
 		m := message.Signed{
 			Packet: &message.Packet{
@@ -67,6 +83,38 @@ func (sc *signedConn) broadcastNewRound() {
 		err := writeMessage(conn, &m)
 		if err != nil {
 			continue
+		}
+	}
+
+	return
+}
+
+// announceStart sends an annoucement message if the pool
+// is full.
+func (sc *signedConn) announceStart() {
+	sc.tracker.mutex.Lock()
+	defer sc.tracker.mutex.Unlock()
+
+	playerData := sc.tracker.connections[sc.conn]
+
+	for conn, td := range sc.tracker.connections {
+		if playerData.pool != td.pool {
+			continue
+		}
+
+		m := message.Signed{
+			Packet: &message.Packet{
+				Phase:  message.Phase_ANNOUNCEMENT,
+				Number: uint32(sc.tracker.poolSize),
+			},
+		}
+
+		err := writeMessage(conn, &m)
+		if err != nil {
+			sc.broadcastNewRound()
+
+			// Don't disconnect
+			return
 		}
 	}
 
