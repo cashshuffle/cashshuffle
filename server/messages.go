@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"time"
 
 	"github.com/cashshuffle/cashshuffle/message"
 	"github.com/golang/protobuf/proto"
@@ -46,6 +47,7 @@ func (sc *signedConn) processReceivedMessage() error {
 		playerData := sc.tracker.getTrackerData(sc.conn)
 
 		if sc.tracker.getPoolSize(playerData.pool) == sc.tracker.poolSize {
+			time.Sleep(50 * time.Millisecond)
 			sc.announceStart()
 		}
 
