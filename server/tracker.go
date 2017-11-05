@@ -11,9 +11,8 @@ import (
 type tracker struct {
 	connections      map[net.Conn]*trackerData
 	verificationKeys map[string]net.Conn
-	playerNumbers    map[uint32]interface{}
 	mutex            sync.Mutex
-	pools            map[int]int
+	pools            map[int]map[uint32]interface{}
 	poolSize         int
 	fullPools        map[int]interface{}
 }
@@ -32,8 +31,7 @@ type trackerData struct {
 func (t *tracker) init() {
 	t.connections = make(map[net.Conn]*trackerData)
 	t.verificationKeys = make(map[string]net.Conn)
-	t.playerNumbers = make(map[uint32]interface{})
-	t.pools = make(map[int]int)
+	t.pools = make(map[int]map[uint32]interface{})
 	t.fullPools = make(map[int]interface{})
 
 	return
@@ -46,12 +44,11 @@ func (t *tracker) add(data *trackerData) {
 
 	t.verificationKeys[data.verificationKey] = data.conn
 
-	data.number = t.generateNumber()
 	data.sessionID = t.generateSessionID()
 
 	t.connections[data.conn] = data
 
-	data.pool = t.assignPool()
+	data.pool, data.number = t.assignPool()
 
 	return
 }
@@ -63,10 +60,6 @@ func (t *tracker) remove(conn net.Conn) {
 
 	td := t.connections[conn]
 	if td != nil {
-		if td.number != 0 {
-			delete(t.playerNumbers, td.number)
-		}
-
 		if td.verificationKey != "" {
 			delete(t.verificationKeys, td.verificationKey)
 		}
@@ -112,25 +105,7 @@ func (t *tracker) getPoolSize(pool int) int {
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
 
-	return t.pools[pool]
-}
-
-// generateNumber gets the connections number in the pool.
-// This method assumes the caller is holding the mutex.
-func (t *tracker) generateNumber() uint32 {
-	num := uint32(1)
-
-	for {
-		if _, ok := t.playerNumbers[num]; ok {
-			num = num + 1
-			continue
-		}
-
-		break
-	}
-
-	t.playerNumbers[num] = nil
-	return num
+	return len(t.pools[pool])
 }
 
 // generateSessionID generates a unique session id.
@@ -143,40 +118,50 @@ func (t *tracker) generateSessionID() []byte {
 
 // assignPool assigns a user to a pool.
 // This method assumes the caller is holding the mutex.
-func (t *tracker) assignPool() int {
-	var members int
+func (t *tracker) assignPool() (int, uint32) {
 	num := 1
 
 	for {
-		if v, ok := t.pools[num]; ok {
+		if _, ok := t.pools[num]; ok {
 			if _, ok := t.fullPools[num]; ok {
 				num = num + 1
 				continue
 			}
-
-			members = v + 1
-		} else {
-			members = 1
 		}
 
 		break
 	}
 
-	t.pools[num] = members
+	playerNum := uint32(1)
+	if _, ok := t.pools[num]; !ok {
+		t.pools[num] = make(map[uint32]interface{})
+		t.pools[num][1] = nil
+	} else {
+		for {
+			if _, ok := t.pools[num][playerNum]; ok {
+				playerNum = playerNum + 1
+				continue
+			}
 
-	if members == t.poolSize {
+			break
+		}
+
+		t.pools[num][playerNum] = nil
+	}
+
+	if len(t.pools[num]) == t.poolSize {
 		t.fullPools[num] = nil
 	}
 
-	return num
+	return num, playerNum
 }
 
 // unassignPool removes a user from a pool.
 // This method assumes the caller is holding the mutex.
 func (t *tracker) unassignPool(td *trackerData) {
-	t.pools[td.pool] = t.pools[td.pool] - 1
+	delete(t.pools[td.pool], td.number)
 
-	if t.pools[td.pool] == 0 {
+	if len(t.pools[td.pool]) == 0 {
 		delete(t.pools, td.pool)
 		delete(t.fullPools, td.pool)
 	}
