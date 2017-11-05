@@ -5,9 +5,13 @@ import (
 	"net"
 )
 
+var debugMode bool
+
 // Start brings up the TCP server.
-func Start(port int, cert string, key string, poolSize int) (err error) {
+func Start(port int, cert string, key string, poolSize int, debug bool) (err error) {
 	var listener net.Listener
+
+	debugMode = debug
 
 	if tlsEnabled(cert, key) {
 		listener, err = createTLSListener(port, cert, key)

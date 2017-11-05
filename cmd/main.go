@@ -65,6 +65,8 @@ func prepareFlags() {
 		&config.Port, "port", "p", config.Port, "server port")
 	MainCmd.PersistentFlags().IntVarP(
 		&config.PoolSize, "pool-size", "s", config.PoolSize, "pool size")
+	MainCmd.PersistentFlags().BoolVarP(
+		&config.Debug, "debug", "d", config.Debug, "debug mode")
 }
 
 // Where all the work happens.
@@ -74,7 +76,7 @@ func performCommand(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	err := server.Start(config.Port, config.Cert, config.Key, config.PoolSize)
+	err := server.Start(config.Port, config.Cert, config.Key, config.PoolSize, config.Debug)
 	if err != nil {
 		return err
 	}

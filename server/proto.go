@@ -19,6 +19,10 @@ func writeMessage(conn net.Conn, m *message.Signed) error {
 		return err
 	}
 
+	if debugMode {
+		fmt.Println("SENT", packets)
+	}
+
 	_, err = conn.Write([]byte(fmt.Sprintf("%s%s", reply, breakBytes)))
 	if err != nil {
 		return err

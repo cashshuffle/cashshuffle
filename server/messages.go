@@ -112,6 +112,10 @@ func sendToSignedChan(b *bytes.Buffer, conn net.Conn, c chan *signedConn, t *tra
 		return err
 	}
 
+	if debugMode {
+		fmt.Println("RECEIVED", pdata)
+	}
+
 	for _, signed := range pdata.Packet {
 		data := &signedConn{
 			message: signed,

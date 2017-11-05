@@ -16,6 +16,7 @@ type Config struct {
 	Cert           string `json:"cert"`
 	Key            string `json:"key"`
 	PoolSize       int    `json:"pool_size,string"`
+	Debug          bool   `json:"debug,string"`
 }
 
 // Load reads the configuration from ~/.cashshuffle/config and loads it into the Config struct.
