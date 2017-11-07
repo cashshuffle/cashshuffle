@@ -63,17 +63,13 @@ func (sc *signedConn) processReceivedMessage() error {
 // processMessages reads messages from the connection and begins processing.
 func processMessages(conn net.Conn, c chan *signedConn, t *tracker) {
 	scanner := bufio.NewScanner(conn)
-	scanner.Split(bufio.ScanRunes)
-
-	var b bytes.Buffer
+	scanner.Split(bufio.ScanBytes)
 
 	for {
+		var b bytes.Buffer
+
 		for scanner.Scan() {
 			scanBytes := scanner.Bytes()
-
-			if breakScan(scanBytes) {
-				break
-			}
 
 			if len(b.String()) > maxMessageLength {
 				fmt.Fprintln(os.Stderr, "[Error] message too long")
@@ -81,6 +77,12 @@ func processMessages(conn net.Conn, c chan *signedConn, t *tracker) {
 			}
 
 			b.Write(scanBytes)
+
+			if breakScan(b) {
+				b.Truncate(b.Len() - 3)
+				break
+			}
+
 		}
 
 		if err := scanner.Err(); err != nil {
@@ -109,11 +111,14 @@ func sendToSignedChan(b *bytes.Buffer, conn net.Conn, c chan *signedConn, t *tra
 
 	err := proto.Unmarshal(b.Bytes(), pdata)
 	if err != nil {
+		if debugMode {
+			fmt.Println("[Error] Unmarshal failed:", b.Bytes())
+		}
 		return err
 	}
 
 	if debugMode {
-		fmt.Println("RECEIVED", pdata)
+		fmt.Println("[Received]", pdata)
 	}
 
 	for _, signed := range pdata.Packet {
@@ -130,8 +135,17 @@ func sendToSignedChan(b *bytes.Buffer, conn net.Conn, c chan *signedConn, t *tra
 }
 
 // breakScan checks if a byte sequence is the break point on the scanner.
-func breakScan(bs []byte) bool {
-	if len(bs) == 3 {
+func breakScan(buf bytes.Buffer) bool {
+	len := buf.Len()
+
+	if len > 3 {
+		payload := buf.Bytes()
+		bs := []byte{
+			payload[len-3],
+			payload[len-2],
+			payload[len-1],
+		}
+
 		for i := range bs {
 			if bs[i] != breakBytes[i] {
 				return false

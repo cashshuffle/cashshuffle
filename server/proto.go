@@ -20,7 +20,7 @@ func writeMessage(conn net.Conn, m *message.Signed) error {
 	}
 
 	if debugMode {
-		fmt.Println("SENT", packets)
+		fmt.Println("[Sent]", packets)
 	}
 
 	_, err = conn.Write([]byte(fmt.Sprintf("%s%s", reply, breakBytes)))
