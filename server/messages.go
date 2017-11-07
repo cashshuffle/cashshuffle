@@ -91,7 +91,7 @@ func processMessages(conn net.Conn, c chan *signedConn, t *tracker) {
 		}
 
 		// We should not receive empty messages.
-		if b.String() == "" {
+		if b.Len() == 0 {
 			break
 		}
 
