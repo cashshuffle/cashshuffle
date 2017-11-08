@@ -3,27 +3,29 @@ package server
 import "errors"
 
 // verifyMessage makes sure all required fields exist.
-func (sc *signedConn) verifyMessage() error {
-	td := sc.tracker.getTrackerData(sc.conn)
+func (pi *packetInfo) verifyMessage() error {
+	td := pi.tracker.getTrackerData(pi.conn)
 
-	packet := sc.message.GetPacket()
+	for _, pkt := range pi.message.Packet {
+		packet := pkt.GetPacket()
 
-	if string(packet.GetSession()) != string(td.sessionID) {
-		return errors.New("invalid session")
-	}
+		if string(packet.GetSession()) != string(td.sessionID) {
+			return errors.New("invalid session")
+		}
 
-	if packet.GetFrom().String() != td.verificationKey {
-		return errors.New("invalid verification key")
-	}
+		if packet.GetFrom().String() != td.verificationKey {
+			return errors.New("invalid verification key")
+		}
 
-	if packet.GetNumber() != td.number {
-		return errors.New("invalid user number")
-	}
+		if packet.GetNumber() != td.number {
+			return errors.New("invalid user number")
+		}
 
-	to := packet.GetTo()
-	if to != nil {
-		if sc.tracker.getVerificationKeyData(to.String()) == nil {
-			return errors.New("invalid destination")
+		to := packet.GetTo()
+		if to != nil {
+			if pi.tracker.getVerificationKeyData(to.String()) == nil {
+				return errors.New("invalid destination")
+			}
 		}
 	}
 

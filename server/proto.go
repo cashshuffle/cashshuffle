@@ -9,9 +9,9 @@ import (
 )
 
 // writeMessage writes a *message.Signed to the connection via protobuf.
-func writeMessage(conn net.Conn, m *message.Signed) error {
+func writeMessage(conn net.Conn, msgs []*message.Signed) error {
 	packets := &message.Packets{
-		Packet: []*message.Signed{m},
+		Packet: msgs,
 	}
 
 	reply, err := proto.Marshal(packets)

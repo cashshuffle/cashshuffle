@@ -21,47 +21,47 @@ var (
 	breakBytes = []byte{226, 143, 142}
 )
 
-// startSignedChan starts a loop reading messages.
-func startSignedChan(c chan *signedConn) {
+// startPacketInfoChan starts a loop reading messages.
+func startPacketInfoChan(c chan *packetInfo) {
 	for {
-		sc := <-c
-		err := sc.processReceivedMessage()
+		pi := <-c
+		err := pi.processReceivedMessage()
 		if err != nil {
-			sc.conn.Close()
+			pi.conn.Close()
 			fmt.Fprintf(os.Stderr, "[Error] %s\n", err.Error())
 		}
 	}
 }
 
 // processReceivedMessage reads the message and processes it.
-func (sc *signedConn) processReceivedMessage() error {
+func (pi *packetInfo) processReceivedMessage() error {
 	// If we are not tracking the connection yet, the user must be
 	// registering with the server.
-	if sc.tracker.getTrackerData(sc.conn) == nil {
-		err := sc.registerClient()
+	if pi.tracker.getTrackerData(pi.conn) == nil {
+		err := pi.registerClient()
 		if err != nil {
 			return err
 		}
 
-		playerData := sc.tracker.getTrackerData(sc.conn)
+		playerData := pi.tracker.getTrackerData(pi.conn)
 
-		if sc.tracker.getPoolSize(playerData.pool) == sc.tracker.poolSize {
-			sc.announceStart()
+		if pi.tracker.getPoolSize(playerData.pool) == pi.tracker.poolSize {
+			pi.announceStart()
 		}
 
 		return nil
 	}
 
-	if err := sc.verifyMessage(); err != nil {
+	if err := pi.verifyMessage(); err != nil {
 		return err
 	}
 
-	err := sc.broadcastMessage()
+	err := pi.broadcastMessage()
 	return err
 }
 
 // processMessages reads messages from the connection and begins processing.
-func processMessages(conn net.Conn, c chan *signedConn, t *tracker) {
+func processMessages(conn net.Conn, c chan *packetInfo, t *tracker) {
 	scanner := bufio.NewScanner(conn)
 	scanner.Split(bufio.ScanBytes)
 
@@ -95,16 +95,17 @@ func processMessages(conn net.Conn, c chan *signedConn, t *tracker) {
 			break
 		}
 
-		if err := sendToSignedChan(&b, conn, c, t); err != nil {
+		if err := sendToPacketInfoChan(&b, conn, c, t); err != nil {
 			fmt.Fprintf(os.Stderr, "[Error] %s\n", err.Error())
 			break
 		}
 	}
 }
 
-// sendToSignedChannel takes a byte buffer containing a protobuf message,
-// converts it to message.Signed and sends it over signedChan.
-func sendToSignedChan(b *bytes.Buffer, conn net.Conn, c chan *signedConn, t *tracker) error {
+// sendToPacketInfoChan takes a byte buffer containing a protobuf message,
+// unmarshals it, creates a packetInfo, then sends it over the packetInfo
+// channel.
+func sendToPacketInfoChan(b *bytes.Buffer, conn net.Conn, c chan *packetInfo, t *tracker) error {
 	defer b.Reset()
 
 	pdata := new(message.Packets)
@@ -121,15 +122,13 @@ func sendToSignedChan(b *bytes.Buffer, conn net.Conn, c chan *signedConn, t *tra
 		fmt.Println("[Received]", pdata)
 	}
 
-	for _, signed := range pdata.Packet {
-		data := &signedConn{
-			message: signed,
-			conn:    conn,
-			tracker: t,
-		}
-
-		c <- data
+	data := &packetInfo{
+		message: pdata,
+		conn:    conn,
+		tracker: t,
 	}
+
+	c <- data
 
 	return nil
 }

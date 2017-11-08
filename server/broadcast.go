@@ -2,35 +2,55 @@ package server
 
 import (
 	"errors"
+	"fmt"
+	"strings"
 
 	"github.com/cashshuffle/cashshuffle/message"
 )
 
+var (
+	playerPrefix = "Player"
+	broadcastKey = "Broadcast"
+)
+
 // broadcastMessage processes messages and either broadcasts
 // them to all connected users, or to a single user.
-func (sc *signedConn) broadcastMessage() error {
-	to := sc.message.GetPacket().GetTo()
+func (pi *packetInfo) broadcastMessage() error {
+	msgMap := make(map[string][]*message.Signed)
 
-	if to == nil {
-		err := sc.broadcastAll()
-		if err != nil {
-			sc.broadcastNewRound()
+	for _, signed := range pi.message.GetPacket() {
+		to := signed.GetPacket().GetTo()
 
-			// Don't disconnect, we broadcasted a new round.
-			return nil
+		if to == nil {
+			msgMap[broadcastKey] = append(msgMap[broadcastKey], signed)
+		} else {
+			k := fmt.Sprintf("%s%s", playerPrefix, signed.GetPacket().GetTo().String())
+			msgMap[k] = append(msgMap[k], signed)
 		}
-	} else {
-		td := sc.tracker.getVerificationKeyData(to.String())
-		if td == nil {
-			return errors.New("peer disconnected")
-		}
+	}
 
-		err := writeMessage(td.conn, sc.message)
-		if err != nil {
-			sc.broadcastNewRound()
+	for player, msgs := range msgMap {
+		if player == broadcastKey {
+			err := pi.broadcastAll(msgs)
+			if err != nil {
+				pi.broadcastNewRound()
 
-			// Don't disconnect
-			return nil
+				// Don't disconnect, we broadcasted a new round.
+				return nil
+			}
+		} else {
+			td := pi.tracker.getVerificationKeyData(strings.TrimLeft(player, playerPrefix))
+			if td == nil {
+				return errors.New("peer disconnected")
+			}
+
+			err := writeMessage(td.conn, msgs)
+			if err != nil {
+				pi.broadcastNewRound()
+
+				// Don't disconnect
+				return nil
+			}
 		}
 	}
 
@@ -38,18 +58,18 @@ func (sc *signedConn) broadcastMessage() error {
 }
 
 // broadcastAll broadcasts to all participants.
-func (sc *signedConn) broadcastAll() error {
-	sc.tracker.mutex.Lock()
-	defer sc.tracker.mutex.Unlock()
+func (pi *packetInfo) broadcastAll(msgs []*message.Signed) error {
+	pi.tracker.mutex.Lock()
+	defer pi.tracker.mutex.Unlock()
 
-	playerData := sc.tracker.connections[sc.conn]
+	playerData := pi.tracker.connections[pi.conn]
 
-	for conn, td := range sc.tracker.connections {
+	for conn, td := range pi.tracker.connections {
 		if playerData.pool != td.pool {
 			continue
 		}
 
-		err := writeMessage(conn, sc.message)
+		err := writeMessage(conn, msgs)
 		if err != nil {
 			return err
 		}
@@ -59,13 +79,13 @@ func (sc *signedConn) broadcastAll() error {
 }
 
 // broadcastNewRound broadcasts a new round.
-func (sc *signedConn) broadcastNewRound() {
-	sc.tracker.mutex.Lock()
-	defer sc.tracker.mutex.Unlock()
+func (pi *packetInfo) broadcastNewRound() {
+	pi.tracker.mutex.Lock()
+	defer pi.tracker.mutex.Unlock()
 
-	playerData := sc.tracker.connections[sc.conn]
+	playerData := pi.tracker.connections[pi.conn]
 
-	for conn, td := range sc.tracker.connections {
+	for conn, td := range pi.tracker.connections {
 		if playerData.pool != td.pool {
 			continue
 		}
@@ -80,7 +100,7 @@ func (sc *signedConn) broadcastNewRound() {
 			},
 		}
 
-		err := writeMessage(conn, &m)
+		err := writeMessage(conn, []*message.Signed{&m})
 		if err != nil {
 			continue
 		}
@@ -91,13 +111,13 @@ func (sc *signedConn) broadcastNewRound() {
 
 // announceStart sends an annoucement message if the pool
 // is full.
-func (sc *signedConn) announceStart() {
-	sc.tracker.mutex.Lock()
-	defer sc.tracker.mutex.Unlock()
+func (pi *packetInfo) announceStart() {
+	pi.tracker.mutex.Lock()
+	defer pi.tracker.mutex.Unlock()
 
-	playerData := sc.tracker.connections[sc.conn]
+	playerData := pi.tracker.connections[pi.conn]
 
-	for conn, td := range sc.tracker.connections {
+	for conn, td := range pi.tracker.connections {
 		if playerData.pool != td.pool {
 			continue
 		}
@@ -105,13 +125,13 @@ func (sc *signedConn) announceStart() {
 		m := message.Signed{
 			Packet: &message.Packet{
 				Phase:  message.Phase_ANNOUNCEMENT,
-				Number: uint32(sc.tracker.poolSize),
+				Number: uint32(pi.tracker.poolSize),
 			},
 		}
 
-		err := writeMessage(conn, &m)
+		err := writeMessage(conn, []*message.Signed{&m})
 		if err != nil {
-			sc.broadcastNewRound()
+			pi.broadcastNewRound()
 
 			// Don't disconnect
 			return

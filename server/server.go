@@ -32,8 +32,8 @@ func Start(port int, cert string, key string, poolSize int, debug bool) (err err
 	}
 	t.init()
 
-	signedChan := make(chan *signedConn)
-	go startSignedChan(signedChan)
+	packetInfoChan := make(chan *packetInfo)
+	go startPacketInfoChan(packetInfoChan)
 
 	for {
 		conn, err := listener.Accept()
@@ -41,11 +41,11 @@ func Start(port int, cert string, key string, poolSize int, debug bool) (err err
 			continue
 		}
 
-		go handleConnection(conn, signedChan, t)
+		go handleConnection(conn, packetInfoChan, t)
 	}
 }
 
-func handleConnection(conn net.Conn, c chan *signedConn, tracker *tracker) {
+func handleConnection(conn net.Conn, c chan *packetInfo, tracker *tracker) {
 	defer conn.Close()
 	defer tracker.remove(conn)
 
