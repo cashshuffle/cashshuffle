@@ -1,7 +1,6 @@
 package server
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 
@@ -41,7 +40,10 @@ func (pi *packetInfo) broadcastMessage() error {
 		} else {
 			td := pi.tracker.getVerificationKeyData(strings.TrimLeft(player, playerPrefix))
 			if td == nil {
-				return errors.New("peer disconnected")
+				pi.broadcastNewRound()
+
+				// Don't disconnect
+				return nil
 			}
 
 			err := writeMessage(td.conn, msgs)
