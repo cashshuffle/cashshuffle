@@ -82,7 +82,6 @@ func processMessages(conn net.Conn, c chan *packetInfo, t *tracker) {
 				b.Truncate(b.Len() - 3)
 				break
 			}
-
 		}
 
 		if err := scanner.Err(); err != nil {

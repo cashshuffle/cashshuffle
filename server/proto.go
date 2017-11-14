@@ -23,7 +23,7 @@ func writeMessage(conn net.Conn, msgs []*message.Signed) error {
 		fmt.Println("[Sent]", packets)
 	}
 
-	_, err = conn.Write([]byte(fmt.Sprintf("%s%s", reply, breakBytes)))
+	_, err = conn.Write(append(reply, breakBytes...))
 	if err != nil {
 		return err
 	}
