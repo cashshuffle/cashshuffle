@@ -35,6 +35,7 @@ func Start(port int, cert string, key string, poolSize int, debug bool) (err err
 	packetInfoChan := make(chan *packetInfo)
 	go startPacketInfoChan(packetInfoChan)
 
+	fmt.Printf("listening on TCP port %d (pool size: %d)\n", port, poolSize)
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
