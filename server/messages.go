@@ -91,7 +91,7 @@ func processMessages(conn net.Conn, c chan *packetInfo, t *tracker) {
 
 		// We should not receive empty messages.
 		if b.Len() == 0 {
-			break
+			continue
 		}
 
 		if err := sendToPacketInfoChan(&b, conn, c, t); err != nil {
