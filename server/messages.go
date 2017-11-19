@@ -67,8 +67,10 @@ func processMessages(conn net.Conn, c chan *packetInfo, t *tracker) {
 
 	for {
 		var b bytes.Buffer
+		scanned := false
 
 		for scanner.Scan() {
+			scanned = true
 			scanBytes := scanner.Bytes()
 
 			if len(b.String()) > maxMessageLength {
@@ -89,9 +91,12 @@ func processMessages(conn net.Conn, c chan *packetInfo, t *tracker) {
 			break
 		}
 
-		// We should not receive empty messages.
 		if b.Len() == 0 {
-			continue
+			if scanned {
+				continue
+			}
+
+			break
 		}
 
 		if err := sendToPacketInfoChan(&b, conn, c, t); err != nil {
