@@ -1,7 +1,7 @@
 [![License][License-Image]][License-URL] [![ReportCard][ReportCard-Image]][ReportCard-URL] [![Build][Build-Status-Image]][Build-Status-URL]
 # cashshuffle
 
-A CoinShuffle server implented in Go. For more information on CoinShuffle visit [http://crypsys.mmci.uni-saarland.de/projects/CoinShuffle/](http://crypsys.mmci.uni-saarland.de/projects/CoinShuffle/).
+A CashShuffle server implented in Go. For more information on CashShuffle visit [https://cashshuffle.com](https://cashshuffle.com).
 
 ## Install
 
