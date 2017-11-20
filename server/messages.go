@@ -135,7 +135,7 @@ func sendToPacketInfoChan(b *bytes.Buffer, conn net.Conn, c chan *packetInfo, t 
 func breakScan(buf bytes.Buffer) bool {
 	len := buf.Len()
 
-	if len > 3 {
+	if len >= 3 {
 		payload := buf.Bytes()
 		bs := []byte{
 			payload[len-3],
