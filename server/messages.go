@@ -90,7 +90,7 @@ func processMessages(conn net.Conn, c chan *packetInfo, t *tracker) {
 		}
 
 		if b.Len() == 0 {
-			continue
+			break
 		}
 
 		if err := sendToPacketInfoChan(&b, conn, c, t); err != nil {
