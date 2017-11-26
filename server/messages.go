@@ -56,6 +56,10 @@ func (pi *packetInfo) processReceivedMessage() error {
 		return err
 	}
 
+	if err := pi.checkBanMessage(); err != nil {
+		return err
+	}
+
 	err := pi.broadcastMessage()
 	return err
 }

@@ -18,6 +18,7 @@ func (pi *packetInfo) registerClient() error {
 				td := trackerData{
 					verificationKey: p.From.String(),
 					conn:            pi.conn,
+					bannedBy:        make(map[string]interface{}),
 				}
 				pi.tracker.add(&td)
 

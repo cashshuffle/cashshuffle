@@ -67,7 +67,7 @@ func (pi *packetInfo) broadcastAll(msgs []*message.Signed) error {
 	playerData := pi.tracker.connections[pi.conn]
 
 	for conn, td := range pi.tracker.connections {
-		if playerData.pool != td.pool {
+		if (playerData.pool != td.pool) || pi.tracker.banned(td) {
 			continue
 		}
 
@@ -88,7 +88,7 @@ func (pi *packetInfo) broadcastNewRound() {
 	playerData := pi.tracker.connections[pi.conn]
 
 	for conn, td := range pi.tracker.connections {
-		if playerData.pool != td.pool {
+		if playerData.pool != td.pool || pi.tracker.banned(td) {
 			continue
 		}
 
@@ -120,7 +120,7 @@ func (pi *packetInfo) announceStart() {
 	playerData := pi.tracker.connections[pi.conn]
 
 	for conn, td := range pi.tracker.connections {
-		if playerData.pool != td.pool {
+		if playerData.pool != td.pool || pi.tracker.banned(td) {
 			continue
 		}
 

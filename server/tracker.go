@@ -25,6 +25,7 @@ type trackerData struct {
 	conn            net.Conn
 	verificationKey string
 	pool            int
+	bannedBy        map[string]interface{}
 }
 
 // init initializes the tracker.
@@ -70,6 +71,15 @@ func (t *tracker) remove(conn net.Conn) {
 	}
 
 	return
+}
+
+// banned returns true if the player has been banned.
+func (t *tracker) banned(data *trackerData) bool {
+	if t.poolSize == (len(data.bannedBy) - 1) {
+		return true
+	}
+
+	return false
 }
 
 // count returns the number of connections to the server.
