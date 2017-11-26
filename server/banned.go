@@ -36,8 +36,8 @@ func (pi *packetInfo) checkBanMessage() error {
 			return nil
 		}
 
-		pi.tracker.mutex.Lock()
-		defer pi.tracker.mutex.Unlock()
+		bannedTrackerData.mutex.Lock()
+		defer bannedTrackerData.mutex.Unlock()
 
 		bannedTrackerData.bannedBy[td.verificationKey] = nil
 
