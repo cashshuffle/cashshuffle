@@ -12,6 +12,7 @@ message Packet {
     VerificationKey to = 4;
     Phase phase = 5;
     Message message = 6;
+    Registration registration = 7;
 }
 
 enum Phase {
@@ -37,6 +38,10 @@ message Message {
 
 message Address {
     string address = 1;
+}
+
+message Registration {
+    uint64 amount = 1;
 }
 
 message VerificationKey {

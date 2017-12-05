@@ -13,12 +13,14 @@ func (pi *packetInfo) registerClient() error {
 
 		if signed.GetSignature() == nil {
 			p := signed.GetPacket()
+			registration := p.GetRegistration()
 
-			if p.From.String() != "" {
+			if p.From.String() != "" && registration != nil {
 				td := trackerData{
 					verificationKey: p.From.String(),
 					conn:            pi.conn,
 					bannedBy:        make(map[string]interface{}),
+					amount:          registration.Amount,
 				}
 				pi.tracker.add(&td)
 

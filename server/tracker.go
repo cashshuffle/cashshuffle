@@ -13,6 +13,7 @@ type tracker struct {
 	verificationKeys map[string]net.Conn
 	mutex            sync.Mutex
 	pools            map[int]map[uint32]interface{}
+	poolAmounts      map[int]uint64
 	poolSize         int
 	fullPools        map[int]interface{}
 }
@@ -26,6 +27,7 @@ type trackerData struct {
 	verificationKey string
 	pool            int
 	bannedBy        map[string]interface{}
+	amount          uint64
 }
 
 // init initializes the tracker.
@@ -33,6 +35,7 @@ func (t *tracker) init() {
 	t.connections = make(map[net.Conn]*trackerData)
 	t.verificationKeys = make(map[string]net.Conn)
 	t.pools = make(map[int]map[uint32]interface{})
+	t.poolAmounts = make(map[int]uint64)
 	t.fullPools = make(map[int]interface{})
 
 	return
@@ -49,7 +52,7 @@ func (t *tracker) add(data *trackerData) {
 
 	t.connections[data.conn] = data
 
-	data.pool, data.number = t.assignPool()
+	data.pool, data.number = t.assignPool(data)
 
 	return
 }
@@ -128,11 +131,16 @@ func (t *tracker) generateSessionID() []byte {
 
 // assignPool assigns a user to a pool.
 // This method assumes the caller is holding the mutex.
-func (t *tracker) assignPool() (int, uint32) {
+func (t *tracker) assignPool(data *trackerData) (int, uint32) {
 	num := 1
 
 	for {
 		if _, ok := t.pools[num]; ok {
+			if t.poolAmounts[num] != data.amount {
+				num = num + 1
+				continue
+			}
+
 			if _, ok := t.fullPools[num]; ok {
 				num = num + 1
 				continue
@@ -146,6 +154,7 @@ func (t *tracker) assignPool() (int, uint32) {
 	if _, ok := t.pools[num]; !ok {
 		t.pools[num] = make(map[uint32]interface{})
 		t.pools[num][1] = nil
+		t.poolAmounts[num] = data.amount
 	} else {
 		for {
 			if _, ok := t.pools[num][playerNum]; ok {
