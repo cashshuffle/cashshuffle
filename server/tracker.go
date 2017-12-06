@@ -37,8 +37,6 @@ func (t *tracker) init() {
 	t.pools = make(map[int]map[uint32]interface{})
 	t.poolAmounts = make(map[int]uint64)
 	t.fullPools = make(map[int]interface{})
-
-	return
 }
 
 // add adds a connection to the tracker.
@@ -53,8 +51,6 @@ func (t *tracker) add(data *trackerData) {
 	t.connections[data.conn] = data
 
 	data.pool, data.number = t.assignPool(data)
-
-	return
 }
 
 // remove removes the connection.
@@ -72,17 +68,11 @@ func (t *tracker) remove(conn net.Conn) {
 
 		delete(t.connections, conn)
 	}
-
-	return
 }
 
 // banned returns true if the player has been banned.
 func (t *tracker) banned(data *trackerData) bool {
-	if t.poolSize == (len(data.bannedBy) - 1) {
-		return true
-	}
-
-	return false
+	return t.poolSize == (len(data.bannedBy) - 1)
 }
 
 // count returns the number of connections to the server.
@@ -184,6 +174,4 @@ func (t *tracker) unassignPool(td *trackerData) {
 		delete(t.pools, td.pool)
 		delete(t.fullPools, td.pool)
 	}
-
-	return
 }

@@ -69,10 +69,5 @@ func (c *Config) loadConfig() ([]byte, error) {
 }
 
 func (c *Config) applyConf(conf []byte) error {
-	err := json.Unmarshal(conf, c)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return json.Unmarshal(conf, c)
 }

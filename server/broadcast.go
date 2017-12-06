@@ -107,8 +107,6 @@ func (pi *packetInfo) broadcastNewRound() {
 			continue
 		}
 	}
-
-	return
 }
 
 // announceStart sends an annoucement message if the pool
@@ -139,6 +137,4 @@ func (pi *packetInfo) announceStart() {
 			return
 		}
 	}
-
-	return
 }

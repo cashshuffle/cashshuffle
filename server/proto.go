@@ -27,9 +27,5 @@ func writeMessage(conn net.Conn, msgs []*message.Signed) error {
 	time.Sleep(250 * time.Millisecond)
 
 	_, err = conn.Write(append(reply, breakBytes...))
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }

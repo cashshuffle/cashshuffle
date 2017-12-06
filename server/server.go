@@ -51,6 +51,4 @@ func handleConnection(conn net.Conn, c chan *packetInfo, tracker *tracker) {
 	defer tracker.remove(conn)
 
 	processMessages(conn, c, tracker)
-
-	return
 }
