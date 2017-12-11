@@ -19,6 +19,29 @@ go get -u github.com/FiloSottile/gvt
 cd $GOPATH/src/github.com/cashshuffle/cashshuffle
 gvt restore
 ```
+## Usage
+
+To start the server, just set the pool size and add your SSL cert and key.
+
+```
+cashshuffle -s 5 -c <cert> -k <key>
+```
+
+You can use `--help` to view all the options.
+
+```
+Usage:
+  cashshuffle [flags]
+
+Flags:
+  -c, --cert string     path to server.crt for TLS
+  -d, --debug           debug mode
+  -h, --help            help for cashshuffle
+  -k, --key string      path to server.key for TLS
+  -s, --pool-size int   pool size (default 5)
+  -p, --port int        server port (default 8080)
+  -v, --version         display version
+```
 
 ## License
 
