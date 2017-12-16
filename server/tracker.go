@@ -173,5 +173,6 @@ func (t *tracker) unassignPool(td *trackerData) {
 	if len(t.pools[td.pool]) == 0 {
 		delete(t.pools, td.pool)
 		delete(t.fullPools, td.pool)
+		delete(t.poolAmounts, td.pool)
 	}
 }
