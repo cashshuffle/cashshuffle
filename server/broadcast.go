@@ -138,3 +138,13 @@ func (pi *packetInfo) announceStart() {
 		}
 	}
 }
+
+func (pi *packetInfo) broadcastJoinedPool(td *trackerData) error {
+	m := message.Signed{
+		Packet: &message.Packet{
+			Number: td.number,
+		},
+	}
+
+	return pi.broadcastAll([]*message.Signed{&m})
+}
