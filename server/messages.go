@@ -47,6 +47,8 @@ func (pi *packetInfo) processReceivedMessage() error {
 
 		if pi.tracker.getPoolSize(playerData.pool) == pi.tracker.poolSize {
 			pi.announceStart()
+		} else {
+			pi.broadcastJoinedPool(playerData)
 		}
 
 		return nil
