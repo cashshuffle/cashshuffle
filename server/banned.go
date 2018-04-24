@@ -24,24 +24,24 @@ func (pi *packetInfo) checkBanMessage() error {
 	}
 
 	if packet.Message.Blame.Reason == message.Reason_LIAR {
-		banKey := packet.Message.Blame.Accused.Key
-
+		banKey := packet.Message.Blame.Accused.String()
 		bannedTrackerData := pi.tracker.getVerificationKeyData(banKey)
+
 		if bannedTrackerData == nil {
 			return errors.New("invalid ban")
 		}
 
 		td := pi.tracker.getTrackerData(pi.conn)
+
 		if td == nil {
 			return nil
 		}
 
 		bannedTrackerData.mutex.Lock()
 		defer bannedTrackerData.mutex.Unlock()
-
 		bannedTrackerData.bannedBy[td.verificationKey] = nil
 
-		return nil
+		return errors.New("player banned!")
 	}
 
 	return nil
