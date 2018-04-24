@@ -4,11 +4,10 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"net"
-	"os"
-
 	"github.com/cashshuffle/cashshuffle/message"
 	"github.com/golang/protobuf/proto"
+	"net"
+	"os"
 )
 
 const (
@@ -59,11 +58,13 @@ func (pi *packetInfo) processReceivedMessage() error {
 	}
 
 	if err := pi.checkBanMessage(); err != nil {
+		if err.Error() == "player banned!" {
+			return nil
+		}
 		return err
+	} else {
+		return pi.broadcastMessage()
 	}
-
-	err := pi.broadcastMessage()
-	return err
 }
 
 // processMessages reads messages from the connection and begins processing.

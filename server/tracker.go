@@ -72,7 +72,7 @@ func (t *tracker) remove(conn net.Conn) {
 
 // banned returns true if the player has been banned.
 func (t *tracker) banned(data *trackerData) bool {
-	return t.poolSize == (len(data.bannedBy) - 1)
+	return t.poolSize == (len(data.bannedBy) + 1)
 }
 
 // count returns the number of connections to the server.

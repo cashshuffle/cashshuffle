@@ -17,6 +17,9 @@ func (pi *packetInfo) verifyMessage() error {
 			return errors.New("invalid verification key")
 		}
 
+		if pi.tracker.banned(td) {
+			return errors.New("banned player")
+		}
 		if packet.GetNumber() != td.number {
 			return errors.New("invalid user number")
 		}
