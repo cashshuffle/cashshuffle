@@ -11,7 +11,7 @@ import (
 type tracker struct {
 	connections      map[net.Conn]*trackerData
 	verificationKeys map[string]net.Conn
-	mutex            sync.Mutex
+	mutex            sync.RWMutex
 	pools            map[int]map[uint32]interface{}
 	poolAmounts      map[int]uint64
 	poolSize         int
@@ -30,13 +30,16 @@ type trackerData struct {
 	amount          uint64
 }
 
-// init initializes the tracker.
-func (t *tracker) init() {
-	t.connections = make(map[net.Conn]*trackerData)
-	t.verificationKeys = make(map[string]net.Conn)
-	t.pools = make(map[int]map[uint32]interface{})
-	t.poolAmounts = make(map[int]uint64)
-	t.fullPools = make(map[int]interface{})
+// NewTracker instantiates a new tracker
+func NewTracker(poolSize int) *tracker {
+	return &tracker{
+		poolSize:         poolSize,
+		connections:      make(map[net.Conn]*trackerData),
+		verificationKeys: make(map[string]net.Conn),
+		pools:            make(map[int]map[uint32]interface{}),
+		poolAmounts:      make(map[int]uint64),
+		fullPools:        make(map[int]interface{}),
+	}
 }
 
 // add adds a connection to the tracker.

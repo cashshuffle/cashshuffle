@@ -64,6 +64,8 @@ func prepareFlags() {
 	MainCmd.PersistentFlags().IntVarP(
 		&config.Port, "port", "p", config.Port, "server port")
 	MainCmd.PersistentFlags().IntVarP(
+		&config.StatsPort, "stats-port", "z", config.StatsPort, "stats server port (default: disabled)")
+	MainCmd.PersistentFlags().IntVarP(
 		&config.PoolSize, "pool-size", "s", config.PoolSize, "pool size")
 	MainCmd.PersistentFlags().BoolVarP(
 		&config.Debug, "debug", "d", config.Debug, "debug mode")
@@ -76,5 +78,12 @@ func performCommand(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	return server.Start(config.Port, config.Cert, config.Key, config.PoolSize, config.Debug)
+	t := server.NewTracker(config.PoolSize)
+
+	// enable stats if port specified
+	if config.StatsPort > 0 {
+		go server.StartStatsServer(config.StatsPort, config.Cert, config.Key, t)
+	}
+
+	return server.Start(config.Port, config.Cert, config.Key, t, config.Debug)
 }

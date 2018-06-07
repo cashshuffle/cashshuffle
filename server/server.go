@@ -8,7 +8,7 @@ import (
 var debugMode bool
 
 // Start brings up the TCP server.
-func Start(port int, cert string, key string, poolSize int, debug bool) (err error) {
+func Start(port int, cert string, key string, t *tracker, debug bool) (err error) {
 	var listener net.Listener
 
 	debugMode = debug
@@ -27,15 +27,10 @@ func Start(port int, cert string, key string, poolSize int, debug bool) (err err
 
 	defer listener.Close()
 
-	t := &tracker{
-		poolSize: poolSize,
-	}
-	t.init()
-
 	packetInfoChan := make(chan *packetInfo)
 	go startPacketInfoChan(packetInfoChan)
 
-	fmt.Printf("xxx - Listening on TCP port %d (pool size: %d)\n", port, poolSize)
+	fmt.Printf("Listening on TCP port %d (pool size: %d)\n", port, t.poolSize)
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
