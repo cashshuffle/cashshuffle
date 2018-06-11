@@ -35,13 +35,14 @@ Usage:
   cashshuffle [flags]
 
 Flags:
-  -c, --cert string     path to server.crt for TLS
-  -d, --debug           debug mode
-  -h, --help            help for cashshuffle
-  -k, --key string      path to server.key for TLS
-  -s, --pool-size int   pool size (default 5)
-  -p, --port int        server port (default 8080)
-  -v, --version         display version
+  -c, --cert string      path to server.crt for TLS
+  -d, --debug            debug mode
+  -h, --help             help for cashshuffle
+  -k, --key string       path to server.key for TLS
+  -s, --pool-size int    pool size (default 5)
+  -p, --port int         server port (default 8080)
+  -z, --stats-port int   stats server port (default: disabled)
+  -v, --version          display version
 ```
 
 ## License
