@@ -66,6 +66,12 @@ func (pi *packetInfo) broadcastAll(msgs []*message.Signed) error {
 
 	playerData := pi.tracker.connections[pi.conn]
 
+	// If the user has disconnected, then no need to send
+	// the broadcast.
+	if playerData == nil {
+		return nil
+	}
+
 	for conn, td := range pi.tracker.connections {
 		if (playerData.pool != td.pool) || pi.tracker.banned(td) {
 			continue
@@ -86,6 +92,12 @@ func (pi *packetInfo) broadcastNewRound() {
 	defer pi.tracker.mutex.Unlock()
 
 	playerData := pi.tracker.connections[pi.conn]
+
+	// If the user has disconnected, then no need to send
+	// the broadcast.
+	if playerData == nil {
+		return
+	}
 
 	for conn, td := range pi.tracker.connections {
 		if playerData.pool != td.pool || pi.tracker.banned(td) {
@@ -116,6 +128,12 @@ func (pi *packetInfo) announceStart() {
 	defer pi.tracker.mutex.Unlock()
 
 	playerData := pi.tracker.connections[pi.conn]
+
+	// If the user has disconnected, then no need to send
+	// the broadcast.
+	if playerData == nil {
+		return
+	}
 
 	for conn, td := range pi.tracker.connections {
 		if playerData.pool != td.pool || pi.tracker.banned(td) {
