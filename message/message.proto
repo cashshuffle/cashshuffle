@@ -8,8 +8,8 @@ message Signed {
 message Packet {
     bytes session = 1;
     uint32 number = 2;
-    VerificationKey from = 3;
-    VerificationKey to = 4;
+    VerificationKey from_key = 3;
+    VerificationKey to_key = 4;
     Phase phase = 5;
     Message message = 6;
     Registration registration = 7;

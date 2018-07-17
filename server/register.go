@@ -15,9 +15,9 @@ func (pi *packetInfo) registerClient() error {
 			p := signed.GetPacket()
 			registration := p.GetRegistration()
 
-			if p.From.String() != "" && registration != nil {
+			if p.FromKey.String() != "" && registration != nil {
 				td := trackerData{
-					verificationKey: p.From.String(),
+					verificationKey: p.FromKey.String(),
 					conn:            pi.conn,
 					bannedBy:        make(map[string]interface{}),
 					amount:          registration.Amount,

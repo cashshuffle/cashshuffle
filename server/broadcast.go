@@ -18,12 +18,12 @@ func (pi *packetInfo) broadcastMessage() error {
 	msgMap := make(map[string][]*message.Signed)
 
 	for _, signed := range pi.message.GetPacket() {
-		to := signed.GetPacket().GetTo()
+		to := signed.GetPacket().GetToKey()
 
 		if to == nil {
 			msgMap[broadcastKey] = append(msgMap[broadcastKey], signed)
 		} else {
-			k := fmt.Sprintf("%s%s", playerPrefix, signed.GetPacket().GetTo().String())
+			k := fmt.Sprintf("%s%s", playerPrefix, signed.GetPacket().GetToKey().String())
 			msgMap[k] = append(msgMap[k], signed)
 		}
 	}
