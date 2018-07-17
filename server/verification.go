@@ -13,7 +13,7 @@ func (pi *packetInfo) verifyMessage() error {
 			return errors.New("invalid session")
 		}
 
-		if packet.GetFrom().String() != td.verificationKey {
+		if packet.GetFromKey().String() != td.verificationKey {
 			return errors.New("invalid verification key")
 		}
 
@@ -24,7 +24,7 @@ func (pi *packetInfo) verifyMessage() error {
 			return errors.New("invalid user number")
 		}
 
-		to := packet.GetTo()
+		to := packet.GetToKey()
 		if to != nil {
 			if pi.tracker.getVerificationKeyData(to.String()) == nil {
 				return errors.New("invalid destination")
