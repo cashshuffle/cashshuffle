@@ -7,8 +7,8 @@ import (
 	"github.com/nats-io/nuid"
 )
 
-// tracker is used to track connections to the server.
-type tracker struct {
+// Tracker is used to track connections to the server.
+type Tracker struct {
 	connections      map[net.Conn]*trackerData
 	verificationKeys map[string]net.Conn
 	mutex            sync.RWMutex
@@ -31,8 +31,8 @@ type trackerData struct {
 }
 
 // NewTracker instantiates a new tracker
-func NewTracker(poolSize int) *tracker {
-	return &tracker{
+func NewTracker(poolSize int) *Tracker {
+	return &Tracker{
 		poolSize:         poolSize,
 		connections:      make(map[net.Conn]*trackerData),
 		verificationKeys: make(map[string]net.Conn),
@@ -43,7 +43,7 @@ func NewTracker(poolSize int) *tracker {
 }
 
 // add adds a connection to the tracker.
-func (t *tracker) add(data *trackerData) {
+func (t *Tracker) add(data *trackerData) {
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
 
@@ -57,7 +57,7 @@ func (t *tracker) add(data *trackerData) {
 }
 
 // remove removes the connection.
-func (t *tracker) remove(conn net.Conn) {
+func (t *Tracker) remove(conn net.Conn) {
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
 
@@ -74,12 +74,12 @@ func (t *tracker) remove(conn net.Conn) {
 }
 
 // banned returns true if the player has been banned.
-func (t *tracker) banned(data *trackerData) bool {
+func (t *Tracker) banned(data *trackerData) bool {
 	return t.poolSize == (len(data.bannedBy) + 1)
 }
 
 // count returns the number of connections to the server.
-func (t *tracker) count() int {
+func (t *Tracker) count() int {
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
 
@@ -87,7 +87,7 @@ func (t *tracker) count() int {
 }
 
 // getVerifcationKeyConn gets the connection for a verification key.
-func (t *tracker) getVerificationKeyData(key string) *trackerData {
+func (t *Tracker) getVerificationKeyData(key string) *trackerData {
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
 
@@ -99,7 +99,7 @@ func (t *tracker) getVerificationKeyData(key string) *trackerData {
 }
 
 // getTrackerdData returns trackerdata associated with a connection.
-func (t *tracker) getTrackerData(c net.Conn) *trackerData {
+func (t *Tracker) getTrackerData(c net.Conn) *trackerData {
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
 
@@ -107,7 +107,7 @@ func (t *tracker) getTrackerData(c net.Conn) *trackerData {
 }
 
 // getPoolSize returns the pool size for the connection.
-func (t *tracker) getPoolSize(pool int) int {
+func (t *Tracker) getPoolSize(pool int) int {
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
 
@@ -116,7 +116,7 @@ func (t *tracker) getPoolSize(pool int) int {
 
 // generateSessionID generates a unique session id.
 // This method assumes the caller is holding the mutex.
-func (t *tracker) generateSessionID() []byte {
+func (t *Tracker) generateSessionID() []byte {
 	n := nuid.New()
 
 	return []byte(n.Next())
@@ -124,7 +124,7 @@ func (t *tracker) generateSessionID() []byte {
 
 // assignPool assigns a user to a pool.
 // This method assumes the caller is holding the mutex.
-func (t *tracker) assignPool(data *trackerData) (int, uint32) {
+func (t *Tracker) assignPool(data *trackerData) (int, uint32) {
 	num := 1
 
 	for {
@@ -170,7 +170,7 @@ func (t *tracker) assignPool(data *trackerData) (int, uint32) {
 
 // unassignPool removes a user from a pool.
 // This method assumes the caller is holding the mutex.
-func (t *tracker) unassignPool(td *trackerData) {
+func (t *Tracker) unassignPool(td *trackerData) {
 	delete(t.pools[td.pool], td.number)
 
 	if len(t.pools[td.pool]) == 0 {

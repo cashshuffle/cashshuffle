@@ -19,7 +19,8 @@ type PoolStats struct {
 	Full    bool   `json:"full"`
 }
 
-func (t *tracker) Stats() *TrackerStats {
+// Stats returns the tracker stats.
+func (t *Tracker) Stats() *TrackerStats {
 	t.mutex.RLock()
 	defer t.mutex.RUnlock()
 
