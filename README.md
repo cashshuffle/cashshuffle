@@ -33,7 +33,7 @@ To start the server using LetsEncrypt to manage the cert.
 ```
 # LetsEncrypt requires port 80 for negotiation.
 # Therefore sudo is required.
-sudo cashshuffle -s 5 -a
+sudo cashshuffle -s 5 -a <hostname>
 ```
 
 You can use `--help` to view all the options.
