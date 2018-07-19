@@ -41,7 +41,7 @@ func (pi *packetInfo) checkBanMessage() error {
 		defer bannedTrackerData.mutex.Unlock()
 		bannedTrackerData.bannedBy[td.verificationKey] = nil
 
-		return errors.New("player banned!")
+		return errors.New("player banned")
 	}
 
 	return nil

@@ -4,10 +4,11 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"github.com/cashshuffle/cashshuffle/message"
-	"github.com/golang/protobuf/proto"
 	"net"
 	"os"
+
+	"github.com/cashshuffle/cashshuffle/message"
+	"github.com/golang/protobuf/proto"
 )
 
 const (
@@ -62,13 +63,13 @@ func (pi *packetInfo) processReceivedMessage() error {
 			return nil
 		}
 		return err
-	} else {
-		return pi.broadcastMessage()
 	}
+
+	return pi.broadcastMessage()
 }
 
 // processMessages reads messages from the connection and begins processing.
-func processMessages(conn net.Conn, c chan *packetInfo, t *tracker) {
+func processMessages(conn net.Conn, c chan *packetInfo, t *Tracker) {
 	scanner := bufio.NewScanner(conn)
 	scanner.Split(bufio.ScanBytes)
 
@@ -110,7 +111,7 @@ func processMessages(conn net.Conn, c chan *packetInfo, t *tracker) {
 // sendToPacketInfoChan takes a byte buffer containing a protobuf message,
 // unmarshals it, creates a packetInfo, then sends it over the packetInfo
 // channel.
-func sendToPacketInfoChan(b *bytes.Buffer, conn net.Conn, c chan *packetInfo, t *tracker) error {
+func sendToPacketInfoChan(b *bytes.Buffer, conn net.Conn, c chan *packetInfo, t *Tracker) error {
 	defer b.Reset()
 
 	pdata := new(message.Packets)

@@ -3,18 +3,20 @@ package server
 import (
 	"fmt"
 	"net"
+
+	"golang.org/x/crypto/acme/autocert"
 )
 
 var debugMode bool
 
 // Start brings up the TCP server.
-func Start(port int, cert string, key string, t *tracker, debug bool) (err error) {
+func Start(port int, cert string, key string, debug bool, t *Tracker, m *autocert.Manager) (err error) {
 	var listener net.Listener
 
 	debugMode = debug
 
-	if tlsEnabled(cert, key) {
-		listener, err = createTLSListener(port, cert, key)
+	if tlsEnabled(cert, key, m) {
+		listener, err = createTLSListener(port, cert, key, m)
 		if err != nil {
 			return err
 		}
@@ -41,7 +43,7 @@ func Start(port int, cert string, key string, t *tracker, debug bool) (err error
 	}
 }
 
-func handleConnection(conn net.Conn, c chan *packetInfo, tracker *tracker) {
+func handleConnection(conn net.Conn, c chan *packetInfo, tracker *Tracker) {
 	defer conn.Close()
 	defer tracker.remove(conn)
 
