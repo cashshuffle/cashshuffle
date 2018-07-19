@@ -9,7 +9,7 @@ import (
 )
 
 func TestTrackStats(t *testing.T) {
-	tracker := &tracker{
+	tracker := &Tracker{
 		connections: map[net.Conn]*trackerData{
 			&fakeConn{}: {},
 			&fakeConn{}: {},

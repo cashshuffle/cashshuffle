@@ -11,5 +11,5 @@ import (
 type packetInfo struct {
 	message *message.Packets
 	conn    net.Conn
-	tracker *tracker
+	tracker *Tracker
 }

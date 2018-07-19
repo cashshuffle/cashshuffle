@@ -18,6 +18,7 @@ type Config struct {
 	Key            string `json:"key"`
 	PoolSize       int    `json:"pool_size,string"`
 	Debug          bool   `json:"debug,string"`
+	AutoCert       string `json:"auto_cert"`
 }
 
 // Load reads the configuration from ~/.cashshuffle/config and loads it into the Config struct.
@@ -39,13 +40,22 @@ func (c *Config) Load() error {
 	return nil
 }
 
-func (c *Config) loadConfig() ([]byte, error) {
+func (c *Config) configDir() (string, error) {
 	h, err := homedir.Dir()
+	if err != nil {
+		return "", err
+	}
+
+	return filepath.Join(h, ".cashshuffle"), nil
+}
+
+func (c *Config) loadConfig() ([]byte, error) {
+	configDir, err := c.configDir()
 	if err != nil {
 		return nil, err
 	}
 
-	f, err := os.Open(filepath.Join(h, ".cashshuffle", "config"))
+	f, err := os.Open(filepath.Join(configDir, "config"))
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil, nil

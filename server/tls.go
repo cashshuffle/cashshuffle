@@ -4,16 +4,25 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net"
+
+	"golang.org/x/crypto/acme/autocert"
 )
 
 // createTLSListener creates a net.Listener with TLS support.
-func createTLSListener(port int, cert string, key string) (net.Listener, error) {
-	cer, err := tls.LoadX509KeyPair(cert, key)
-	if err != nil {
-		return nil, err
+func createTLSListener(port int, cert string, key string, m *autocert.Manager) (net.Listener, error) {
+	c := &tls.Config{}
+
+	if cert != "" && key != "" {
+		cer, err := tls.LoadX509KeyPair(cert, key)
+		if err != nil {
+			return nil, err
+		}
+
+		c.Certificates = []tls.Certificate{cer}
+	} else {
+		c.GetCertificate = m.GetCertificate
 	}
 
-	c := &tls.Config{Certificates: []tls.Certificate{cer}}
 	listener, err := tls.Listen("tcp", fmt.Sprintf(":%d", port), c)
 	if err != nil {
 		return nil, err
@@ -23,8 +32,8 @@ func createTLSListener(port int, cert string, key string) (net.Listener, error) 
 }
 
 // tlsEnabled returns a bool indicating if TLS should be supported.
-func tlsEnabled(cert string, key string) bool {
-	if cert != "" && key != "" {
+func tlsEnabled(cert string, key string, autoCertManager *autocert.Manager) bool {
+	if autoCertManager != nil || (cert != "" && key != "") {
 		return true
 	}
 
