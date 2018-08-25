@@ -26,15 +26,20 @@ enum Phase {
     BLAME = 7;
 }
 
+message Coins {
+  repeated string coins = 1;
+}
+
 message Message {
     Address address = 1;
     EncryptionKey key = 2;
     Hash hash = 3;
-    Signature signature = 4;
+    map<string, Signature>signatures = 4;
     string str = 5;
     Blame blame = 6;
-    Message next = 7;
+    map<string, Coins> inputs = 7;
 }
+
 
 message Address {
     string address = 1;
@@ -92,6 +97,12 @@ enum Reason {
 
 message Invalid {
     bytes invalid = 1;
+}
+
+
+message Inputs {
+  string address = 1;
+  repeated string coins = 2;
 }
 
 message Packets {
