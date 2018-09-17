@@ -30,14 +30,21 @@ message Coins {
   repeated string coins = 1;
 }
 
+message Signatures {
+  string utxo = 1;
+  Signature signature =2;
+}
+
 message Message {
     Address address = 1;
     EncryptionKey key = 2;
     Hash hash = 3;
-    map<string, Signature>signatures = 4;
+    // map<string, Signature> signatures = 4;
+    repeated Signatures signatures = 4;
     string str = 5;
     Blame blame = 6;
     map<string, Coins> inputs = 7;
+    // repeated Signatures signatures = 7;
 }
 
 
