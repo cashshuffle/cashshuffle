@@ -1,6 +1,7 @@
 package server
 
 import (
+	"encoding/binary"
 	"fmt"
 	"net"
 	"time"
@@ -26,6 +27,23 @@ func writeMessage(conn net.Conn, msgs []*message.Signed) error {
 
 	time.Sleep(250 * time.Millisecond)
 
-	_, err = conn.Write(append(reply, breakBytes...))
+	_, err = conn.Write(frameMessage(reply))
 	return err
+}
+
+// frameMessage sets up the message to be sent
+// over the wire. This is sent as
+// [magicBytes][length][message]
+func frameMessage(reply []byte) []byte {
+	msg := []byte{}
+
+	msg = append(msg, magicBytes...)
+
+	bs := make([]byte, 4)
+	binary.BigEndian.PutUint32(bs, uint32(len(reply)))
+	msg = append(msg, bs...)
+
+	msg = append(msg, reply...)
+
+	return msg
 }
