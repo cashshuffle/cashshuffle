@@ -3,6 +3,7 @@ package server
 import (
 	"bufio"
 	"bytes"
+	"encoding/binary"
 	"fmt"
 	"net"
 	"os"
@@ -16,9 +17,12 @@ const (
 )
 
 var (
-	// breakBytes are the bytes that delimit each protobuf message
-	// This represents the character ⏎
-	breakBytes = []byte{226, 143, 142}
+	// magicBytes are the bytes starting each message
+	magicBytes = []byte{66, 188, 195, 38, 105, 70, 120, 115}
+
+	// headerLength is the length of the magic string
+	// and the message length.
+	headerLength = 12
 )
 
 // startPacketInfoChan starts a loop reading messages.
@@ -73,21 +77,45 @@ func processMessages(conn net.Conn, c chan *packetInfo, t *Tracker) {
 	scanner := bufio.NewScanner(conn)
 	scanner.Split(bufio.ScanBytes)
 
-	for {
-		var b bytes.Buffer
+	var validMagic bool
+	var numReadBytes int
+	needFrame := true
 
+	var b bytes.Buffer
+	var mb bytes.Buffer
+
+	for {
 		for scanner.Scan() {
 			scanBytes := scanner.Bytes()
-
-			if len(b.String()) > maxMessageLength {
-				fmt.Fprintln(os.Stderr, "[Error] message too long")
-				return
-			}
-
 			b.Write(scanBytes)
 
-			if breakScan(b) {
-				b.Truncate(b.Len() - 3)
+			if needFrame {
+				if b.Len() >= headerLength {
+					validMagic, numReadBytes = processFrame(&b)
+
+					if !validMagic {
+						fmt.Fprintf(os.Stderr, "[Error] %s\n", "invalid magic")
+						return
+					}
+
+					if numReadBytes <= 0 || numReadBytes > maxMessageLength {
+						fmt.Fprintf(os.Stderr, "[Error] %s\n", "invalid message length")
+						return
+					}
+
+					needFrame = false
+				}
+
+				continue
+			}
+
+			if b.Len() >= numReadBytes {
+				msg := make([]byte, numReadBytes)
+				b.Read(msg)
+
+				mb.Write(msg)
+
+				needFrame = true
 				break
 			}
 		}
@@ -97,15 +125,28 @@ func processMessages(conn net.Conn, c chan *packetInfo, t *Tracker) {
 			break
 		}
 
-		if b.Len() == 0 {
+		if mb.Len() == 0 {
 			break
 		}
 
-		if err := sendToPacketInfoChan(&b, conn, c, t); err != nil {
+		if err := sendToPacketInfoChan(&mb, conn, c, t); err != nil {
 			fmt.Fprintf(os.Stderr, "[Error] %s\n", err.Error())
 			break
 		}
 	}
+}
+
+// processFrame takes a buffer and returns whether
+// the magic bytes are correct, and the length of
+// the expected message.
+func processFrame(b *bytes.Buffer) (bool, int) {
+	magic := make([]byte, len(magicBytes))
+	b.Read(magic)
+
+	lenBytes := make([]byte, 4)
+	b.Read(lenBytes)
+
+	return bytes.Equal(magic, magicBytes), int(binary.BigEndian.Uint32(lenBytes))
 }
 
 // sendToPacketInfoChan takes a byte buffer containing a protobuf message,
@@ -137,28 +178,4 @@ func sendToPacketInfoChan(b *bytes.Buffer, conn net.Conn, c chan *packetInfo, t 
 	c <- data
 
 	return nil
-}
-
-// breakScan checks if a byte sequence is the break point on the scanner.
-func breakScan(buf bytes.Buffer) bool {
-	len := buf.Len()
-
-	if len >= 3 {
-		payload := buf.Bytes()
-		bs := []byte{
-			payload[len-3],
-			payload[len-2],
-			payload[len-1],
-		}
-
-		for i := range bs {
-			if bs[i] != breakBytes[i] {
-				return false
-			}
-		}
-
-		return true
-	}
-
-	return false
 }
