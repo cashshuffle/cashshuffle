@@ -4,7 +4,6 @@ import (
 	"encoding/binary"
 	"fmt"
 	"net"
-	"time"
 
 	"github.com/cashshuffle/cashshuffle/message"
 	"github.com/golang/protobuf/proto"
@@ -24,8 +23,6 @@ func writeMessage(conn net.Conn, msgs []*message.Signed) error {
 	if debugMode {
 		fmt.Println("[Sent]", packets)
 	}
-
-	time.Sleep(250 * time.Millisecond)
 
 	_, err = conn.Write(frameMessage(reply))
 	return err
