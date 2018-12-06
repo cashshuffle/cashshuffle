@@ -7,9 +7,10 @@ type StatsInformer interface {
 
 // TrackerStats represents a snapshot of the trackers statistics
 type TrackerStats struct {
-	Connections int `json:"connections"`
-	PoolSize    int
+	Connections int         `json:"connections"`
+	PoolSize    int         `json:"poolSize"`
 	Pools       []PoolStats `json:"pools"`
+	ShufflePort int         `json:"shufflePort"`
 }
 
 // PoolStats represents the stats for a particular pool
@@ -28,6 +29,7 @@ func (t *Tracker) Stats() *TrackerStats {
 		Connections: len(t.connections),
 		PoolSize:    t.poolSize,
 		Pools:       make([]PoolStats, 0),
+		ShufflePort: t.shufflePort,
 	}
 
 	for k, p := range t.pools {

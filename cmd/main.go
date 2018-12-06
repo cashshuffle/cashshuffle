@@ -88,7 +88,7 @@ func performCommand(cmd *cobra.Command, args []string) error {
 		return errors.New("can't specify auto-cert and key/cert")
 	}
 
-	t := server.NewTracker(config.PoolSize)
+	t := server.NewTracker(config.PoolSize, config.Port)
 
 	m, err := getLetsEncryptManager()
 	if err != nil {
