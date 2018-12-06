@@ -15,7 +15,7 @@ import (
 
 const (
 	appName         = "cashshuffle"
-	version         = "0.3.1"
+	version         = "0.3.2"
 	defaultPort     = 8080
 	defaultPoolSize = 5
 )
