@@ -41,7 +41,8 @@ func TestTrackStats(t *testing.T) {
 		fullPools: map[int]interface{}{
 			1: nil,
 		},
-		poolSize: 5,
+		poolSize:    5,
+		shufflePort: 3000,
 	}
 
 	stats := tracker.Stats()
@@ -49,6 +50,7 @@ func TestTrackStats(t *testing.T) {
 	assert.Equal(t, 8, stats.Connections)
 	assert.Equal(t, 5, stats.PoolSize)
 	assert.Equal(t, 2, len(stats.Pools))
+	assert.Equal(t, 3000, stats.ShufflePort)
 	assert.Contains(t, stats.Pools,
 		PoolStats{
 			Members: 5,
