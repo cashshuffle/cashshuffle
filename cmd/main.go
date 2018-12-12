@@ -14,10 +14,11 @@ import (
 )
 
 const (
-	appName         = "cashshuffle"
-	version         = "0.3.2"
-	defaultPort     = 8080
-	defaultPoolSize = 5
+	appName          = "cashshuffle"
+	version          = "0.3.3"
+	defaultPort      = 1337
+	defaultStatsPort = 8080
+	defaultPoolSize  = 5
 )
 
 // Stores configuration data.
@@ -55,6 +56,10 @@ func prepareFlags() {
 		config.Port = defaultPort
 	}
 
+	if config.StatsPort == 0 {
+		config.StatsPort = defaultStatsPort
+	}
+
 	if config.PoolSize == 0 {
 		config.PoolSize = defaultPoolSize
 	}
@@ -68,7 +73,7 @@ func prepareFlags() {
 	MainCmd.PersistentFlags().IntVarP(
 		&config.Port, "port", "p", config.Port, "server port")
 	MainCmd.PersistentFlags().IntVarP(
-		&config.StatsPort, "stats-port", "z", config.StatsPort, "stats server port (default disabled)")
+		&config.StatsPort, "stats-port", "z", config.StatsPort, "stats server port")
 	MainCmd.PersistentFlags().IntVarP(
 		&config.PoolSize, "pool-size", "s", config.PoolSize, "pool size")
 	MainCmd.PersistentFlags().BoolVarP(
