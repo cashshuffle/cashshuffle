@@ -49,6 +49,13 @@ func (pi *packetInfo) processReceivedMessage() error {
 
 		playerData := pi.tracker.getTrackerData(pi.conn)
 
+		// If a malicious client is connecting and disconnecting
+		// quickly it is possible that playerData will be nil.
+		// No need to return an error, just don't register them.
+		if playerData == nil {
+			return nil
+		}
+
 		if pi.tracker.getPoolSize(playerData.pool) == pi.tracker.poolSize {
 			pi.announceStart()
 		} else {

@@ -32,7 +32,6 @@ func (pi *packetInfo) checkBanMessage() error {
 		}
 
 		td := pi.tracker.getTrackerData(pi.conn)
-
 		if td == nil {
 			return nil
 		}
