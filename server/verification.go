@@ -5,6 +5,9 @@ import "errors"
 // verifyMessage makes sure all required fields exist.
 func (pi *packetInfo) verifyMessage() error {
 	td := pi.tracker.getTrackerData(pi.conn)
+	if td == nil {
+		return errors.New("player disconnected")
+	}
 
 	for _, pkt := range pi.message.Packet {
 		packet := pkt.GetPacket()
