@@ -10,18 +10,18 @@ import (
 var debugMode bool
 
 // Start brings up the TCP server.
-func Start(port int, cert string, key string, debug bool, t *Tracker, m *autocert.Manager) (err error) {
+func Start(ip string, port int, cert string, key string, debug bool, t *Tracker, m *autocert.Manager) (err error) {
 	var listener net.Listener
 
 	debugMode = debug
 
 	if tlsEnabled(cert, key, m) {
-		listener, err = createTLSListener(port, cert, key, m)
+		listener, err = createTLSListener(ip, port, cert, key, m)
 		if err != nil {
 			return err
 		}
 	} else {
-		listener, err = net.Listen("tcp", fmt.Sprintf(":%d", port))
+		listener, err = net.Listen("tcp", fmt.Sprintf("%s:%d", ip, port))
 		if err != nil {
 			return err
 		}
@@ -32,7 +32,7 @@ func Start(port int, cert string, key string, debug bool, t *Tracker, m *autocer
 	packetInfoChan := make(chan *packetInfo)
 	go startPacketInfoChan(packetInfoChan)
 
-	fmt.Printf("Listening on TCP port %d (pool size: %d)\n", port, t.poolSize)
+	fmt.Printf("Shuffle Listening on TCP %s:%d (pool size: %d)\n", ip, port, t.poolSize)
 	for {
 		conn, err := listener.Accept()
 		if err != nil {

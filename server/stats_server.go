@@ -10,12 +10,12 @@ import (
 )
 
 // StartStatsServer creates a new server to serve stats
-func StartStatsServer(port int, cert string, key string, si StatsInformer, m *autocert.Manager) error {
+func StartStatsServer(ip string, port int, cert string, key string, si StatsInformer, m *autocert.Manager) error {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/stats", statsJSON(si))
-	s := newStatsServer(fmt.Sprintf(":%d", port), mux, m)
+	s := newStatsServer(fmt.Sprintf("%s:%d", ip, port), mux, m)
 	tls := tlsEnabled(cert, key, m)
-	fmt.Printf("Stats Listening on TCP port %d (tls: %v)\n", port, tls)
+	fmt.Printf("Stats Listening on TCP %s:%d (tls: %v)\n", ip, port, tls)
 	if tls {
 		return s.ListenAndServeTLS(cert, key)
 	}

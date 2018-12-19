@@ -9,7 +9,7 @@ import (
 )
 
 // createTLSListener creates a net.Listener with TLS support.
-func createTLSListener(port int, cert string, key string, m *autocert.Manager) (net.Listener, error) {
+func createTLSListener(ip string, port int, cert string, key string, m *autocert.Manager) (net.Listener, error) {
 	c := &tls.Config{}
 
 	if cert != "" && key != "" {
@@ -23,7 +23,7 @@ func createTLSListener(port int, cert string, key string, m *autocert.Manager) (
 		c.GetCertificate = m.GetCertificate
 	}
 
-	listener, err := tls.Listen("tcp", fmt.Sprintf(":%d", port), c)
+	listener, err := tls.Listen("tcp", fmt.Sprintf("%s:%d", ip, port), c)
 	if err != nil {
 		return nil, err
 	}
