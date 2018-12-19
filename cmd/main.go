@@ -15,7 +15,7 @@ import (
 
 const (
 	appName          = "cashshuffle"
-	version          = "0.3.3"
+	version          = "0.3.4"
 	defaultPort      = 1337
 	defaultStatsPort = 8080
 	defaultPoolSize  = 5
@@ -80,6 +80,8 @@ func prepareFlags() {
 		&config.Debug, "debug", "d", config.Debug, "debug mode")
 	MainCmd.PersistentFlags().StringVarP(
 		&config.AutoCert, "auto-cert", "a", config.AutoCert, "register hostname with LetsEncrypt")
+	MainCmd.PersistentFlags().StringVarP(
+		&config.BindIP, "bind-ip", "b", config.BindIP, "IP address to bind to")
 }
 
 // Where all the work happens.
@@ -102,10 +104,10 @@ func performCommand(cmd *cobra.Command, args []string) error {
 
 	// enable stats if port specified
 	if config.StatsPort > 0 {
-		go server.StartStatsServer(config.StatsPort, config.Cert, config.Key, t, m)
+		go server.StartStatsServer(config.BindIP, config.StatsPort, config.Cert, config.Key, t, m)
 	}
 
-	return server.Start(config.Port, config.Cert, config.Key, config.Debug, t, m)
+	return server.Start(config.BindIP, config.Port, config.Cert, config.Key, config.Debug, t, m)
 }
 
 func getLetsEncryptManager() (*autocert.Manager, error) {
