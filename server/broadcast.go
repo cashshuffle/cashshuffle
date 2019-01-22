@@ -32,7 +32,7 @@ func (pi *packetInfo) broadcastMessage() error {
 		if player == broadcastKey {
 			err := pi.broadcastAll(msgs)
 			if err != nil {
-				pi.broadcastNewRound()
+				pi.broadcastNewRound(true)
 
 				// Don't disconnect, we broadcasted a new round.
 				return nil
@@ -40,7 +40,7 @@ func (pi *packetInfo) broadcastMessage() error {
 		} else {
 			td := pi.tracker.getVerificationKeyData(strings.TrimLeft(player, playerPrefix))
 			if td == nil {
-				pi.broadcastNewRound()
+				pi.broadcastNewRound(true)
 
 				// Don't disconnect
 				return nil
@@ -48,7 +48,7 @@ func (pi *packetInfo) broadcastMessage() error {
 
 			err := writeMessage(td.conn, msgs)
 			if err != nil {
-				pi.broadcastNewRound()
+				pi.broadcastNewRound(true)
 
 				// Don't disconnect
 				return nil
@@ -87,9 +87,11 @@ func (pi *packetInfo) broadcastAll(msgs []*message.Signed) error {
 }
 
 // broadcastNewRound broadcasts a new round.
-func (pi *packetInfo) broadcastNewRound() {
-	pi.tracker.mutex.Lock()
-	defer pi.tracker.mutex.Unlock()
+func (pi *packetInfo) broadcastNewRound(lock bool) {
+	if lock {
+		pi.tracker.mutex.Lock()
+		defer pi.tracker.mutex.Unlock()
+	}
 
 	playerData := pi.tracker.connections[pi.conn]
 
@@ -149,7 +151,7 @@ func (pi *packetInfo) announceStart() {
 
 		err := writeMessage(conn, []*message.Signed{&m})
 		if err != nil {
-			pi.broadcastNewRound()
+			pi.broadcastNewRound(false)
 
 			// Don't disconnect
 			return
