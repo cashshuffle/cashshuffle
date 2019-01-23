@@ -14,11 +14,12 @@ import (
 )
 
 const (
-	appName          = "cashshuffle"
-	version          = "0.3.4"
-	defaultPort      = 1337
-	defaultStatsPort = 8080
-	defaultPoolSize  = 5
+	appName              = "cashshuffle"
+	version              = "0.3.6"
+	defaultPort          = 1337
+	defaultWebsocketPort = 1338
+	defaultStatsPort     = 8080
+	defaultPoolSize      = 5
 )
 
 // Stores configuration data.
@@ -56,6 +57,10 @@ func prepareFlags() {
 		config.Port = defaultPort
 	}
 
+	if config.WebSocketPort == 0 {
+		config.WebSocketPort = defaultWebsocketPort
+	}
+
 	if config.StatsPort == 0 {
 		config.StatsPort = defaultStatsPort
 	}
@@ -72,6 +77,8 @@ func prepareFlags() {
 		&config.DisplayVersion, "version", "v", false, "display version")
 	MainCmd.PersistentFlags().IntVarP(
 		&config.Port, "port", "p", config.Port, "server port")
+	MainCmd.PersistentFlags().IntVarP(
+		&config.WebSocketPort, "websocket-port", "w", config.WebSocketPort, "websocket port")
 	MainCmd.PersistentFlags().IntVarP(
 		&config.StatsPort, "stats-port", "z", config.StatsPort, "stats server port")
 	MainCmd.PersistentFlags().IntVarP(
@@ -105,6 +112,11 @@ func performCommand(cmd *cobra.Command, args []string) error {
 	// enable stats if port specified
 	if config.StatsPort > 0 {
 		go server.StartStatsServer(config.BindIP, config.StatsPort, config.Cert, config.Key, t, m)
+	}
+
+	// enable websocket port if specified.
+	if config.WebSocketPort > 0 {
+		go server.StartWebsocket(config.BindIP, config.WebSocketPort, config.Cert, config.Key, config.Debug, t, m)
 	}
 
 	return server.Start(config.BindIP, config.Port, config.Cert, config.Key, config.Debug, t, m)
