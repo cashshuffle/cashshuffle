@@ -52,6 +52,9 @@ func StartWebsocket(ip string, port int, cert string, key string, debug bool, t 
 	go startPacketInfoChan(packetInfoChan)
 
 	var handleConnectionFunc = func(ws *websocket.Conn) {
+		// Need to enforce binary type. Text framing won't work.
+		ws.PayloadType = websocket.BinaryFrame
+
 		handleConnection(ws, packetInfoChan, t)
 	}
 
