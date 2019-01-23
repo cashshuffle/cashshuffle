@@ -15,9 +15,9 @@ import (
 
 const (
 	appName              = "cashshuffle"
-	version              = "0.3.6"
+	version              = "0.4.0"
 	defaultPort          = 1337
-	defaultWebsocketPort = 1338
+	defaultWebSocketPort = 1338
 	defaultStatsPort     = 8080
 	defaultPoolSize      = 5
 )
@@ -58,7 +58,7 @@ func prepareFlags() {
 	}
 
 	if config.WebSocketPort == 0 {
-		config.WebSocketPort = defaultWebsocketPort
+		config.WebSocketPort = defaultWebSocketPort
 	}
 
 	if config.StatsPort == 0 {
@@ -102,7 +102,7 @@ func performCommand(cmd *cobra.Command, args []string) error {
 		return errors.New("can't specify auto-cert and key/cert")
 	}
 
-	t := server.NewTracker(config.PoolSize, config.Port)
+	t := server.NewTracker(config.PoolSize, config.Port, config.WebSocketPort)
 
 	m, err := getLetsEncryptManager()
 	if err != nil {

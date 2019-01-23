@@ -1,10 +1,13 @@
 package server
 
 import (
+	"crypto/tls"
 	"fmt"
 	"net"
+	"net/http"
 
 	"golang.org/x/crypto/acme/autocert"
+	"golang.org/x/net/websocket"
 )
 
 var debugMode bool
@@ -45,7 +48,41 @@ func Start(ip string, port int, cert string, key string, debug bool, t *Tracker,
 
 // StartWebsocket brings up the websocket server.
 func StartWebsocket(ip string, port int, cert string, key string, debug bool, t *Tracker, m *autocert.Manager) (err error) {
+	packetInfoChan := make(chan *packetInfo)
+	go startPacketInfoChan(packetInfoChan)
+
+	var handleConnectionFunc = func(ws *websocket.Conn) {
+		handleConnection(ws, packetInfoChan, t)
+	}
+
+	portString := fmt.Sprintf("%s:%d", ip, port)
+
+	mux := http.NewServeMux()
+	mux.Handle("/", websocket.Handler(handleConnectionFunc))
+
+	srv := &http.Server{
+		Addr:      portString,
+		Handler:   mux,
+		TLSConfig: &tls.Config{},
+	}
+
+	if m != nil {
+		srv.TLSConfig.GetCertificate = m.GetCertificate
+	}
+
 	fmt.Printf("Shuffle Listening via Websockets on %s:%d\n", ip, port)
+
+	if tlsEnabled(cert, key, m) {
+		err = srv.ListenAndServeTLS(cert, key)
+		if err != nil {
+			return err
+		}
+	} else {
+		err = srv.ListenAndServe()
+		if err != nil {
+			return err
+		}
+	}
 
 	return nil
 }

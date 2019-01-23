@@ -9,14 +9,15 @@ import (
 
 // Tracker is used to track connections to the server.
 type Tracker struct {
-	connections      map[net.Conn]*trackerData
-	verificationKeys map[string]net.Conn
-	mutex            sync.RWMutex
-	pools            map[int]map[uint32]interface{}
-	poolAmounts      map[int]uint64
-	poolSize         int
-	fullPools        map[int]interface{}
-	shufflePort      int
+	connections          map[net.Conn]*trackerData
+	verificationKeys     map[string]net.Conn
+	mutex                sync.RWMutex
+	pools                map[int]map[uint32]interface{}
+	poolAmounts          map[int]uint64
+	poolSize             int
+	fullPools            map[int]interface{}
+	shufflePort          int
+	shuffleWebSocketPort int
 }
 
 // trackerData is data needed about each connection.
@@ -32,15 +33,16 @@ type trackerData struct {
 }
 
 // NewTracker instantiates a new tracker
-func NewTracker(poolSize int, shufflePort int) *Tracker {
+func NewTracker(poolSize int, shufflePort int, shuffleWebSocketPort int) *Tracker {
 	return &Tracker{
-		poolSize:         poolSize,
-		connections:      make(map[net.Conn]*trackerData),
-		verificationKeys: make(map[string]net.Conn),
-		pools:            make(map[int]map[uint32]interface{}),
-		poolAmounts:      make(map[int]uint64),
-		fullPools:        make(map[int]interface{}),
-		shufflePort:      shufflePort,
+		poolSize:             poolSize,
+		connections:          make(map[net.Conn]*trackerData),
+		verificationKeys:     make(map[string]net.Conn),
+		pools:                make(map[int]map[uint32]interface{}),
+		poolAmounts:          make(map[int]uint64),
+		fullPools:            make(map[int]interface{}),
+		shufflePort:          shufflePort,
+		shuffleWebSocketPort: shuffleWebSocketPort,
 	}
 }
 
