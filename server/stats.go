@@ -7,10 +7,11 @@ type StatsInformer interface {
 
 // TrackerStats represents a snapshot of the trackers statistics
 type TrackerStats struct {
-	Connections int         `json:"connections"`
-	PoolSize    int         `json:"poolSize"`
-	Pools       []PoolStats `json:"pools"`
-	ShufflePort int         `json:"shufflePort"`
+	Connections          int         `json:"connections"`
+	PoolSize             int         `json:"poolSize"`
+	Pools                []PoolStats `json:"pools"`
+	ShufflePort          int         `json:"shufflePort"`
+	ShuffleWebSocketPort int         `json:"shuffleWebSocketPort"`
 }
 
 // PoolStats represents the stats for a particular pool
@@ -26,10 +27,11 @@ func (t *Tracker) Stats() *TrackerStats {
 	defer t.mutex.RUnlock()
 
 	ts := &TrackerStats{
-		Connections: len(t.connections),
-		PoolSize:    t.poolSize,
-		Pools:       make([]PoolStats, 0),
-		ShufflePort: t.shufflePort,
+		Connections:          len(t.connections),
+		PoolSize:             t.poolSize,
+		Pools:                make([]PoolStats, 0),
+		ShufflePort:          t.shufflePort,
+		ShuffleWebSocketPort: t.shuffleWebSocketPort,
 	}
 
 	for k, p := range t.pools {
