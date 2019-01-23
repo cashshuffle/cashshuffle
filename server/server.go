@@ -43,6 +43,13 @@ func Start(ip string, port int, cert string, key string, debug bool, t *Tracker,
 	}
 }
 
+// StartWebsocket brings up the websocket server.
+func StartWebsocket(ip string, port int, cert string, key string, debug bool, t *Tracker, m *autocert.Manager) (err error) {
+	fmt.Printf("Shuffle Listening via Websockets on %s:%d\n", ip, port)
+
+	return nil
+}
+
 func handleConnection(conn net.Conn, c chan *packetInfo, tracker *Tracker) {
 	defer conn.Close()
 	defer tracker.remove(conn)
