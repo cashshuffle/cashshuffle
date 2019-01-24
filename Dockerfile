@@ -21,4 +21,4 @@ RUN make install
 ENTRYPOINT ["/go/bin/cashshuffle"]
 
 # Document that the service listens on ports 1337 and 8080.
-EXPOSE 1337 8080
+EXPOSE 1337 1338 8080
