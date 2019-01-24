@@ -14,6 +14,7 @@ type Config struct {
 	DisplayVersion bool   `json:"-"`
 	Port           int    `json:"port,string"`
 	StatsPort      int    `json:"stats_port,string"`
+	WebSocketPort  int    `json:"websocket_port,string"`
 	Cert           string `json:"cert"`
 	Key            string `json:"key"`
 	PoolSize       int    `json:"pool_size,string"`
