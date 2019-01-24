@@ -64,9 +64,10 @@ func StartWebsocket(ip string, port int, cert string, key string, debug bool, t 
 	mux.Handle("/", websocket.Handler(handleConnectionFunc))
 
 	srv := &http.Server{
-		Addr:      portString,
-		Handler:   mux,
-		TLSConfig: &tls.Config{},
+		Addr:         portString,
+		Handler:      mux,
+		TLSConfig:    &tls.Config{},
+		TLSNextProto: make(map[string]func(*http.Server, *tls.Conn, http.Handler), 0),
 	}
 
 	if m != nil {
