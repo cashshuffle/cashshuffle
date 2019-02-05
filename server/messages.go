@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"time"
 
 	"github.com/cashshuffle/cashshuffle/message"
 	"github.com/golang/protobuf/proto"
@@ -135,6 +136,9 @@ func processMessages(conn net.Conn, c chan *packetInfo, t *Tracker) {
 		if mb.Len() == 0 {
 			break
 		}
+
+		// Extend the deadline, we got a valid full message.
+		conn.SetDeadline(time.Now().Add(deadline))
 
 		if err := sendToPacketInfoChan(&mb, conn, c, t); err != nil {
 			fmt.Fprintf(os.Stderr, "[Error] %s\n", err.Error())
