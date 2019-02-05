@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"time"
 
 	"golang.org/x/crypto/acme/autocert"
 	"golang.org/x/net/websocket"
@@ -68,6 +69,9 @@ func StartWebsocket(ip string, port int, cert string, key string, debug bool, t 
 		Handler:      mux,
 		TLSConfig:    &tls.Config{},
 		TLSNextProto: make(map[string]func(*http.Server, *tls.Conn, http.Handler), 0),
+		ReadTimeout:  30 * time.Second,
+		WriteTimeout: 30 * time.Second,
+		IdleTimeout:  5 * time.Minute,
 	}
 
 	if m != nil {

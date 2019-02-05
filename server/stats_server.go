@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"golang.org/x/crypto/acme/autocert"
 )
@@ -32,9 +33,12 @@ func statsJSON(si StatsInformer) func(http.ResponseWriter, *http.Request) {
 
 func newStatsServer(addr string, mux *http.ServeMux, m *autocert.Manager) *http.Server {
 	srv := &http.Server{
-		Addr:      addr,
-		Handler:   mux,
-		TLSConfig: &tls.Config{},
+		Addr:         addr,
+		Handler:      mux,
+		TLSConfig:    &tls.Config{},
+		ReadTimeout:  30 * time.Second,
+		WriteTimeout: 30 * time.Second,
+		IdleTimeout:  5 * time.Minute,
 	}
 
 	if m != nil {
