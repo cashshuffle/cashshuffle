@@ -4,9 +4,14 @@ import (
 	"encoding/binary"
 	"fmt"
 	"net"
+	"time"
 
 	"github.com/cashshuffle/cashshuffle/message"
 	"github.com/golang/protobuf/proto"
+)
+
+const (
+	deadline = 120 * time.Second
 )
 
 // writeMessage writes a *message.Signed to the connection via protobuf.
@@ -25,7 +30,14 @@ func writeMessage(conn net.Conn, msgs []*message.Signed) error {
 	}
 
 	_, err = conn.Write(frameMessage(reply))
-	return err
+	if err != nil {
+		return err
+	}
+
+	// Extend the deadline, we just sent a message.
+	conn.SetDeadline(time.Now().Add(deadline))
+
+	return nil
 }
 
 // frameMessage sets up the message to be sent

@@ -99,5 +99,7 @@ func handleConnection(conn net.Conn, c chan *packetInfo, tracker *Tracker) {
 	defer conn.Close()
 	defer tracker.remove(conn)
 
+	// They just connected, set the deadline to prevent leaked connections.
+	conn.SetDeadline(time.Now().Add(deadline))
 	processMessages(conn, c, tracker)
 }
