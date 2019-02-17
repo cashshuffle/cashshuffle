@@ -21,6 +21,7 @@ func (pi *packetInfo) registerClient() error {
 					conn:            pi.conn,
 					bannedBy:        make(map[string]interface{}),
 					amount:          registration.Amount,
+					shuffleType:     registration.Type,
 				}
 				pi.tracker.add(&td)
 
