@@ -4,6 +4,7 @@ import (
 	"net"
 	"sync"
 
+	"github.com/cashshuffle/cashshuffle/message"
 	"github.com/nats-io/nuid"
 )
 
@@ -14,6 +15,7 @@ type Tracker struct {
 	mutex                sync.RWMutex
 	pools                map[int]map[uint32]interface{}
 	poolAmounts          map[int]uint64
+	poolTypes            map[int]message.ShuffleType
 	poolSize             int
 	fullPools            map[int]interface{}
 	shufflePort          int
@@ -30,6 +32,7 @@ type trackerData struct {
 	pool            int
 	bannedBy        map[string]interface{}
 	amount          uint64
+	shuffleType     message.ShuffleType
 }
 
 // NewTracker instantiates a new tracker
@@ -40,6 +43,7 @@ func NewTracker(poolSize int, shufflePort int, shuffleWebSocketPort int) *Tracke
 		verificationKeys:     make(map[string]net.Conn),
 		pools:                make(map[int]map[uint32]interface{}),
 		poolAmounts:          make(map[int]uint64),
+		poolTypes:            make(map[int]message.ShuffleType),
 		fullPools:            make(map[int]interface{}),
 		shufflePort:          shufflePort,
 		shuffleWebSocketPort: shuffleWebSocketPort,
@@ -138,6 +142,11 @@ func (t *Tracker) assignPool(data *trackerData) (int, uint32) {
 				continue
 			}
 
+			if t.poolTypes[num] != data.shuffleType {
+				num = num + 1
+				continue
+			}
+
 			if _, ok := t.fullPools[num]; ok {
 				num = num + 1
 				continue
@@ -152,6 +161,7 @@ func (t *Tracker) assignPool(data *trackerData) (int, uint32) {
 		t.pools[num] = make(map[uint32]interface{})
 		t.pools[num][1] = nil
 		t.poolAmounts[num] = data.amount
+		t.poolTypes[num] = data.shuffleType
 	} else {
 		for {
 			if _, ok := t.pools[num][playerNum]; ok {
@@ -181,5 +191,6 @@ func (t *Tracker) unassignPool(td *trackerData) {
 		delete(t.pools, td.pool)
 		delete(t.fullPools, td.pool)
 		delete(t.poolAmounts, td.pool)
+		delete(t.poolTypes, td.pool)
 	}
 }
