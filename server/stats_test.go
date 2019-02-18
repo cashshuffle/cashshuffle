@@ -41,7 +41,7 @@ func TestTrackStats(t *testing.T) {
 		},
 		poolTypes: map[int]message.ShuffleType{
 			1: 0,
-			2: 0,
+			2: 1,
 		},
 		fullPools: map[int]interface{}{
 			1: nil,
@@ -66,7 +66,7 @@ func TestTrackStats(t *testing.T) {
 		PoolStats{
 			Members: 3,
 			Amount:  1000,
-			Type:    "DEFAULT",
+			Type:    "DUST",
 			Full:    false,
 		},
 	)
