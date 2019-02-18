@@ -18,6 +18,7 @@ type TrackerStats struct {
 type PoolStats struct {
 	Members int    `json:"members"`
 	Amount  uint64 `json:"amount"`
+	Type    string `json:"type"`
 	Full    bool   `json:"full"`
 }
 
@@ -39,6 +40,7 @@ func (t *Tracker) Stats() *TrackerStats {
 		ps := PoolStats{
 			Members: len(p),
 			Amount:  t.poolAmounts[k],
+			Type:    t.poolTypes[k].String(),
 			Full:    full,
 		}
 		ts.Pools = append(ts.Pools, ps)
