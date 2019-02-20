@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cashshuffle/cashshuffle/message"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -38,6 +39,10 @@ func TestTrackStats(t *testing.T) {
 			1: 100,
 			2: 1000,
 		},
+		poolTypes: map[int]message.ShuffleType{
+			1: 0,
+			2: 1,
+		},
 		fullPools: map[int]interface{}{
 			1: nil,
 		},
@@ -55,11 +60,13 @@ func TestTrackStats(t *testing.T) {
 		PoolStats{
 			Members: 5,
 			Amount:  100,
+			Type:    "DEFAULT",
 			Full:    true,
 		},
 		PoolStats{
 			Members: 3,
 			Amount:  1000,
+			Type:    "DUST",
 			Full:    false,
 		},
 	)
