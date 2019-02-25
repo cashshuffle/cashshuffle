@@ -26,6 +26,10 @@ func (pi *packetInfo) registerClient() error {
 				pi.tracker.add(&td)
 
 				err := pi.registrationSuccess(&td)
+				if err != nil {
+					pi.tracker.remove(pi.conn)
+				}
+
 				return err
 			}
 		}
