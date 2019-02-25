@@ -82,6 +82,8 @@ func (pi *packetInfo) processReceivedMessage() error {
 
 // processMessages reads messages from the connection and begins processing.
 func processMessages(conn net.Conn, c chan *packetInfo, t *Tracker) {
+	defer t.remove(conn)
+
 	scanner := bufio.NewScanner(conn)
 	scanner.Split(bufio.ScanBytes)
 
