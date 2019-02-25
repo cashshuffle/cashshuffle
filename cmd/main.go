@@ -15,7 +15,7 @@ import (
 
 const (
 	appName              = "cashshuffle"
-	version              = "0.5.0"
+	version              = "0.5.1"
 	defaultPort          = 1337
 	defaultWebSocketPort = 1338
 	defaultStatsPort     = 8080
