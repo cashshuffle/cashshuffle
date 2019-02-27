@@ -1,6 +1,8 @@
 package server
 
-import "errors"
+import (
+	"errors"
+)
 
 // verifyMessage makes sure all required fields exist.
 func (pi *packetInfo) verifyMessage() error {
@@ -23,6 +25,7 @@ func (pi *packetInfo) verifyMessage() error {
 		if pi.tracker.banned(td) {
 			return errors.New("banned player")
 		}
+
 		if packet.GetNumber() != td.number {
 			return errors.New("invalid user number")
 		}

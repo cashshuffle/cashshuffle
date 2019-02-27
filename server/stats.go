@@ -2,11 +2,13 @@ package server
 
 // StatsInformer defines an interface that exposes tracker stats
 type StatsInformer interface {
-	Stats() *TrackerStats
+	Stats(string) *TrackerStats
 }
 
 // TrackerStats represents a snapshot of the trackers statistics
 type TrackerStats struct {
+	BanScore             uint32      `json:"banScore"`
+	Banned               bool        `json:"banned"`
 	Connections          int         `json:"connections"`
 	PoolSize             int         `json:"poolSize"`
 	Pools                []PoolStats `json:"pools"`
@@ -20,14 +22,28 @@ type PoolStats struct {
 	Amount  uint64 `json:"amount"`
 	Type    string `json:"type"`
 	Full    bool   `json:"full"`
+	Version uint64 `json:"version"`
 }
 
 // Stats returns the tracker stats.
-func (t *Tracker) Stats() *TrackerStats {
+func (t *Tracker) Stats(ip string) *TrackerStats {
 	t.mutex.RLock()
 	defer t.mutex.RUnlock()
 
+	banned := false
+	var banScore uint32
+
+	banData := t.bannedIPs[ip]
+	if banData != nil {
+		banScore = banData.score
+		if banData.score >= maxBanScore {
+			banned = true
+		}
+	}
+
 	ts := &TrackerStats{
+		BanScore:             banScore,
+		Banned:               banned,
 		Connections:          len(t.connections),
 		PoolSize:             t.poolSize,
 		Pools:                make([]PoolStats, 0),
@@ -42,6 +58,7 @@ func (t *Tracker) Stats() *TrackerStats {
 			Amount:  t.poolAmounts[k],
 			Type:    t.poolTypes[k].String(),
 			Full:    full,
+			Version: t.poolVersions[k],
 		}
 		ts.Pools = append(ts.Pools, ps)
 	}

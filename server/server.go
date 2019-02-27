@@ -100,5 +100,8 @@ func handleConnection(conn net.Conn, c chan *packetInfo, tracker *Tracker) {
 
 	// They just connected, set the deadline to prevent leaked connections.
 	conn.SetDeadline(time.Now().Add(deadline))
-	processMessages(conn, c, tracker)
+
+	if !tracker.bannedIP(conn) {
+		processMessages(conn, c, tracker)
+	}
 }

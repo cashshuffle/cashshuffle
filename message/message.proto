@@ -60,6 +60,7 @@ message Address {
 message Registration {
     uint64 amount = 1;
     ShuffleType type = 2;
+    uint64 version = 3;
 }
 
 message VerificationKey {
