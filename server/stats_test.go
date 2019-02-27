@@ -43,15 +43,30 @@ func TestTrackStats(t *testing.T) {
 			1: 0,
 			2: 1,
 		},
+		poolVersions: map[int]uint64{
+			1: 0,
+			2: 1,
+		},
 		fullPools: map[int]interface{}{
 			1: nil,
 		},
 		poolSize:    5,
 		shufflePort: 3000,
+		bannedIPs: map[string]*banData{
+			"8.8.8.8": &banData{
+				score: maxBanScore,
+			},
+			"8.8.4.4": &banData{
+				score: maxBanScore - 1,
+			},
+		},
 	}
 
-	stats := tracker.Stats()
+	// Test with ban.
+	stats := tracker.Stats("8.8.8.8")
 
+	assert.Equal(t, uint32(3), stats.BanScore)
+	assert.Equal(t, true, stats.Banned)
 	assert.Equal(t, 8, stats.Connections)
 	assert.Equal(t, 5, stats.PoolSize)
 	assert.Equal(t, 2, len(stats.Pools))
@@ -62,12 +77,40 @@ func TestTrackStats(t *testing.T) {
 			Amount:  100,
 			Type:    "DEFAULT",
 			Full:    true,
+			Version: 0,
 		},
 		PoolStats{
 			Members: 3,
 			Amount:  1000,
 			Type:    "DUST",
 			Full:    false,
+			Version: 1,
+		},
+	)
+
+	// Test without ban.
+	stats2 := tracker.Stats("8.8.4.4")
+
+	assert.Equal(t, uint32(2), stats2.BanScore)
+	assert.Equal(t, false, stats2.Banned)
+	assert.Equal(t, 8, stats2.Connections)
+	assert.Equal(t, 5, stats2.PoolSize)
+	assert.Equal(t, 2, len(stats2.Pools))
+	assert.Equal(t, 3000, stats2.ShufflePort)
+	assert.Contains(t, stats2.Pools,
+		PoolStats{
+			Members: 5,
+			Amount:  100,
+			Type:    "DEFAULT",
+			Full:    true,
+			Version: 0,
+		},
+		PoolStats{
+			Members: 3,
+			Amount:  1000,
+			Type:    "DUST",
+			Full:    false,
+			Version: 1,
 		},
 	)
 }

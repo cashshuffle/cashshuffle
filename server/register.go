@@ -20,8 +20,9 @@ func (pi *packetInfo) registerClient() error {
 					verificationKey: p.FromKey.String(),
 					conn:            pi.conn,
 					bannedBy:        make(map[string]interface{}),
-					amount:          registration.Amount,
-					shuffleType:     registration.Type,
+					amount:          registration.GetAmount(),
+					shuffleType:     registration.GetType(),
+					version:         registration.GetVersion(),
 				}
 				pi.tracker.add(&td)
 

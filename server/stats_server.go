@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
 	"time"
 
@@ -25,7 +26,8 @@ func StartStatsServer(ip string, port int, cert string, key string, si StatsInfo
 
 func statsJSON(si StatsInformer) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		b, _ := json.Marshal(si.Stats())
+		ip, _, _ := net.SplitHostPort(r.RemoteAddr)
+		b, _ := json.Marshal(si.Stats(ip))
 		w.Header().Set("Content-Type", "application/json")
 		w.Write(b)
 	}
