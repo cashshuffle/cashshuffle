@@ -132,4 +132,3 @@ type fakeAddr struct{}
 
 func (fa *fakeAddr) Network() string { return "" }
 func (fa *fakeAddr) String() string  { return "" }
-
