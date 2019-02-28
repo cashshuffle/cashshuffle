@@ -53,10 +53,10 @@ func TestTrackStats(t *testing.T) {
 		poolSize:    5,
 		shufflePort: 3000,
 		bannedIPs: map[string]*banData{
-			"8.8.8.8": &banData{
+			"8.8.8.8": {
 				score: maxBanScore,
 			},
-			"8.8.4.4": &banData{
+			"8.8.4.4": {
 				score: maxBanScore - 1,
 			},
 		},
@@ -132,3 +132,4 @@ type fakeAddr struct{}
 
 func (fa *fakeAddr) Network() string { return "" }
 func (fa *fakeAddr) String() string  { return "" }
+
