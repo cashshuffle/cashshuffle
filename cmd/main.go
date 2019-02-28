@@ -14,12 +14,15 @@ import (
 )
 
 const (
-	appName              = "cashshuffle"
-	version              = "0.6.0"
-	defaultPort          = 1337
-	defaultWebSocketPort = 1338
-	defaultStatsPort     = 8080
-	defaultPoolSize      = 5
+	appName                 = "cashshuffle"
+	version                 = "0.6.1"
+	defaultPort             = 1337
+	defaultWebSocketPort    = 1338
+	defaultTorPort          = 1339
+	defaultTorWebSocketPort = 1340
+	defaultStatsPort        = 8080
+	defaultTorStatsPort     = 8081
+	defaultPoolSize         = 5
 )
 
 // Stores configuration data.
@@ -65,6 +68,18 @@ func prepareFlags() {
 		config.StatsPort = defaultStatsPort
 	}
 
+	if config.TorPort == 0 {
+		config.TorPort = defaultTorPort
+	}
+
+	if config.TorWebSocketPort == 0 {
+		config.TorWebSocketPort = defaultTorWebSocketPort
+	}
+
+	if config.TorStatsPort == 0 {
+		config.TorStatsPort = defaultTorStatsPort
+	}
+
 	if config.PoolSize == 0 {
 		config.PoolSize = defaultPoolSize
 	}
@@ -89,6 +104,14 @@ func prepareFlags() {
 		&config.AutoCert, "auto-cert", "a", config.AutoCert, "register hostname with LetsEncrypt")
 	MainCmd.PersistentFlags().StringVarP(
 		&config.BindIP, "bind-ip", "b", config.BindIP, "IP address to bind to")
+	MainCmd.PersistentFlags().BoolVarP(
+		&config.Tor, "tor", "t", config.Tor, "enable secondary listener for tor connections")
+	MainCmd.PersistentFlags().IntVarP(
+		&config.TorPort, "tor-port", "", config.TorPort, "tor server port")
+	MainCmd.PersistentFlags().IntVarP(
+		&config.TorWebSocketPort, "tor-websocket-port", "", config.TorWebSocketPort, "tor websocket port")
+	MainCmd.PersistentFlags().IntVarP(
+		&config.TorStatsPort, "tor-stats-port", "", config.TorStatsPort, "tor stats server port")
 }
 
 // Where all the work happens.
@@ -102,7 +125,7 @@ func performCommand(cmd *cobra.Command, args []string) error {
 		return errors.New("can't specify auto-cert and key/cert")
 	}
 
-	t := server.NewTracker(config.PoolSize, config.Port, config.WebSocketPort)
+	t := server.NewTracker(config.PoolSize, config.Port, config.WebSocketPort, config.TorPort, config.TorWebSocketPort)
 
 	m, err := getLetsEncryptManager()
 	if err != nil {
@@ -111,15 +134,28 @@ func performCommand(cmd *cobra.Command, args []string) error {
 
 	// enable stats if port specified
 	if config.StatsPort > 0 {
-		go server.StartStatsServer(config.BindIP, config.StatsPort, config.Cert, config.Key, t, m)
+		go server.StartStatsServer(config.BindIP, config.StatsPort, config.Cert, config.Key, t, m, false)
+	}
+
+	if config.Tor && config.TorStatsPort > 0 {
+		go server.StartStatsServer("localhost", config.TorStatsPort, "", "", t, nil, true)
 	}
 
 	// enable websocket port if specified.
 	if config.WebSocketPort > 0 {
-		go server.StartWebsocket(config.BindIP, config.WebSocketPort, config.Cert, config.Key, config.Debug, t, m)
+		go server.StartWebsocket(config.BindIP, config.WebSocketPort, config.Cert, config.Key, config.Debug, t, m, false)
 	}
 
-	return server.Start(config.BindIP, config.Port, config.Cert, config.Key, config.Debug, t, m)
+	if config.Tor && config.TorWebSocketPort > 0 {
+		go server.StartWebsocket("localhost", config.TorWebSocketPort, "", "", config.Debug, t, nil, true)
+	}
+
+	// enable tor server if specified.
+	if config.Tor {
+		go server.Start("localhost", config.TorPort, "", "", config.Debug, t, nil, true)
+	}
+
+	return server.Start(config.BindIP, config.Port, config.Cert, config.Key, config.Debug, t, m, false)
 }
 
 func getLetsEncryptManager() (*autocert.Manager, error) {

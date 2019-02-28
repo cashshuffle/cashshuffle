@@ -43,17 +43,21 @@ Usage:
   cashshuffle [flags]
 
 Flags:
-  -a, --auto-cert string     register hostname with LetsEncrypt
-  -b, --bind-ip string       IP address to bind to
-  -c, --cert string          path to server.crt for TLS
-  -d, --debug                debug mode
-  -h, --help                 help for cashshuffle
-  -k, --key string           path to server.key for TLS
-  -s, --pool-size int        pool size (default 5)
-  -p, --port int             server port (default 1337)
-  -z, --stats-port int       stats server port (default 8080)
-  -v, --version              display version
-  -w, --websocket-port int   websocket port (default 1338)
+  -a, --auto-cert string         register hostname with LetsEncrypt
+  -b, --bind-ip string           IP address to bind to
+  -c, --cert string              path to server.crt for TLS
+  -d, --debug                    debug mode
+  -h, --help                     help for cashshuffle
+  -k, --key string               path to server.key for TLS
+  -s, --pool-size int            pool size (default 5)
+  -p, --port int                 server port (default 1337)
+  -z, --stats-port int           stats server port (default 8080)
+  -t, --tor                      enable secondary listener for tor connections
+      --tor-port int             tor server port (default 1339)
+      --tor-stats-port int       tor stats server port (default 8081)
+      --tor-websocket-port int   tor websocket port (default 1340)
+  -v, --version                  display version
+  -w, --websocket-port int       websocket port (default 1338)
 ```
 
 ## License

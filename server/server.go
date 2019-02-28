@@ -14,7 +14,7 @@ import (
 var debugMode bool
 
 // Start brings up the TCP server.
-func Start(ip string, port int, cert string, key string, debug bool, t *Tracker, m *autocert.Manager) (err error) {
+func Start(ip string, port int, cert string, key string, debug bool, t *Tracker, m *autocert.Manager, tor bool) (err error) {
 	var listener net.Listener
 
 	debugMode = debug
@@ -36,7 +36,12 @@ func Start(ip string, port int, cert string, key string, debug bool, t *Tracker,
 	packetInfoChan := make(chan *packetInfo)
 	go startPacketInfoChan(packetInfoChan)
 
-	fmt.Printf("Shuffle Listening on TCP %s:%d (pool size: %d)\n", ip, port, t.poolSize)
+	torStr := ""
+	if tor {
+		torStr = "Tor"
+	}
+
+	fmt.Printf("%sShuffle Listening on TCP %s:%d (pool size: %d)\n", torStr, ip, port, t.poolSize)
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
@@ -48,7 +53,7 @@ func Start(ip string, port int, cert string, key string, debug bool, t *Tracker,
 }
 
 // StartWebsocket brings up the websocket server.
-func StartWebsocket(ip string, port int, cert string, key string, debug bool, t *Tracker, m *autocert.Manager) (err error) {
+func StartWebsocket(ip string, port int, cert string, key string, debug bool, t *Tracker, m *autocert.Manager, tor bool) (err error) {
 	packetInfoChan := make(chan *packetInfo)
 	go startPacketInfoChan(packetInfoChan)
 
@@ -78,7 +83,12 @@ func StartWebsocket(ip string, port int, cert string, key string, debug bool, t 
 		srv.TLSConfig.GetCertificate = m.GetCertificate
 	}
 
-	fmt.Printf("Shuffle Listening via Websockets on %s:%d\n", ip, port)
+	torStr := ""
+	if tor {
+		torStr = "Tor"
+	}
+
+	fmt.Printf("%sShuffle Listening via Websockets on %s:%d\n", torStr, ip, port)
 
 	if tlsEnabled(cert, key, m) {
 		err = srv.ListenAndServeTLS(cert, key)

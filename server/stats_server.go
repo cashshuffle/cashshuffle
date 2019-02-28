@@ -12,22 +12,28 @@ import (
 )
 
 // StartStatsServer creates a new server to serve stats
-func StartStatsServer(ip string, port int, cert string, key string, si StatsInformer, m *autocert.Manager) error {
+func StartStatsServer(ip string, port int, cert string, key string, si StatsInformer, m *autocert.Manager, tor bool) error {
 	mux := http.NewServeMux()
-	mux.HandleFunc("/stats", statsJSON(si))
+	mux.HandleFunc("/stats", statsJSON(si, tor))
 	s := newStatsServer(fmt.Sprintf("%s:%d", ip, port), mux, m)
 	tls := tlsEnabled(cert, key, m)
-	fmt.Printf("Stats Listening on TCP %s:%d (tls: %v)\n", ip, port, tls)
+
+	torStr := ""
+	if tor {
+		torStr = "Tor"
+	}
+
+	fmt.Printf("%sStats Listening on TCP %s:%d (tls: %v)\n", torStr, ip, port, tls)
 	if tls {
 		return s.ListenAndServeTLS(cert, key)
 	}
 	return s.ListenAndServe()
 }
 
-func statsJSON(si StatsInformer) func(http.ResponseWriter, *http.Request) {
+func statsJSON(si StatsInformer, tor bool) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ip, _, _ := net.SplitHostPort(r.RemoteAddr)
-		b, _ := json.Marshal(si.Stats(ip))
+		b, _ := json.Marshal(si.Stats(ip, tor))
 		w.Header().Set("Content-Type", "application/json")
 		w.Write(b)
 	}

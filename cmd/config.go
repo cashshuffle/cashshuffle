@@ -11,16 +11,20 @@ import (
 
 // Config stores all the application configuration.
 type Config struct {
-	DisplayVersion bool   `json:"-"`
-	Port           int    `json:"port,string"`
-	StatsPort      int    `json:"stats_port,string"`
-	WebSocketPort  int    `json:"websocket_port,string"`
-	Cert           string `json:"cert"`
-	Key            string `json:"key"`
-	PoolSize       int    `json:"pool_size,string"`
-	Debug          bool   `json:"debug,string"`
-	AutoCert       string `json:"auto_cert"`
-	BindIP         string `json:"bind_ip"`
+	DisplayVersion   bool   `json:"-"`
+	Port             int    `json:"port,string"`
+	StatsPort        int    `json:"stats_port,string"`
+	WebSocketPort    int    `json:"websocket_port,string"`
+	Cert             string `json:"cert"`
+	Key              string `json:"key"`
+	PoolSize         int    `json:"pool_size,string"`
+	Debug            bool   `json:"debug,string"`
+	AutoCert         string `json:"auto_cert"`
+	BindIP           string `json:"bind_ip"`
+	Tor              bool   `json:"tor,string"`
+	TorPort          int    `json:"tor_port,string"`
+	TorStatsPort     int    `json:"tor_stats_port,string"`
+	TorWebSocketPort int    `json:"tor_websocket_port,string"`
 }
 
 // Load reads the configuration from ~/.cashshuffle/config and loads it into the Config struct.

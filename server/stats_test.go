@@ -50,8 +50,11 @@ func TestTrackStats(t *testing.T) {
 		fullPools: map[int]interface{}{
 			1: nil,
 		},
-		poolSize:    5,
-		shufflePort: 3000,
+		poolSize:                5,
+		shufflePort:             3000,
+		shuffleWebSocketPort:    3001,
+		torShufflePort:          3002,
+		torShuffleWebSocketPort: 3003,
 		bannedIPs: map[string]*banData{
 			"8.8.8.8": {
 				score: maxBanScore,
@@ -63,7 +66,7 @@ func TestTrackStats(t *testing.T) {
 	}
 
 	// Test with ban.
-	stats := tracker.Stats("8.8.8.8")
+	stats := tracker.Stats("8.8.8.8", false)
 
 	assert.Equal(t, uint32(3), stats.BanScore)
 	assert.Equal(t, true, stats.Banned)
@@ -71,6 +74,7 @@ func TestTrackStats(t *testing.T) {
 	assert.Equal(t, 5, stats.PoolSize)
 	assert.Equal(t, 2, len(stats.Pools))
 	assert.Equal(t, 3000, stats.ShufflePort)
+	assert.Equal(t, 3001, stats.ShuffleWebSocketPort)
 	assert.Contains(t, stats.Pools,
 		PoolStats{
 			Members: 5,
@@ -89,14 +93,15 @@ func TestTrackStats(t *testing.T) {
 	)
 
 	// Test without ban.
-	stats2 := tracker.Stats("8.8.4.4")
+	stats2 := tracker.Stats("8.8.4.4", true)
 
 	assert.Equal(t, uint32(2), stats2.BanScore)
 	assert.Equal(t, false, stats2.Banned)
 	assert.Equal(t, 8, stats2.Connections)
 	assert.Equal(t, 5, stats2.PoolSize)
 	assert.Equal(t, 2, len(stats2.Pools))
-	assert.Equal(t, 3000, stats2.ShufflePort)
+	assert.Equal(t, 3002, stats2.ShufflePort)
+	assert.Equal(t, 3003, stats2.ShuffleWebSocketPort)
 	assert.Contains(t, stats2.Pools,
 		PoolStats{
 			Members: 5,

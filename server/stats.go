@@ -2,7 +2,7 @@ package server
 
 // StatsInformer defines an interface that exposes tracker stats
 type StatsInformer interface {
-	Stats(string) *TrackerStats
+	Stats(string, bool) *TrackerStats
 }
 
 // TrackerStats represents a snapshot of the trackers statistics
@@ -26,7 +26,7 @@ type PoolStats struct {
 }
 
 // Stats returns the tracker stats.
-func (t *Tracker) Stats(ip string) *TrackerStats {
+func (t *Tracker) Stats(ip string, tor bool) *TrackerStats {
 	t.mutex.RLock()
 	defer t.mutex.RUnlock()
 
@@ -41,14 +41,24 @@ func (t *Tracker) Stats(ip string) *TrackerStats {
 		}
 	}
 
+	sp := t.shufflePort
+	if tor {
+		sp = t.torShufflePort
+	}
+
+	wssp := t.shuffleWebSocketPort
+	if tor {
+		wssp = t.torShuffleWebSocketPort
+	}
+
 	ts := &TrackerStats{
 		BanScore:             banScore,
 		Banned:               banned,
 		Connections:          len(t.connections),
 		PoolSize:             t.poolSize,
 		Pools:                make([]PoolStats, 0),
-		ShufflePort:          t.shufflePort,
-		ShuffleWebSocketPort: t.shuffleWebSocketPort,
+		ShufflePort:          sp,
+		ShuffleWebSocketPort: wssp,
 	}
 
 	for k, p := range t.pools {
