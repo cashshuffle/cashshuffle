@@ -266,6 +266,20 @@ func (t *Tracker) assignPool(data *trackerData) (int, uint32) {
 	return num, playerNum
 }
 
+// decreasePoolSize decreases the pool size being
+// tracked in trackerData after a blame occurs.
+func(t *Tracker) decreasePoolSize(pool int) {
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
+
+	for _, td := range t.pools[pool] {
+		td.mutex.Lock()
+		defer td.mutex.Unlock()
+
+		td.poolSize--
+	}
+}
+
 // unassignPool removes a user from a pool.
 // This method assumes the caller is holding the mutex.
 func (t *Tracker) unassignPool(td *trackerData) {

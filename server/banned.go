@@ -37,11 +37,12 @@ func (pi *packetInfo) checkBanMessage() error {
 		}
 
 		bannedTrackerData.mutex.Lock()
-		defer bannedTrackerData.mutex.Unlock()
 		bannedTrackerData.bannedBy[td.verificationKey] = nil
+		bannedTrackerData.mutex.Unlock()
 
 		if pi.tracker.banned(bannedTrackerData) {
 			pi.tracker.banIP(bannedTrackerData.conn)
+			pi.tracker.decreasePoolSize(td.pool)
 		}
 
 		return errors.New("player banned")
