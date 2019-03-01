@@ -268,11 +268,15 @@ func (t *Tracker) assignPool(data *trackerData) (int, uint32) {
 
 // decreasePoolSize decreases the pool size being
 // tracked in trackerData after a blame occurs.
-func(t *Tracker) decreasePoolSize(pool int) {
+func (t *Tracker) decreasePoolSize(pool int) {
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
 
 	for _, td := range t.pools[pool] {
+		if td == nil {
+			continue
+		}
+
 		td.mutex.Lock()
 		defer td.mutex.Unlock()
 
