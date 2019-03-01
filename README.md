@@ -74,7 +74,7 @@ Now edit your `torrc` and add the following. Then restart Tor for the configurat
 ```
 HiddenServiceDir /var/lib/tor/cashshuffle
 HiddenServicePort 1339 127.0.0.1:1339
-HiddenServicePort 1140 127.0.0.1:1140
+HiddenServicePort 1340 127.0.0.1:1340
 HiddenServicePort 8081 127.0.0.1:8081
 ```
 
