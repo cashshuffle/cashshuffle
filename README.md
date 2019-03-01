@@ -60,6 +60,25 @@ Flags:
   -w, --websocket-port int       websocket port (default 1338)
 ```
 
+## Tor
+
+To run a server on the public internet with SSL and also support Tor just use the `--tor` flag.
+
+```
+cashshuffle -s 5 -c <cert> -k <key> --tor
+```
+
+Now edit your `torrc` and add the following. Then restart Tor for the configuration to take effect.
+
+```
+HiddenServiceDir /var/lib/tor/cashshuffle
+HiddenServicePort 1339 127.0.0.1:1339
+HiddenServicePort 1140 127.0.0.1:1140
+HiddenServicePort 8081 127.0.0.1:8081
+```
+
+For more docs on setting up onion services you can check out https://www.torproject.org/docs/tor-onion-service.html.en.
+
 ## License
 
 cashshuffle is released under the MIT license.
