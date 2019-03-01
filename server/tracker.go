@@ -111,6 +111,9 @@ func (t *Tracker) remove(conn net.Conn) {
 
 // banned returns true if the player has been banned.
 func (t *Tracker) banned(data *trackerData) bool {
+	data.mutex.Lock()
+	defer data.mutex.Unlock()
+
 	return data.poolSize <= (len(data.bannedBy) + 1)
 }
 
