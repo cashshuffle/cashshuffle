@@ -23,18 +23,20 @@ const (
 
 // Tracker is used to track connections to the server.
 type Tracker struct {
-	bannedIPs            map[string]*banData
-	connections          map[net.Conn]*trackerData
-	verificationKeys     map[string]net.Conn
-	mutex                sync.RWMutex
-	pools                map[int]map[uint32]interface{}
-	poolAmounts          map[int]uint64
-	poolVersions         map[int]uint64
-	poolTypes            map[int]message.ShuffleType
-	poolSize             int
-	fullPools            map[int]interface{}
-	shufflePort          int
-	shuffleWebSocketPort int
+	bannedIPs               map[string]*banData
+	connections             map[net.Conn]*trackerData
+	verificationKeys        map[string]net.Conn
+	mutex                   sync.RWMutex
+	pools                   map[int]map[uint32]interface{}
+	poolAmounts             map[int]uint64
+	poolVersions            map[int]uint64
+	poolTypes               map[int]message.ShuffleType
+	poolSize                int
+	fullPools               map[int]interface{}
+	shufflePort             int
+	shuffleWebSocketPort    int
+	torShufflePort          int
+	torShuffleWebSocketPort int
 }
 
 // banData is the data required to track IP bans.
@@ -57,19 +59,21 @@ type trackerData struct {
 }
 
 // NewTracker instantiates a new tracker
-func NewTracker(poolSize int, shufflePort int, shuffleWebSocketPort int) *Tracker {
+func NewTracker(poolSize int, shufflePort int, shuffleWebSocketPort int, torShufflePort int, torShuffleWebSocketPort int) *Tracker {
 	return &Tracker{
-		poolSize:             poolSize,
-		bannedIPs:            make(map[string]*banData),
-		connections:          make(map[net.Conn]*trackerData),
-		verificationKeys:     make(map[string]net.Conn),
-		pools:                make(map[int]map[uint32]interface{}),
-		poolAmounts:          make(map[int]uint64),
-		poolVersions:         make(map[int]uint64),
-		poolTypes:            make(map[int]message.ShuffleType),
-		fullPools:            make(map[int]interface{}),
-		shufflePort:          shufflePort,
-		shuffleWebSocketPort: shuffleWebSocketPort,
+		poolSize:                poolSize,
+		bannedIPs:               make(map[string]*banData),
+		connections:             make(map[net.Conn]*trackerData),
+		verificationKeys:        make(map[string]net.Conn),
+		pools:                   make(map[int]map[uint32]interface{}),
+		poolAmounts:             make(map[int]uint64),
+		poolVersions:            make(map[int]uint64),
+		poolTypes:               make(map[int]message.ShuffleType),
+		fullPools:               make(map[int]interface{}),
+		shufflePort:             shufflePort,
+		shuffleWebSocketPort:    shuffleWebSocketPort,
+		torShufflePort:          torShufflePort,
+		torShuffleWebSocketPort: torShuffleWebSocketPort,
 	}
 }
 
