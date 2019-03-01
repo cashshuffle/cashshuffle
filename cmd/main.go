@@ -112,7 +112,7 @@ func prepareFlags() {
 	MainCmd.PersistentFlags().BoolVarP(
 		&config.Tor, "tor", "t", config.Tor, "enable secondary listener for tor connections")
 	MainCmd.PersistentFlags().StringVarP(
-		&config.TorBindIP, "tor-bind-ip", "", config.TorBindIP, "IP address to bind tor to")
+		&config.TorBindIP, "tor-bind-ip", "", config.TorBindIP, "IP address to bind to for tor")
 	MainCmd.PersistentFlags().IntVarP(
 		&config.TorPort, "tor-port", "", config.TorPort, "tor server port")
 	MainCmd.PersistentFlags().IntVarP(

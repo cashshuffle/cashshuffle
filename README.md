@@ -53,7 +53,7 @@ Flags:
   -p, --port int                 server port (default 1337)
   -z, --stats-port int           stats server port (default 8080)
   -t, --tor                      enable secondary listener for tor connections
-      --tor-bind-ip string       IP address to bind tor to (default "127.0.0.1")
+      --tor-bind-ip string       IP address to bind to for tor (default "127.0.0.1")
       --tor-port int             tor server port (default 1339)
       --tor-stats-port int       tor stats server port (default 8081)
       --tor-websocket-port int   tor websocket port (default 1340)
