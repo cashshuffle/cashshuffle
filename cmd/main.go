@@ -23,6 +23,7 @@ const (
 	defaultStatsPort        = 8080
 	defaultTorStatsPort     = 8081
 	defaultPoolSize         = 5
+	defaultTorBindIP        = "127.0.0.1"
 )
 
 // Stores configuration data.
@@ -68,6 +69,10 @@ func prepareFlags() {
 		config.StatsPort = defaultStatsPort
 	}
 
+	if config.TorBindIP == "" {
+		config.TorBindIP = defaultTorBindIP
+	}
+
 	if config.TorPort == 0 {
 		config.TorPort = defaultTorPort
 	}
@@ -106,6 +111,8 @@ func prepareFlags() {
 		&config.BindIP, "bind-ip", "b", config.BindIP, "IP address to bind to")
 	MainCmd.PersistentFlags().BoolVarP(
 		&config.Tor, "tor", "t", config.Tor, "enable secondary listener for tor connections")
+	MainCmd.PersistentFlags().StringVarP(
+		&config.TorBindIP, "tor-bind-ip", "", config.TorBindIP, "IP address to bind tor to")
 	MainCmd.PersistentFlags().IntVarP(
 		&config.TorPort, "tor-port", "", config.TorPort, "tor server port")
 	MainCmd.PersistentFlags().IntVarP(
@@ -138,7 +145,7 @@ func performCommand(cmd *cobra.Command, args []string) error {
 	}
 
 	if config.Tor && config.TorStatsPort > 0 {
-		go server.StartStatsServer("localhost", config.TorStatsPort, "", "", t, nil, true)
+		go server.StartStatsServer(config.TorBindIP, config.TorStatsPort, "", "", t, nil, true)
 	}
 
 	// enable websocket port if specified.
@@ -147,12 +154,12 @@ func performCommand(cmd *cobra.Command, args []string) error {
 	}
 
 	if config.Tor && config.TorWebSocketPort > 0 {
-		go server.StartWebsocket("localhost", config.TorWebSocketPort, "", "", config.Debug, t, nil, true)
+		go server.StartWebsocket(config.TorBindIP, config.TorWebSocketPort, "", "", config.Debug, t, nil, true)
 	}
 
 	// enable tor server if specified.
 	if config.Tor {
-		go server.Start("localhost", config.TorPort, "", "", config.Debug, t, nil, true)
+		go server.Start(config.TorBindIP, config.TorPort, "", "", config.Debug, t, nil, true)
 	}
 
 	return server.Start(config.BindIP, config.Port, config.Cert, config.Key, config.Debug, t, m, false)

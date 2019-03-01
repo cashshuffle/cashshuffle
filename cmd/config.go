@@ -22,6 +22,7 @@ type Config struct {
 	AutoCert         string `json:"auto_cert"`
 	BindIP           string `json:"bind_ip"`
 	Tor              bool   `json:"tor,string"`
+	TorBindIP        string `json:"tor_bind_ip"`
 	TorPort          int    `json:"tor_port,string"`
 	TorStatsPort     int    `json:"tor_stats_port,string"`
 	TorWebSocketPort int    `json:"tor_websocket_port,string"`
