@@ -27,7 +27,7 @@ type Tracker struct {
 	connections             map[net.Conn]*trackerData
 	verificationKeys        map[string]net.Conn
 	mutex                   sync.RWMutex
-	pools                   map[int]map[uint32]interface{}
+	pools                   map[int]map[uint32]*trackerData
 	poolAmounts             map[int]uint64
 	poolVersions            map[int]uint64
 	poolTypes               map[int]message.ShuffleType
@@ -52,6 +52,7 @@ type trackerData struct {
 	conn            net.Conn
 	verificationKey string
 	pool            int
+	poolSize        int
 	bannedBy        map[string]interface{}
 	amount          uint64
 	version         uint64
@@ -65,7 +66,7 @@ func NewTracker(poolSize int, shufflePort int, shuffleWebSocketPort int, torShuf
 		bannedIPs:               make(map[string]*banData),
 		connections:             make(map[net.Conn]*trackerData),
 		verificationKeys:        make(map[string]net.Conn),
-		pools:                   make(map[int]map[uint32]interface{}),
+		pools:                   make(map[int]map[uint32]*trackerData),
 		poolAmounts:             make(map[int]uint64),
 		poolVersions:            make(map[int]uint64),
 		poolTypes:               make(map[int]message.ShuffleType),
@@ -240,8 +241,8 @@ func (t *Tracker) assignPool(data *trackerData) (int, uint32) {
 
 	playerNum := uint32(1)
 	if _, ok := t.pools[num]; !ok {
-		t.pools[num] = make(map[uint32]interface{})
-		t.pools[num][1] = nil
+		t.pools[num] = make(map[uint32]*trackerData)
+		t.pools[num][1] = data
 		t.poolAmounts[num] = data.amount
 		t.poolVersions[num] = data.version
 		t.poolTypes[num] = data.shuffleType
@@ -255,7 +256,7 @@ func (t *Tracker) assignPool(data *trackerData) (int, uint32) {
 			break
 		}
 
-		t.pools[num][playerNum] = nil
+		t.pools[num][playerNum] = data
 	}
 
 	if len(t.pools[num]) == t.poolSize {
