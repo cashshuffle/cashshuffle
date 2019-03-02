@@ -11,7 +11,7 @@ import (
 
 func TestTrackStats(t *testing.T) {
 	tracker := &Tracker{
-		connections: map[net.Conn]*trackerData{
+		connections: map[net.Conn]*playerData{
 			&fakeConn{}: {},
 			&fakeConn{}: {},
 			&fakeConn{}: {},
@@ -21,7 +21,7 @@ func TestTrackStats(t *testing.T) {
 			&fakeConn{}: {},
 			&fakeConn{}: {},
 		},
-		pools: map[int]map[uint32]*trackerData{
+		pools: map[int]map[uint32]*playerData{
 			1: {
 				1: nil,
 				2: nil,

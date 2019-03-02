@@ -31,18 +31,18 @@ func (pi *packetInfo) checkBanMessage() error {
 			return errors.New("invalid ban")
 		}
 
-		td := pi.tracker.getTrackerData(pi.conn)
-		if td == nil {
+		player := pi.tracker.getPlayerData(pi.conn)
+		if player == nil {
 			return nil
 		}
 
 		bannedTrackerData.mutex.Lock()
-		bannedTrackerData.bannedBy[td.verificationKey] = nil
+		bannedTrackerData.bannedBy[player.verificationKey] = nil
 		bannedTrackerData.mutex.Unlock()
 
 		if pi.tracker.banned(bannedTrackerData) {
 			pi.tracker.banIP(bannedTrackerData.conn)
-			pi.tracker.decreasePoolSize(td.pool)
+			pi.tracker.decreasePoolSize(player.pool)
 		}
 
 		return errors.New("player banned")

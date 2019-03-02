@@ -24,10 +24,10 @@ const (
 // Tracker is used to track connections to the server.
 type Tracker struct {
 	bannedIPs               map[string]*banData
-	connections             map[net.Conn]*trackerData
+	connections             map[net.Conn]*playerData
 	verificationKeys        map[string]net.Conn
 	mutex                   sync.RWMutex
-	pools                   map[int]map[uint32]*trackerData
+	pools                   map[int]map[uint32]*playerData
 	poolAmounts             map[int]uint64
 	poolVersions            map[int]uint64
 	poolTypes               map[int]message.ShuffleType
@@ -44,8 +44,8 @@ type banData struct {
 	score uint32
 }
 
-// trackerData is data needed about each connection.
-type trackerData struct {
+// playerData is data needed about each connection.
+type playerData struct {
 	mutex           sync.RWMutex
 	sessionID       []byte
 	number          uint32
@@ -64,9 +64,9 @@ func NewTracker(poolSize int, shufflePort int, shuffleWebSocketPort int, torShuf
 	return &Tracker{
 		poolSize:                poolSize,
 		bannedIPs:               make(map[string]*banData),
-		connections:             make(map[net.Conn]*trackerData),
+		connections:             make(map[net.Conn]*playerData),
 		verificationKeys:        make(map[string]net.Conn),
-		pools:                   make(map[int]map[uint32]*trackerData),
+		pools:                   make(map[int]map[uint32]*playerData),
 		poolAmounts:             make(map[int]uint64),
 		poolVersions:            make(map[int]uint64),
 		poolTypes:               make(map[int]message.ShuffleType),
@@ -79,7 +79,7 @@ func NewTracker(poolSize int, shufflePort int, shuffleWebSocketPort int, torShuf
 }
 
 // add adds a connection to the tracker.
-func (t *Tracker) add(data *trackerData) {
+func (t *Tracker) add(data *playerData) {
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
 
@@ -97,20 +97,20 @@ func (t *Tracker) remove(conn net.Conn) {
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
 
-	td := t.connections[conn]
-	if td != nil {
-		if td.verificationKey != "" {
-			delete(t.verificationKeys, td.verificationKey)
+	player := t.connections[conn]
+	if player != nil {
+		if player.verificationKey != "" {
+			delete(t.verificationKeys, player.verificationKey)
 		}
 
-		t.unassignPool(td)
+		t.unassignPool(player)
 
 		delete(t.connections, conn)
 	}
 }
 
 // banned returns true if the player has been banned.
-func (t *Tracker) banned(data *trackerData) bool {
+func (t *Tracker) banned(data *playerData) bool {
 	data.mutex.RLock()
 	defer data.mutex.RUnlock()
 
@@ -176,7 +176,7 @@ func (t *Tracker) cleanupBan(ip string) {
 }
 
 // getVerifcationKeyConn gets the connection for a verification key.
-func (t *Tracker) getVerificationKeyData(key string) *trackerData {
+func (t *Tracker) getVerificationKeyData(key string) *playerData {
 	t.mutex.RLock()
 	defer t.mutex.RUnlock()
 
@@ -187,8 +187,8 @@ func (t *Tracker) getVerificationKeyData(key string) *trackerData {
 	return nil
 }
 
-// getTrackerdData returns trackerdata associated with a connection.
-func (t *Tracker) getTrackerData(c net.Conn) *trackerData {
+// getPlayerData returns playerData associated with a connection.
+func (t *Tracker) getPlayerData(c net.Conn) *playerData {
 	t.mutex.RLock()
 	defer t.mutex.RUnlock()
 
@@ -213,22 +213,22 @@ func (t *Tracker) generateSessionID() []byte {
 
 // assignPool assigns a user to a pool.
 // This method assumes the caller is holding the mutex.
-func (t *Tracker) assignPool(data *trackerData) (int, uint32) {
+func (t *Tracker) assignPool(player *playerData) (int, uint32) {
 	num := 1
 
 	for {
 		if _, ok := t.pools[num]; ok {
-			if t.poolAmounts[num] != data.amount {
+			if t.poolAmounts[num] != player.amount {
 				num = num + 1
 				continue
 			}
 
-			if t.poolVersions[num] != data.version {
+			if t.poolVersions[num] != player.version {
 				num = num + 1
 				continue
 			}
 
-			if t.poolTypes[num] != data.shuffleType {
+			if t.poolTypes[num] != player.shuffleType {
 				num = num + 1
 				continue
 			}
@@ -244,11 +244,11 @@ func (t *Tracker) assignPool(data *trackerData) (int, uint32) {
 
 	playerNum := uint32(1)
 	if _, ok := t.pools[num]; !ok {
-		t.pools[num] = make(map[uint32]*trackerData)
-		t.pools[num][1] = data
-		t.poolAmounts[num] = data.amount
-		t.poolVersions[num] = data.version
-		t.poolTypes[num] = data.shuffleType
+		t.pools[num] = make(map[uint32]*playerData)
+		t.pools[num][1] = player
+		t.poolAmounts[num] = player.amount
+		t.poolVersions[num] = player.version
+		t.poolTypes[num] = player.shuffleType
 	} else {
 		for {
 			if _, ok := t.pools[num][playerNum]; ok {
@@ -259,7 +259,7 @@ func (t *Tracker) assignPool(data *trackerData) (int, uint32) {
 			break
 		}
 
-		t.pools[num][playerNum] = data
+		t.pools[num][playerNum] = player
 	}
 
 	if len(t.pools[num]) == t.poolSize {
@@ -270,33 +270,33 @@ func (t *Tracker) assignPool(data *trackerData) (int, uint32) {
 }
 
 // decreasePoolSize decreases the pool size being
-// tracked in trackerData after a blame occurs.
+// tracked in playerData after a blame occurs.
 func (t *Tracker) decreasePoolSize(pool int) {
 	t.mutex.RLock()
 	defer t.mutex.RUnlock()
 
-	for _, td := range t.pools[pool] {
-		if td == nil {
+	for _, player := range t.pools[pool] {
+		if player == nil {
 			continue
 		}
 
-		td.mutex.Lock()
-		defer td.mutex.Unlock()
+		player.mutex.Lock()
+		defer player.mutex.Unlock()
 
-		td.poolSize--
+		player.poolSize--
 	}
 }
 
 // unassignPool removes a user from a pool.
 // This method assumes the caller is holding the mutex.
-func (t *Tracker) unassignPool(td *trackerData) {
-	delete(t.pools[td.pool], td.number)
+func (t *Tracker) unassignPool(player *playerData) {
+	delete(t.pools[player.pool], player.number)
 
-	if len(t.pools[td.pool]) == 0 {
-		delete(t.pools, td.pool)
-		delete(t.fullPools, td.pool)
-		delete(t.poolAmounts, td.pool)
-		delete(t.poolVersions, td.pool)
-		delete(t.poolTypes, td.pool)
+	if len(t.pools[player.pool]) == 0 {
+		delete(t.pools, player.pool)
+		delete(t.fullPools, player.pool)
+		delete(t.poolAmounts, player.pool)
+		delete(t.poolVersions, player.pool)
+		delete(t.poolTypes, player.pool)
 	}
 }
