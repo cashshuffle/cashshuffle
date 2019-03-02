@@ -46,7 +46,7 @@ type banData struct {
 
 // trackerData is data needed about each connection.
 type trackerData struct {
-	mutex           sync.Mutex
+	mutex           sync.RWMutex
 	sessionID       []byte
 	number          uint32
 	conn            net.Conn
@@ -111,24 +111,24 @@ func (t *Tracker) remove(conn net.Conn) {
 
 // banned returns true if the player has been banned.
 func (t *Tracker) banned(data *trackerData) bool {
-	data.mutex.Lock()
-	defer data.mutex.Unlock()
+	data.mutex.RLock()
+	defer data.mutex.RUnlock()
 
 	return data.poolSize <= (len(data.bannedBy) + 1)
 }
 
 // count returns the number of connections to the server.
 func (t *Tracker) count() int {
-	t.mutex.Lock()
-	defer t.mutex.Unlock()
+	t.mutex.RLock()
+	defer t.mutex.RUnlock()
 
 	return len(t.connections)
 }
 
 // bannedIP returns true if the player has been banned from the server.
 func (t *Tracker) bannedIP(conn net.Conn) bool {
-	t.mutex.Lock()
-	defer t.mutex.Unlock()
+	t.mutex.RLock()
+	defer t.mutex.RUnlock()
 
 	ip, _, _ := net.SplitHostPort(conn.RemoteAddr().String())
 
@@ -177,8 +177,8 @@ func (t *Tracker) cleanupBan(ip string) {
 
 // getVerifcationKeyConn gets the connection for a verification key.
 func (t *Tracker) getVerificationKeyData(key string) *trackerData {
-	t.mutex.Lock()
-	defer t.mutex.Unlock()
+	t.mutex.RLock()
+	defer t.mutex.RUnlock()
 
 	if _, ok := t.verificationKeys[key]; ok {
 		return t.connections[t.verificationKeys[key]]
@@ -189,16 +189,16 @@ func (t *Tracker) getVerificationKeyData(key string) *trackerData {
 
 // getTrackerdData returns trackerdata associated with a connection.
 func (t *Tracker) getTrackerData(c net.Conn) *trackerData {
-	t.mutex.Lock()
-	defer t.mutex.Unlock()
+	t.mutex.RLock()
+	defer t.mutex.RUnlock()
 
 	return t.connections[c]
 }
 
 // getPoolSize returns the pool size for the connection.
 func (t *Tracker) getPoolSize(pool int) int {
-	t.mutex.Lock()
-	defer t.mutex.Unlock()
+	t.mutex.RLock()
+	defer t.mutex.RUnlock()
 
 	return len(t.pools[pool])
 }
@@ -272,8 +272,8 @@ func (t *Tracker) assignPool(data *trackerData) (int, uint32) {
 // decreasePoolSize decreases the pool size being
 // tracked in trackerData after a blame occurs.
 func (t *Tracker) decreasePoolSize(pool int) {
-	t.mutex.Lock()
-	defer t.mutex.Unlock()
+	t.mutex.RLock()
+	defer t.mutex.RUnlock()
 
 	for _, td := range t.pools[pool] {
 		if td == nil {
