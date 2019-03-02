@@ -55,7 +55,7 @@ func TestTrackStats(t *testing.T) {
 		shuffleWebSocketPort:    3001,
 		torShufflePort:          3002,
 		torShuffleWebSocketPort: 3003,
-		bannedIPs: map[string]*banData{
+		ipBanData: map[string]*banData{
 			"8.8.8.8": {
 				score: maxBanScore,
 			},

@@ -6,8 +6,8 @@ import (
 	"github.com/cashshuffle/cashshuffle/message"
 )
 
-// checkBanMessage checks to see if the player has sent a ban.
-func (pi *packetInfo) checkBanMessage() error {
+// checkBlameMessage checks if the player has sent a blame and handles it.
+func (pi *packetInfo) checkBlameMessage() error {
 	if len(pi.message.Packet) != 1 {
 		return nil
 	}
@@ -24,11 +24,11 @@ func (pi *packetInfo) checkBanMessage() error {
 	}
 
 	if packet.Message.Blame.Reason == message.Reason_LIAR {
-		banKey := packet.Message.Blame.Accused.String()
-		bannedTrackerData := pi.tracker.getVerificationKeyData(banKey)
+		blamedKey := packet.Message.Blame.Accused.String()
+		blamed := pi.tracker.getVerificationKeyPlayer(blamedKey)
 
-		if bannedTrackerData == nil {
-			return errors.New("invalid ban")
+		if blamed == nil {
+			return errors.New("invalid blame")
 		}
 
 		player := pi.tracker.getPlayerData(pi.conn)
@@ -36,16 +36,16 @@ func (pi *packetInfo) checkBanMessage() error {
 			return nil
 		}
 
-		bannedTrackerData.mutex.Lock()
-		bannedTrackerData.bannedBy[player.verificationKey] = nil
-		bannedTrackerData.mutex.Unlock()
+		blamed.mutex.Lock()
+		blamed.blamedBy[player.verificationKey] = nil
+		blamed.mutex.Unlock()
 
-		if pi.tracker.banned(bannedTrackerData) {
-			pi.tracker.banIP(bannedTrackerData.conn)
-			pi.tracker.decreasePoolSize(player.pool)
+		if pi.tracker.bannedByPool(blamed) {
+			pi.tracker.increaseBanScore(blamed.conn)
+			pi.tracker.decreaseVoters(player.pool)
 		}
 
-		return errors.New("player banned")
+		return errors.New(blamedString)
 	}
 
 	return nil

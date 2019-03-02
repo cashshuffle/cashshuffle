@@ -16,26 +16,26 @@ const (
 	// banScoreTick is the ban score increment on each pool ban.
 	banScoreTick = 1
 
-	// maxBanScore is the score the connection much reach to
+	// maxBanScore is the score the connection must reach to
 	// be banned by IP.
 	maxBanScore = 3
 )
 
 // Tracker is used to track connections to the server.
 type Tracker struct {
-	bannedIPs               map[string]*banData
-	connections             map[net.Conn]*playerData
-	verificationKeys        map[string]net.Conn
-	mutex                   sync.RWMutex
-	pools                   map[int]map[uint32]*playerData
-	poolAmounts             map[int]uint64
-	poolVersions            map[int]uint64
-	poolTypes               map[int]message.ShuffleType
-	poolSize                int
-	fullPools               map[int]interface{}
-	shufflePort             int
-	shuffleWebSocketPort    int
-	torShufflePort          int
+	ipBanData            map[string]*banData
+	connections          map[net.Conn]*playerData
+	verificationKeys     map[string]net.Conn
+	mutex                sync.RWMutex
+	pools                map[int]map[uint32]*playerData
+	poolAmounts          map[int]uint64
+	poolVersions         map[int]uint64
+	poolTypes            map[int]message.ShuffleType
+	poolSize             int
+	fullPools            map[int]interface{}
+	shufflePort          int
+	shuffleWebSocketPort int
+	torShufflePort       int
 	torShuffleWebSocketPort int
 }
 
@@ -52,8 +52,8 @@ type playerData struct {
 	conn            net.Conn
 	verificationKey string
 	pool            int
-	poolSize        int
-	bannedBy        map[string]interface{}
+	poolVoterCount  int
+	blamedBy        map[string]interface{}
 	amount          uint64
 	version         uint64
 	shuffleType     message.ShuffleType
@@ -62,17 +62,17 @@ type playerData struct {
 // NewTracker instantiates a new tracker
 func NewTracker(poolSize int, shufflePort int, shuffleWebSocketPort int, torShufflePort int, torShuffleWebSocketPort int) *Tracker {
 	return &Tracker{
-		poolSize:                poolSize,
-		bannedIPs:               make(map[string]*banData),
-		connections:             make(map[net.Conn]*playerData),
-		verificationKeys:        make(map[string]net.Conn),
-		pools:                   make(map[int]map[uint32]*playerData),
-		poolAmounts:             make(map[int]uint64),
-		poolVersions:            make(map[int]uint64),
-		poolTypes:               make(map[int]message.ShuffleType),
-		fullPools:               make(map[int]interface{}),
-		shufflePort:             shufflePort,
-		shuffleWebSocketPort:    shuffleWebSocketPort,
+		poolSize:             poolSize,
+		ipBanData:            make(map[string]*banData),
+		connections:          make(map[net.Conn]*playerData),
+		verificationKeys:     make(map[string]net.Conn),
+		pools:                make(map[int]map[uint32]*playerData),
+		poolAmounts:          make(map[int]uint64),
+		poolVersions:         make(map[int]uint64),
+		poolTypes:            make(map[int]message.ShuffleType),
+		fullPools:            make(map[int]interface{}),
+		shufflePort:          shufflePort,
+		shuffleWebSocketPort: shuffleWebSocketPort,
 		torShufflePort:          torShufflePort,
 		torShuffleWebSocketPort: torShuffleWebSocketPort,
 	}
@@ -109,12 +109,15 @@ func (t *Tracker) remove(conn net.Conn) {
 	}
 }
 
-// banned returns true if the player has been banned.
-func (t *Tracker) banned(data *playerData) bool {
-	data.mutex.RLock()
-	defer data.mutex.RUnlock()
+// bannedByPool returns true if the player has been banned by their pool.
+func (t *Tracker) bannedByPool(player *playerData) bool {
+	player.mutex.RLock()
+	defer player.mutex.RUnlock()
 
-	return data.poolSize <= (len(data.bannedBy) + 1)
+	selfVote := 1
+	blameCount := len(player.blamedBy)
+	banMinThreshold := player.poolVoterCount - selfVote
+	return blameCount >= banMinThreshold
 }
 
 // count returns the number of connections to the server.
@@ -125,14 +128,14 @@ func (t *Tracker) count() int {
 	return len(t.connections)
 }
 
-// bannedIP returns true if the player has been banned from the server.
-func (t *Tracker) bannedIP(conn net.Conn) bool {
+// bannedByIP returns true if the player has been banned from the server.
+func (t *Tracker) bannedByIP(conn net.Conn) bool {
 	t.mutex.RLock()
 	defer t.mutex.RUnlock()
 
 	ip, _, _ := net.SplitHostPort(conn.RemoteAddr().String())
 
-	banData := t.bannedIPs[ip]
+	banData := t.ipBanData[ip]
 	if banData != nil && banData.score >= maxBanScore {
 		return true
 	}
@@ -140,17 +143,17 @@ func (t *Tracker) bannedIP(conn net.Conn) bool {
 	return false
 }
 
-// banIP bans an IP on the server.
-func (t *Tracker) banIP(conn net.Conn) {
+// increaseBanScore increases the ban score of a connection.
+func (t *Tracker) increaseBanScore(conn net.Conn) {
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
 
 	ip, _, _ := net.SplitHostPort(conn.RemoteAddr().String())
 
-	if _, ok := t.bannedIPs[ip]; ok {
-		t.bannedIPs[ip].score += banScoreTick
+	if _, ok := t.ipBanData[ip]; ok {
+		t.ipBanData[ip].score += banScoreTick
 	} else {
-		t.bannedIPs[ip] = &banData{
+		t.ipBanData[ip] = &banData{
 			score: banScoreTick,
 		}
 	}
@@ -166,17 +169,17 @@ func (t *Tracker) cleanupBan(ip string) {
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
 
-	if _, ok := t.bannedIPs[ip]; ok {
-		t.bannedIPs[ip].score -= banScoreTick
+	if _, ok := t.ipBanData[ip]; ok {
+		t.ipBanData[ip].score -= banScoreTick
 	}
 
-	if t.bannedIPs[ip].score == 0 {
-		delete(t.bannedIPs, ip)
+	if t.ipBanData[ip].score == 0 {
+		delete(t.ipBanData, ip)
 	}
 }
 
 // getVerifcationKeyConn gets the connection for a verification key.
-func (t *Tracker) getVerificationKeyData(key string) *playerData {
+func (t *Tracker) getVerificationKeyPlayer(key string) *playerData {
 	t.mutex.RLock()
 	defer t.mutex.RUnlock()
 
@@ -269,9 +272,8 @@ func (t *Tracker) assignPool(player *playerData) (int, uint32) {
 	return num, playerNum
 }
 
-// decreasePoolSize decreases the pool size being
-// tracked in playerData after a blame occurs.
-func (t *Tracker) decreasePoolSize(pool int) {
+// decreaseVoters decreases the number of voters in a pool after a pool ban.
+func (t *Tracker) decreaseVoters(pool int) {
 	t.mutex.RLock()
 	defer t.mutex.RUnlock()
 
@@ -283,7 +285,7 @@ func (t *Tracker) decreasePoolSize(pool int) {
 		player.mutex.Lock()
 		defer player.mutex.Unlock()
 
-		player.poolSize--
+		player.poolVoterCount--
 	}
 }
 

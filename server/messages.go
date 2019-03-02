@@ -15,6 +15,7 @@ import (
 
 const (
 	maxMessageLength = 64 * 1024
+	blamedString     = "player blamed"
 )
 
 var (
@@ -70,8 +71,8 @@ func (pi *packetInfo) processReceivedMessage() error {
 		return err
 	}
 
-	if err := pi.checkBanMessage(); err != nil {
-		if err.Error() == "player banned" {
+	if err := pi.checkBlameMessage(); err != nil {
+		if err.Error() == blamedString {
 			return nil
 		}
 		return err

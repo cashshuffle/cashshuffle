@@ -38,7 +38,7 @@ func (pi *packetInfo) broadcastMessage() error {
 				return nil
 			}
 		} else {
-			player := pi.tracker.getVerificationKeyData(strings.TrimLeft(player, playerPrefix))
+			player := pi.tracker.getVerificationKeyPlayer(strings.TrimLeft(player, playerPrefix))
 			if player == nil {
 				pi.broadcastNewRound(true)
 
@@ -73,7 +73,7 @@ func (pi *packetInfo) broadcastAll(msgs []*message.Signed) error {
 	}
 
 	for otherConn, other := range pi.tracker.connections {
-		if (player.pool != other.pool) || pi.tracker.banned(other) {
+		if (player.pool != other.pool) || pi.tracker.bannedByPool(other) {
 			continue
 		}
 
@@ -102,7 +102,7 @@ func (pi *packetInfo) broadcastNewRound(lock bool) {
 	}
 
 	for otherConn, other := range pi.tracker.connections {
-		if player.pool != other.pool || pi.tracker.banned(other) {
+		if player.pool != other.pool || pi.tracker.bannedByPool(other) {
 			continue
 		}
 
@@ -138,7 +138,7 @@ func (pi *packetInfo) announceStart() {
 	}
 
 	for otherConn, other := range pi.tracker.connections {
-		if player.pool != other.pool || pi.tracker.banned(other) {
+		if player.pool != other.pool || pi.tracker.bannedByPool(other) {
 			continue
 		}
 
