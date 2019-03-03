@@ -28,7 +28,7 @@ func (pi *packetInfo) checkBanMessage() error {
 		bannedTrackerData := pi.tracker.getVerificationKeyData(banKey)
 
 		if bannedTrackerData == nil {
-			return errors.New("invalid ban")
+			return nil
 		}
 
 		td := pi.tracker.getTrackerData(pi.conn)

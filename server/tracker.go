@@ -84,20 +84,9 @@ func (t *Tracker) remove(conn net.Conn) {
 
 	td := t.connections[conn]
 	if td != nil {
-		verificationKey := td.verificationKey
-		// Remove the verification key after 15 seconds. This prevents
-		// an error when a user disconnects right after the blame cycle
-		// starts.
-		go func() {
-			time.Sleep(15 * time.Second)
-
-			t.mutex.Lock()
-			defer t.mutex.Unlock()
-
-			if verificationKey != "" {
-				delete(t.verificationKeys, verificationKey)
-			}
-		}()
+		if td.verificationKey != "" {
+			delete(t.verificationKeys, td.verificationKey)
+		}
 
 		t.unassignPool(td)
 
