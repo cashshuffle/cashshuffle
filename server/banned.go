@@ -36,6 +36,10 @@ func (pi *packetInfo) checkBanMessage() error {
 			return nil
 		}
 
+		if bannedTrackerData.pool != td.pool {
+			return errors.New("invalid ban")
+		}
+
 		added := bannedTrackerData.addBannedBy(td.verificationKey)
 		if !added {
 			return nil
