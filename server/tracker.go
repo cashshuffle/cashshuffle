@@ -44,21 +44,6 @@ type banData struct {
 	score uint32
 }
 
-// trackerData is data needed about each connection.
-type trackerData struct {
-	mutex           sync.RWMutex
-	sessionID       []byte
-	number          uint32
-	conn            net.Conn
-	verificationKey string
-	pool            int
-	poolSize        int
-	bannedBy        map[string]interface{}
-	amount          uint64
-	version         uint64
-	shuffleType     message.ShuffleType
-}
-
 // NewTracker instantiates a new tracker
 func NewTracker(poolSize int, shufflePort int, shuffleWebSocketPort int, torShufflePort int, torShuffleWebSocketPort int) *Tracker {
 	return &Tracker{
@@ -99,9 +84,19 @@ func (t *Tracker) remove(conn net.Conn) {
 
 	td := t.connections[conn]
 	if td != nil {
-		if td.verificationKey != "" {
-			delete(t.verificationKeys, td.verificationKey)
-		}
+		// Remove the verification key after 15 seconds. This prevents
+		// an error when a user disconnects right after the blame cycle
+		// starts.
+		go func() {
+			time.Sleep(15 * time.Second)
+
+			t.mutex.Lock()
+			defer t.mutex.Unlock()
+
+			if td.verificationKey != "" {
+				delete(t.verificationKeys, td.verificationKey)
+			}
+		}()
 
 		t.unassignPool(td)
 
