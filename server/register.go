@@ -23,7 +23,6 @@ func (pi *packetInfo) registerClient() error {
 					amount:          registration.GetAmount(),
 					shuffleType:     registration.GetType(),
 					version:         registration.GetVersion(),
-					poolSize:        pi.tracker.poolSize,
 				}
 				pi.tracker.add(&td)
 

@@ -15,7 +15,6 @@ type trackerData struct {
 	conn            net.Conn
 	verificationKey string
 	pool            int
-	poolSize        int
 	bannedBy        map[string]interface{}
 	amount          uint64
 	version         uint64
