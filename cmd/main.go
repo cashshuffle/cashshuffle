@@ -35,10 +35,8 @@ var MainCmd = &cobra.Command{
 	Short: "CashShuffle server.",
 	Long:  `CashShuffle server.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		err := performCommand(cmd, args)
-		if err != nil {
-			bail(err)
-		}
+		errChan := performCommand(cmd, args)
+		handleServerErrors(errChan)
 	},
 }
 
@@ -122,47 +120,65 @@ func prepareFlags() {
 }
 
 // Where all the work happens.
-func performCommand(cmd *cobra.Command, args []string) error {
+func performCommand(cmd *cobra.Command, args []string) chan error {
+	errChan := make(chan error)
+
 	if config.DisplayVersion {
 		fmt.Printf("%s %s\n", appName, version)
-		return nil
+		os.Exit(0)
 	}
 
 	if config.AutoCert != "" && (config.Cert != "" || config.Key != "") {
-		return errors.New("can't specify auto-cert and key/cert")
+		errChan <- errors.New("can't specify auto-cert and key/cert")
+		return errChan
 	}
 
 	t := server.NewTracker(config.PoolSize, config.Port, config.WebSocketPort, config.TorPort, config.TorWebSocketPort)
 
 	m, err := getLetsEncryptManager()
 	if err != nil {
-		return err
+		errChan <- err
+		return errChan
 	}
 
 	// enable stats if port specified
 	if config.StatsPort > 0 {
-		go server.StartStatsServer(config.BindIP, config.StatsPort, config.Cert, config.Key, t, m, false)
+		go func() {
+			errChan <- server.StartStatsServer(config.BindIP, config.StatsPort, config.Cert, config.Key, t, m, false)
+		}()
 	}
 
 	if config.Tor && config.TorStatsPort > 0 {
-		go server.StartStatsServer(config.TorBindIP, config.TorStatsPort, "", "", t, nil, true)
+		go func() {
+			errChan <- server.StartStatsServer(config.TorBindIP, config.TorStatsPort, "", "", t, nil, true)
+		}()
 	}
 
 	// enable websocket port if specified.
 	if config.WebSocketPort > 0 {
-		go server.StartWebsocket(config.BindIP, config.WebSocketPort, config.Cert, config.Key, config.Debug, t, m, false)
+		go func() {
+			errChan <- server.StartWebsocket(config.BindIP, config.WebSocketPort, config.Cert, config.Key, config.Debug, t, m, false)
+		}()
 	}
 
 	if config.Tor && config.TorWebSocketPort > 0 {
-		go server.StartWebsocket(config.TorBindIP, config.TorWebSocketPort, "", "", config.Debug, t, nil, true)
+		go func() {
+			errChan <- server.StartWebsocket(config.TorBindIP, config.TorWebSocketPort, "", "", config.Debug, t, nil, true)
+		}()
 	}
 
 	// enable tor server if specified.
 	if config.Tor {
-		go server.Start(config.TorBindIP, config.TorPort, "", "", config.Debug, t, nil, true)
+		go func() {
+			errChan <- server.Start(config.TorBindIP, config.TorPort, "", "", config.Debug, t, nil, true)
+		}()
 	}
 
-	return server.Start(config.BindIP, config.Port, config.Cert, config.Key, config.Debug, t, m, false)
+	go func() {
+		errChan <- server.Start(config.BindIP, config.Port, config.Cert, config.Key, config.Debug, t, m, false)
+	}()
+
+	return errChan
 }
 
 func getLetsEncryptManager() (*autocert.Manager, error) {
@@ -192,4 +208,12 @@ func getLetsEncryptManager() (*autocert.Manager, error) {
 	go http.ListenAndServe(":http", m.HTTPHandler(nil))
 
 	return m, nil
+}
+
+func handleServerErrors(c chan error) {
+	for err := range c {
+		if err != nil {
+			bail(err)
+		}
+	}
 }
