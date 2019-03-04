@@ -72,9 +72,6 @@ func (pi *packetInfo) processReceivedMessage() error {
 	}
 
 	if err := pi.checkBlameMessage(); err != nil {
-		if err.Error() == playerBlamedErrorMessage {
-			return nil
-		}
 		return err
 	}
 

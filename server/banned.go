@@ -6,10 +6,6 @@ import (
 	"github.com/cashshuffle/cashshuffle/message"
 )
 
-const (
-	playerBlamedErrorMessage = "player blamed"
-)
-
 // checkBlameMessage checks to see if the player has sent a blame.
 func (pi *packetInfo) checkBlameMessage() error {
 	if len(pi.message.Packet) != 1 {
@@ -53,8 +49,6 @@ func (pi *packetInfo) checkBlameMessage() error {
 			pi.tracker.increaseBanScore(accused.conn)
 			pi.tracker.decreasePoolVoters(blamer.pool)
 		}
-
-		return errors.New(playerBlamedErrorMessage)
 	}
 
 	return nil
