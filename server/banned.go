@@ -40,7 +40,7 @@ func (pi *packetInfo) checkBlameMessage() error {
 			return errors.New("invalid ban")
 		}
 
-		added := accused.addBlamedBy(blamer.verificationKey)
+		added := accused.addBlame(blamer.verificationKey)
 		if !added {
 			return nil
 		}

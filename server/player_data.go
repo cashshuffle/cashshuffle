@@ -21,8 +21,8 @@ type playerData struct {
 	shuffleType     message.ShuffleType
 }
 
-// addBlamedBy adds a verification key to the blamedBy map.
-func (p *playerData) addBlamedBy(verificationKey string) bool {
+// addBlame adds a verification key to the blamedBy map.
+func (p *playerData) addBlame(verificationKey string) bool {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
