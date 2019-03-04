@@ -28,8 +28,8 @@ func (pi *packetInfo) broadcastMessage() error {
 		}
 	}
 
-	for player, msgs := range msgMap {
-		if player == broadcastKey {
+	for vk, msgs := range msgMap {
+		if vk == broadcastKey {
 			err := pi.broadcastAll(msgs)
 			if err != nil {
 				pi.broadcastNewRound(true)
@@ -38,15 +38,15 @@ func (pi *packetInfo) broadcastMessage() error {
 				return nil
 			}
 		} else {
-			td := pi.tracker.getVerificationKeyData(strings.TrimLeft(player, playerPrefix))
-			if td == nil {
+			player := pi.tracker.playerByVerificationKey(strings.TrimLeft(vk, playerPrefix))
+			if player == nil {
 				pi.broadcastNewRound(true)
 
 				// Don't disconnect
 				return nil
 			}
 
-			err := writeMessage(td.conn, msgs)
+			err := writeMessage(player.conn, msgs)
 			if err != nil {
 				pi.broadcastNewRound(true)
 
@@ -64,16 +64,16 @@ func (pi *packetInfo) broadcastAll(msgs []*message.Signed) error {
 	pi.tracker.mutex.RLock()
 	defer pi.tracker.mutex.RUnlock()
 
-	playerData := pi.tracker.connections[pi.conn]
+	sender := pi.tracker.connections[pi.conn]
 
 	// If the user has disconnected, then no need to send
 	// the broadcast.
-	if playerData == nil {
+	if sender == nil {
 		return nil
 	}
 
-	for conn, td := range pi.tracker.connections {
-		if (playerData.pool != td.pool) || pi.tracker.banned(td) {
+	for conn, player := range pi.tracker.connections {
+		if (sender.pool != player.pool) || pi.tracker.banned(player) {
 			continue
 		}
 
@@ -93,23 +93,23 @@ func (pi *packetInfo) broadcastNewRound(lock bool) {
 		defer pi.tracker.mutex.RUnlock()
 	}
 
-	playerData := pi.tracker.connections[pi.conn]
+	sender := pi.tracker.connections[pi.conn]
 
 	// If the user has disconnected, then no need to send
 	// the broadcast.
-	if playerData == nil {
+	if sender == nil {
 		return
 	}
 
-	for conn, td := range pi.tracker.connections {
-		if playerData.pool != td.pool || pi.tracker.banned(td) {
+	for conn, player := range pi.tracker.connections {
+		if sender.pool != player.pool || pi.tracker.banned(player) {
 			continue
 		}
 
 		m := message.Signed{
 			Packet: &message.Packet{
-				Session: td.sessionID,
-				Number:  td.number,
+				Session: player.sessionID,
+				Number:  player.number,
 				Message: &message.Message{
 					Str: "New round",
 				},
@@ -129,16 +129,16 @@ func (pi *packetInfo) announceStart() {
 	pi.tracker.mutex.RLock()
 	defer pi.tracker.mutex.RUnlock()
 
-	playerData := pi.tracker.connections[pi.conn]
+	sender := pi.tracker.connections[pi.conn]
 
 	// If the user has disconnected, then no need to send
 	// the broadcast.
-	if playerData == nil {
+	if sender == nil {
 		return
 	}
 
-	for conn, td := range pi.tracker.connections {
-		if playerData.pool != td.pool || pi.tracker.banned(td) {
+	for conn, player := range pi.tracker.connections {
+		if sender.pool != player.pool || pi.tracker.banned(player) {
 			continue
 		}
 
@@ -159,10 +159,10 @@ func (pi *packetInfo) announceStart() {
 	}
 }
 
-func (pi *packetInfo) broadcastJoinedPool(td *playerData) error {
+func (pi *packetInfo) broadcastJoinedPool(p *playerData) error {
 	m := message.Signed{
 		Packet: &message.Packet{
-			Number: td.number,
+			Number: p.number,
 		},
 	}
 

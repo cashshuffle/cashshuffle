@@ -67,17 +67,17 @@ func NewTracker(poolSize int, shufflePort int, shuffleWebSocketPort int, torShuf
 }
 
 // add adds a connection to the tracker.
-func (t *Tracker) add(data *playerData) {
+func (t *Tracker) add(p *playerData) {
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
 
-	t.verificationKeys[data.verificationKey] = data.conn
+	t.verificationKeys[p.verificationKey] = p.conn
 
-	data.sessionID = t.generateSessionID()
+	p.sessionID = t.generateSessionID()
 
-	t.connections[data.conn] = data
+	t.connections[p.conn] = p
 
-	data.pool, data.number = t.assignPool(data)
+	p.pool, p.number = t.assignPool(p)
 }
 
 // remove removes the connection.
@@ -85,24 +85,24 @@ func (t *Tracker) remove(conn net.Conn) {
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
 
-	td := t.connections[conn]
-	if td != nil {
-		if td.verificationKey != "" {
-			delete(t.verificationKeys, td.verificationKey)
+	player := t.connections[conn]
+	if player != nil {
+		if player.verificationKey != "" {
+			delete(t.verificationKeys, player.verificationKey)
 		}
 
-		t.unassignPool(td)
+		t.unassignPool(player)
 
 		delete(t.connections, conn)
 	}
 }
 
 // banned returns true if the player has been banned.
-func (t *Tracker) banned(data *playerData) bool {
+func (t *Tracker) banned(p *playerData) bool {
 	t.mutex.RLock()
 	defer t.mutex.RUnlock()
 
-	return t.poolSizes[data.pool] <= (len(data.bannedBy) + 1)
+	return t.poolSizes[p.pool] <= (len(p.bannedBy) + 1)
 }
 
 // count returns the number of connections to the server.
@@ -163,8 +163,8 @@ func (t *Tracker) cleanupBan(ip string) {
 	}
 }
 
-// getVerifcationKeyConn gets the connection for a verification key.
-func (t *Tracker) getVerificationKeyData(key string) *playerData {
+// playerByVerificationKey gets the player for a verification key.
+func (t *Tracker) playerByVerificationKey(key string) *playerData {
 	t.mutex.RLock()
 	defer t.mutex.RUnlock()
 
@@ -175,8 +175,8 @@ func (t *Tracker) getVerificationKeyData(key string) *playerData {
 	return nil
 }
 
-// getTrackerdData returns trackerdata associated with a connection.
-func (t *Tracker) getTrackerData(c net.Conn) *playerData {
+// playerByConnection gets the player for a connection.
+func (t *Tracker) playerByConnection(c net.Conn) *playerData {
 	t.mutex.RLock()
 	defer t.mutex.RUnlock()
 
@@ -201,22 +201,22 @@ func (t *Tracker) generateSessionID() []byte {
 
 // assignPool assigns a user to a pool.
 // This method assumes the caller is holding the mutex.
-func (t *Tracker) assignPool(data *playerData) (int, uint32) {
+func (t *Tracker) assignPool(p *playerData) (int, uint32) {
 	num := 1
 
 	for {
 		if _, ok := t.pools[num]; ok {
-			if t.poolAmounts[num] != data.amount {
+			if t.poolAmounts[num] != p.amount {
 				num = num + 1
 				continue
 			}
 
-			if t.poolVersions[num] != data.version {
+			if t.poolVersions[num] != p.version {
 				num = num + 1
 				continue
 			}
 
-			if t.poolTypes[num] != data.shuffleType {
+			if t.poolTypes[num] != p.shuffleType {
 				num = num + 1
 				continue
 			}
@@ -233,11 +233,11 @@ func (t *Tracker) assignPool(data *playerData) (int, uint32) {
 	playerNum := uint32(1)
 	if _, ok := t.pools[num]; !ok {
 		t.pools[num] = make(map[uint32]*playerData)
-		t.pools[num][1] = data
-		t.poolAmounts[num] = data.amount
+		t.pools[num][1] = p
+		t.poolAmounts[num] = p.amount
 		t.poolSizes[num] = t.poolSize
-		t.poolVersions[num] = data.version
-		t.poolTypes[num] = data.shuffleType
+		t.poolVersions[num] = p.version
+		t.poolTypes[num] = p.shuffleType
 	} else {
 		for {
 			if _, ok := t.pools[num][playerNum]; ok {
@@ -248,7 +248,7 @@ func (t *Tracker) assignPool(data *playerData) (int, uint32) {
 			break
 		}
 
-		t.pools[num][playerNum] = data
+		t.pools[num][playerNum] = p
 	}
 
 	if len(t.pools[num]) == t.poolSize {
@@ -269,15 +269,15 @@ func (t *Tracker) decreasePoolSize(pool int) {
 
 // unassignPool removes a user from a pool.
 // This method assumes the caller is holding the mutex.
-func (t *Tracker) unassignPool(td *playerData) {
-	delete(t.pools[td.pool], td.number)
+func (t *Tracker) unassignPool(p *playerData) {
+	delete(t.pools[p.pool], p.number)
 
-	if len(t.pools[td.pool]) == 0 {
-		delete(t.pools, td.pool)
-		delete(t.fullPools, td.pool)
-		delete(t.poolAmounts, td.pool)
-		delete(t.poolSizes, td.pool)
-		delete(t.poolVersions, td.pool)
-		delete(t.poolTypes, td.pool)
+	if len(t.pools[p.pool]) == 0 {
+		delete(t.pools, p.pool)
+		delete(t.fullPools, p.pool)
+		delete(t.poolAmounts, p.pool)
+		delete(t.poolSizes, p.pool)
+		delete(t.poolVersions, p.pool)
+		delete(t.poolTypes, p.pool)
 	}
 }

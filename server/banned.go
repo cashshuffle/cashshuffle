@@ -29,29 +29,29 @@ func (pi *packetInfo) checkBanMessage() error {
 
 	if packet.Message.Blame.Reason == message.Reason_LIAR {
 		banKey := packet.Message.Blame.Accused.String()
-		bannedTrackerData := pi.tracker.getVerificationKeyData(banKey)
+		banned := pi.tracker.playerByVerificationKey(banKey)
 
-		if bannedTrackerData == nil {
+		if banned == nil {
 			return nil
 		}
 
-		td := pi.tracker.getTrackerData(pi.conn)
-		if td == nil {
+		blamer := pi.tracker.playerByConnection(pi.conn)
+		if blamer == nil {
 			return nil
 		}
 
-		if bannedTrackerData.pool != td.pool {
+		if banned.pool != blamer.pool {
 			return errors.New("invalid ban")
 		}
 
-		added := bannedTrackerData.addBannedBy(td.verificationKey)
+		added := banned.addBannedBy(blamer.verificationKey)
 		if !added {
 			return nil
 		}
 
-		if pi.tracker.banned(bannedTrackerData) {
-			pi.tracker.banIP(bannedTrackerData.conn)
-			pi.tracker.decreasePoolSize(td.pool)
+		if pi.tracker.banned(banned) {
+			pi.tracker.banIP(banned.conn)
+			pi.tracker.decreasePoolSize(blamer.pool)
 		}
 
 		return errors.New(playerBannedErrorMessage)
