@@ -15,7 +15,7 @@ import (
 
 const (
 	appName                 = "cashshuffle"
-	version                 = "0.6.1"
+	version                 = "0.6.2"
 	defaultPort             = 1337
 	defaultWebSocketPort    = 1338
 	defaultTorPort          = 1339
@@ -211,7 +211,7 @@ func getLetsEncryptManager() (*autocert.Manager, error) {
 }
 
 func handleServerErrors(c chan error) {
-	err := <- c
+	err := <-c
 	if err != nil {
 		bail(err)
 	}
