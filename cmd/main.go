@@ -211,9 +211,8 @@ func getLetsEncryptManager() (*autocert.Manager, error) {
 }
 
 func handleServerErrors(c chan error) {
-	for err := range c {
-		if err != nil {
-			bail(err)
-		}
+	err := <- c
+	if err != nil {
+		bail(err)
 	}
 }
