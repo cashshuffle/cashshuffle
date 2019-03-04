@@ -11,7 +11,7 @@ import (
 
 const (
 	// banTime is the amount of time to ban an IP.
-	banTime = 30 * time.Minute
+	banTime = 15 * time.Minute
 
 	// banScoreTick is the ban score increment on each pool ban.
 	banScoreTick = 1
