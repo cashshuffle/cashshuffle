@@ -24,7 +24,7 @@ const (
 
 // Tracker is used to track connections to the server.
 type Tracker struct {
-	bannedIPs               map[string]*banData
+	banDatas                map[string]*banData
 	connections             map[net.Conn]*playerData
 	verificationKeys        map[string]net.Conn
 	mutex                   sync.RWMutex
@@ -50,7 +50,7 @@ type banData struct {
 func NewTracker(poolSize int, shufflePort int, shuffleWebSocketPort int, torShufflePort int, torShuffleWebSocketPort int) *Tracker {
 	return &Tracker{
 		poolSize:                poolSize,
-		bannedIPs:               make(map[string]*banData),
+		banDatas:                make(map[string]*banData),
 		connections:             make(map[net.Conn]*playerData),
 		verificationKeys:        make(map[string]net.Conn),
 		pools:                   make(map[int]map[uint32]*playerData),
@@ -97,12 +97,12 @@ func (t *Tracker) remove(conn net.Conn) {
 	}
 }
 
-// banned returns true if the player has been banned.
-func (t *Tracker) banned(p *playerData) bool {
+// bannedByPool returns true if the player has been banned by their pool.
+func (t *Tracker) bannedByPool(p *playerData) bool {
 	t.mutex.RLock()
 	defer t.mutex.RUnlock()
 
-	return t.poolSizes[p.pool] <= (len(p.bannedBy) + 1)
+	return t.poolSizes[p.pool] <= (len(p.blamedBy) + 1)
 }
 
 // count returns the number of connections to the server.
@@ -113,14 +113,14 @@ func (t *Tracker) count() int {
 	return len(t.connections)
 }
 
-// bannedIP returns true if the player has been banned from the server.
-func (t *Tracker) bannedIP(conn net.Conn) bool {
+// bannedByServer returns true if the player has been banned from the server.
+func (t *Tracker) bannedByServer(conn net.Conn) bool {
 	t.mutex.RLock()
 	defer t.mutex.RUnlock()
 
 	ip, _, _ := net.SplitHostPort(conn.RemoteAddr().String())
 
-	banData := t.bannedIPs[ip]
+	banData := t.banDatas[ip]
 	if banData != nil && banData.score >= maxBanScore {
 		return true
 	}
@@ -128,17 +128,17 @@ func (t *Tracker) bannedIP(conn net.Conn) bool {
 	return false
 }
 
-// banIP bans an IP on the server.
-func (t *Tracker) banIP(conn net.Conn) {
+// increaseBanScore increases the ban score for an IP on the server.
+func (t *Tracker) increaseBanScore(conn net.Conn) {
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
 
 	ip, _, _ := net.SplitHostPort(conn.RemoteAddr().String())
 
-	if _, ok := t.bannedIPs[ip]; ok {
-		t.bannedIPs[ip].score += banScoreTick
+	if _, ok := t.banDatas[ip]; ok {
+		t.banDatas[ip].score += banScoreTick
 	} else {
-		t.bannedIPs[ip] = &banData{
+		t.banDatas[ip] = &banData{
 			score: banScoreTick,
 		}
 	}
@@ -154,12 +154,12 @@ func (t *Tracker) cleanupBan(ip string) {
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
 
-	if _, ok := t.bannedIPs[ip]; ok {
-		t.bannedIPs[ip].score -= banScoreTick
+	if _, ok := t.banDatas[ip]; ok {
+		t.banDatas[ip].score -= banScoreTick
 	}
 
-	if t.bannedIPs[ip].score == 0 {
-		delete(t.bannedIPs, ip)
+	if t.banDatas[ip].score == 0 {
+		delete(t.banDatas, ip)
 	}
 }
 

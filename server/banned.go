@@ -7,11 +7,11 @@ import (
 )
 
 const (
-	playerBannedErrorMessage = "player banned"
+	playerBlamedErrorMessage = "player blamed"
 )
 
-// checkBanMessage checks to see if the player has sent a ban.
-func (pi *packetInfo) checkBanMessage() error {
+// checkBlameMessage checks to see if the player has sent a blame.
+func (pi *packetInfo) checkBlameMessage() error {
 	if len(pi.message.Packet) != 1 {
 		return nil
 	}
@@ -28,10 +28,10 @@ func (pi *packetInfo) checkBanMessage() error {
 	}
 
 	if packet.Message.Blame.Reason == message.Reason_LIAR {
-		banKey := packet.Message.Blame.Accused.String()
-		banned := pi.tracker.playerByVerificationKey(banKey)
+		accusedKey := packet.Message.Blame.Accused.String()
+		accused := pi.tracker.playerByVerificationKey(accusedKey)
 
-		if banned == nil {
+		if accused == nil {
 			return nil
 		}
 
@@ -40,21 +40,21 @@ func (pi *packetInfo) checkBanMessage() error {
 			return nil
 		}
 
-		if banned.pool != blamer.pool {
+		if accused.pool != blamer.pool {
 			return errors.New("invalid ban")
 		}
 
-		added := banned.addBannedBy(blamer.verificationKey)
+		added := accused.addBlamedBy(blamer.verificationKey)
 		if !added {
 			return nil
 		}
 
-		if pi.tracker.banned(banned) {
-			pi.tracker.banIP(banned.conn)
+		if pi.tracker.bannedByPool(accused) {
+			pi.tracker.increaseBanScore(accused.conn)
 			pi.tracker.decreasePoolSize(blamer.pool)
 		}
 
-		return errors.New(playerBannedErrorMessage)
+		return errors.New(playerBlamedErrorMessage)
 	}
 
 	return nil

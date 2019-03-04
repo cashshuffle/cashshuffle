@@ -15,22 +15,22 @@ type playerData struct {
 	conn            net.Conn
 	verificationKey string
 	pool            int
-	bannedBy        map[string]interface{}
+	blamedBy        map[string]interface{}
 	amount          uint64
 	version         uint64
 	shuffleType     message.ShuffleType
 }
 
-// addBannedBy adds a verification key to the bannedBy map.
-func (p *playerData) addBannedBy(verificationKey string) bool {
+// addBlamedBy adds a verification key to the blamedBy map.
+func (p *playerData) addBlamedBy(verificationKey string) bool {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
-	if _, ok := p.bannedBy[verificationKey]; ok {
+	if _, ok := p.blamedBy[verificationKey]; ok {
 		return false
 	}
 
-	p.bannedBy[verificationKey] = nil
+	p.blamedBy[verificationKey] = nil
 
 	return true
 }

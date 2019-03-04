@@ -73,7 +73,7 @@ func (pi *packetInfo) broadcastAll(msgs []*message.Signed) error {
 	}
 
 	for conn, player := range pi.tracker.connections {
-		if (sender.pool != player.pool) || pi.tracker.banned(player) {
+		if (sender.pool != player.pool) || pi.tracker.bannedByPool(player) {
 			continue
 		}
 
@@ -102,7 +102,7 @@ func (pi *packetInfo) broadcastNewRound(lock bool) {
 	}
 
 	for conn, player := range pi.tracker.connections {
-		if sender.pool != player.pool || pi.tracker.banned(player) {
+		if sender.pool != player.pool || pi.tracker.bannedByPool(player) {
 			continue
 		}
 
@@ -138,7 +138,7 @@ func (pi *packetInfo) announceStart() {
 	}
 
 	for conn, player := range pi.tracker.connections {
-		if sender.pool != player.pool || pi.tracker.banned(player) {
+		if sender.pool != player.pool || pi.tracker.bannedByPool(player) {
 			continue
 		}
 

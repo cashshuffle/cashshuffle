@@ -71,8 +71,8 @@ func (pi *packetInfo) processReceivedMessage() error {
 		return err
 	}
 
-	if err := pi.checkBanMessage(); err != nil {
-		if err.Error() == playerBannedErrorMessage {
+	if err := pi.checkBlameMessage(); err != nil {
+		if err.Error() == playerBlamedErrorMessage {
 			return nil
 		}
 		return err

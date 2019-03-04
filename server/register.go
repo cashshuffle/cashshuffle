@@ -19,7 +19,7 @@ func (pi *packetInfo) registerClient() error {
 				player := playerData{
 					verificationKey: p.FromKey.String(),
 					conn:            pi.conn,
-					bannedBy:        make(map[string]interface{}),
+					blamedBy:        make(map[string]interface{}),
 					amount:          registration.GetAmount(),
 					shuffleType:     registration.GetType(),
 					version:         registration.GetVersion(),
