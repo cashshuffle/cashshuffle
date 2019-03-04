@@ -7,8 +7,8 @@ import (
 	"github.com/cashshuffle/cashshuffle/message"
 )
 
-// trackerData is data needed about each connection.
-type trackerData struct {
+// playerData is data needed about each connection.
+type playerData struct {
 	mutex           sync.RWMutex
 	sessionID       []byte
 	number          uint32
@@ -22,15 +22,15 @@ type trackerData struct {
 }
 
 // addBannedBy adds a verification key to the bannedBy map.
-func (td *trackerData) addBannedBy(verificationKey string) bool {
-	td.mutex.Lock()
-	defer td.mutex.Unlock()
+func (p *playerData) addBannedBy(verificationKey string) bool {
+	p.mutex.Lock()
+	defer p.mutex.Unlock()
 
-	if _, ok := td.bannedBy[verificationKey]; ok {
+	if _, ok := p.bannedBy[verificationKey]; ok {
 		return false
 	}
 
-	td.bannedBy[verificationKey] = nil
+	p.bannedBy[verificationKey] = nil
 
 	return true
 }

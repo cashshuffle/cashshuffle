@@ -16,7 +16,7 @@ func (pi *packetInfo) registerClient() error {
 			registration := p.GetRegistration()
 
 			if p.FromKey.String() != "" && registration != nil {
-				td := trackerData{
+				td := playerData{
 					verificationKey: p.FromKey.String(),
 					conn:            pi.conn,
 					bannedBy:        make(map[string]interface{}),
@@ -44,7 +44,7 @@ func (pi *packetInfo) registerClient() error {
 }
 
 // registrationSuccess sends a registration success reply.
-func (pi *packetInfo) registrationSuccess(td *trackerData) error {
+func (pi *packetInfo) registrationSuccess(td *playerData) error {
 	m := message.Signed{
 		Packet: &message.Packet{
 			Session: td.sessionID,

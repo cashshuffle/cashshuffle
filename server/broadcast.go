@@ -159,7 +159,7 @@ func (pi *packetInfo) announceStart() {
 	}
 }
 
-func (pi *packetInfo) broadcastJoinedPool(td *trackerData) error {
+func (pi *packetInfo) broadcastJoinedPool(td *playerData) error {
 	m := message.Signed{
 		Packet: &message.Packet{
 			Number: td.number,
