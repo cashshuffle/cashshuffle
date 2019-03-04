@@ -6,8 +6,9 @@ import (
 	"net"
 	"time"
 
-	"github.com/cashshuffle/cashshuffle/message"
 	"github.com/golang/protobuf/proto"
+
+	"github.com/cashshuffle/cashshuffle/message"
 )
 
 const (
