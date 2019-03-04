@@ -30,7 +30,7 @@ type Tracker struct {
 	mutex                   sync.RWMutex
 	pools                   map[int]map[uint32]*playerData
 	poolAmounts             map[int]uint64
-	poolSizes               map[int]int
+	poolVoters              map[int]int
 	poolVersions            map[int]uint64
 	poolTypes               map[int]message.ShuffleType
 	poolSize                int
@@ -55,7 +55,7 @@ func NewTracker(poolSize int, shufflePort int, shuffleWebSocketPort int, torShuf
 		verificationKeys:        make(map[string]net.Conn),
 		pools:                   make(map[int]map[uint32]*playerData),
 		poolAmounts:             make(map[int]uint64),
-		poolSizes:               make(map[int]int),
+		poolVoters:              make(map[int]int),
 		poolVersions:            make(map[int]uint64),
 		poolTypes:               make(map[int]message.ShuffleType),
 		fullPools:               make(map[int]interface{}),
@@ -102,7 +102,7 @@ func (t *Tracker) bannedByPool(p *playerData) bool {
 	t.mutex.RLock()
 	defer t.mutex.RUnlock()
 
-	return t.poolSizes[p.pool] <= (len(p.blamedBy) + 1)
+	return t.poolVoters[p.pool] <= (len(p.blamedBy) + 1)
 }
 
 // count returns the number of connections to the server.
@@ -183,8 +183,8 @@ func (t *Tracker) playerByConnection(c net.Conn) *playerData {
 	return t.connections[c]
 }
 
-// getPoolSize returns the pool size for the connection.
-func (t *Tracker) getPoolSize(pool int) int {
+// playerCount returns the number of players in a pool.
+func (t *Tracker) playerCount(pool int) int {
 	t.mutex.RLock()
 	defer t.mutex.RUnlock()
 
@@ -235,7 +235,7 @@ func (t *Tracker) assignPool(p *playerData) (int, uint32) {
 		t.pools[num] = make(map[uint32]*playerData)
 		t.pools[num][1] = p
 		t.poolAmounts[num] = p.amount
-		t.poolSizes[num] = t.poolSize
+		t.poolVoters[num] = t.poolSize
 		t.poolVersions[num] = p.version
 		t.poolTypes[num] = p.shuffleType
 	} else {
@@ -258,13 +258,12 @@ func (t *Tracker) assignPool(p *playerData) (int, uint32) {
 	return num, playerNum
 }
 
-// decreasePoolSize decreases the pool size being
-// tracked in playerData after a blame occurs.
-func (t *Tracker) decreasePoolSize(pool int) {
+// decreasePoolVoters decreases the voter count for a pool.
+func (t *Tracker) decreasePoolVoters(pool int) {
 	t.mutex.RLock()
 	defer t.mutex.RUnlock()
 
-	t.poolSizes[pool]--
+	t.poolVoters[pool]--
 }
 
 // unassignPool removes a user from a pool.
@@ -276,7 +275,7 @@ func (t *Tracker) unassignPool(p *playerData) {
 		delete(t.pools, p.pool)
 		delete(t.fullPools, p.pool)
 		delete(t.poolAmounts, p.pool)
-		delete(t.poolSizes, p.pool)
+		delete(t.poolVoters, p.pool)
 		delete(t.poolVersions, p.pool)
 		delete(t.poolTypes, p.pool)
 	}

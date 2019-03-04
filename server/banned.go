@@ -51,7 +51,7 @@ func (pi *packetInfo) checkBlameMessage() error {
 
 		if pi.tracker.bannedByPool(accused) {
 			pi.tracker.increaseBanScore(accused.conn)
-			pi.tracker.decreasePoolSize(blamer.pool)
+			pi.tracker.decreasePoolVoters(blamer.pool)
 		}
 
 		return errors.New(playerBlamedErrorMessage)
