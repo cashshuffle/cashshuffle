@@ -61,8 +61,8 @@ func (pi *packetInfo) broadcastMessage() error {
 
 // broadcastAll broadcasts to all participants.
 func (pi *packetInfo) broadcastAll(msgs []*message.Signed) error {
-	pi.tracker.mutex.Lock()
-	defer pi.tracker.mutex.Unlock()
+	pi.tracker.mutex.RLock()
+	defer pi.tracker.mutex.RUnlock()
 
 	playerData := pi.tracker.connections[pi.conn]
 
@@ -89,8 +89,8 @@ func (pi *packetInfo) broadcastAll(msgs []*message.Signed) error {
 // broadcastNewRound broadcasts a new round.
 func (pi *packetInfo) broadcastNewRound(lock bool) {
 	if lock {
-		pi.tracker.mutex.Lock()
-		defer pi.tracker.mutex.Unlock()
+		pi.tracker.mutex.RLock()
+		defer pi.tracker.mutex.RUnlock()
 	}
 
 	playerData := pi.tracker.connections[pi.conn]
@@ -126,8 +126,8 @@ func (pi *packetInfo) broadcastNewRound(lock bool) {
 // announceStart sends an annoucement message if the pool
 // is full.
 func (pi *packetInfo) announceStart() {
-	pi.tracker.mutex.Lock()
-	defer pi.tracker.mutex.Unlock()
+	pi.tracker.mutex.RLock()
+	defer pi.tracker.mutex.RUnlock()
 
 	playerData := pi.tracker.connections[pi.conn]
 

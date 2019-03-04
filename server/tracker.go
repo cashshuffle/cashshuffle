@@ -27,8 +27,9 @@ type Tracker struct {
 	connections             map[net.Conn]*trackerData
 	verificationKeys        map[string]net.Conn
 	mutex                   sync.RWMutex
-	pools                   map[int]map[uint32]interface{}
+	pools                   map[int]map[uint32]*trackerData
 	poolAmounts             map[int]uint64
+	poolSizes               map[int]int
 	poolVersions            map[int]uint64
 	poolTypes               map[int]message.ShuffleType
 	poolSize                int
@@ -44,20 +45,6 @@ type banData struct {
 	score uint32
 }
 
-// trackerData is data needed about each connection.
-type trackerData struct {
-	mutex           sync.Mutex
-	sessionID       []byte
-	number          uint32
-	conn            net.Conn
-	verificationKey string
-	pool            int
-	bannedBy        map[string]interface{}
-	amount          uint64
-	version         uint64
-	shuffleType     message.ShuffleType
-}
-
 // NewTracker instantiates a new tracker
 func NewTracker(poolSize int, shufflePort int, shuffleWebSocketPort int, torShufflePort int, torShuffleWebSocketPort int) *Tracker {
 	return &Tracker{
@@ -65,8 +52,9 @@ func NewTracker(poolSize int, shufflePort int, shuffleWebSocketPort int, torShuf
 		bannedIPs:               make(map[string]*banData),
 		connections:             make(map[net.Conn]*trackerData),
 		verificationKeys:        make(map[string]net.Conn),
-		pools:                   make(map[int]map[uint32]interface{}),
+		pools:                   make(map[int]map[uint32]*trackerData),
 		poolAmounts:             make(map[int]uint64),
+		poolSizes:               make(map[int]int),
 		poolVersions:            make(map[int]uint64),
 		poolTypes:               make(map[int]message.ShuffleType),
 		fullPools:               make(map[int]interface{}),
@@ -110,21 +98,24 @@ func (t *Tracker) remove(conn net.Conn) {
 
 // banned returns true if the player has been banned.
 func (t *Tracker) banned(data *trackerData) bool {
-	return t.poolSize == (len(data.bannedBy) + 1)
+	t.mutex.RLock()
+	defer t.mutex.RUnlock()
+
+	return t.poolSizes[data.pool] <= (len(data.bannedBy) + 1)
 }
 
 // count returns the number of connections to the server.
 func (t *Tracker) count() int {
-	t.mutex.Lock()
-	defer t.mutex.Unlock()
+	t.mutex.RLock()
+	defer t.mutex.RUnlock()
 
 	return len(t.connections)
 }
 
 // bannedIP returns true if the player has been banned from the server.
 func (t *Tracker) bannedIP(conn net.Conn) bool {
-	t.mutex.Lock()
-	defer t.mutex.Unlock()
+	t.mutex.RLock()
+	defer t.mutex.RUnlock()
 
 	ip, _, _ := net.SplitHostPort(conn.RemoteAddr().String())
 
@@ -173,8 +164,8 @@ func (t *Tracker) cleanupBan(ip string) {
 
 // getVerifcationKeyConn gets the connection for a verification key.
 func (t *Tracker) getVerificationKeyData(key string) *trackerData {
-	t.mutex.Lock()
-	defer t.mutex.Unlock()
+	t.mutex.RLock()
+	defer t.mutex.RUnlock()
 
 	if _, ok := t.verificationKeys[key]; ok {
 		return t.connections[t.verificationKeys[key]]
@@ -185,16 +176,16 @@ func (t *Tracker) getVerificationKeyData(key string) *trackerData {
 
 // getTrackerdData returns trackerdata associated with a connection.
 func (t *Tracker) getTrackerData(c net.Conn) *trackerData {
-	t.mutex.Lock()
-	defer t.mutex.Unlock()
+	t.mutex.RLock()
+	defer t.mutex.RUnlock()
 
 	return t.connections[c]
 }
 
 // getPoolSize returns the pool size for the connection.
 func (t *Tracker) getPoolSize(pool int) int {
-	t.mutex.Lock()
-	defer t.mutex.Unlock()
+	t.mutex.RLock()
+	defer t.mutex.RUnlock()
 
 	return len(t.pools[pool])
 }
@@ -240,9 +231,10 @@ func (t *Tracker) assignPool(data *trackerData) (int, uint32) {
 
 	playerNum := uint32(1)
 	if _, ok := t.pools[num]; !ok {
-		t.pools[num] = make(map[uint32]interface{})
-		t.pools[num][1] = nil
+		t.pools[num] = make(map[uint32]*trackerData)
+		t.pools[num][1] = data
 		t.poolAmounts[num] = data.amount
+		t.poolSizes[num] = t.poolSize
 		t.poolVersions[num] = data.version
 		t.poolTypes[num] = data.shuffleType
 	} else {
@@ -255,7 +247,7 @@ func (t *Tracker) assignPool(data *trackerData) (int, uint32) {
 			break
 		}
 
-		t.pools[num][playerNum] = nil
+		t.pools[num][playerNum] = data
 	}
 
 	if len(t.pools[num]) == t.poolSize {
@@ -263,6 +255,15 @@ func (t *Tracker) assignPool(data *trackerData) (int, uint32) {
 	}
 
 	return num, playerNum
+}
+
+// decreasePoolSize decreases the pool size being
+// tracked in trackerData after a blame occurs.
+func (t *Tracker) decreasePoolSize(pool int) {
+	t.mutex.RLock()
+	defer t.mutex.RUnlock()
+
+	t.poolSizes[pool]--
 }
 
 // unassignPool removes a user from a pool.
@@ -274,6 +275,7 @@ func (t *Tracker) unassignPool(td *trackerData) {
 		delete(t.pools, td.pool)
 		delete(t.fullPools, td.pool)
 		delete(t.poolAmounts, td.pool)
+		delete(t.poolSizes, td.pool)
 		delete(t.poolVersions, td.pool)
 		delete(t.poolTypes, td.pool)
 	}

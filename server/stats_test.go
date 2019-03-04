@@ -21,7 +21,7 @@ func TestTrackStats(t *testing.T) {
 			&fakeConn{}: {},
 			&fakeConn{}: {},
 		},
-		pools: map[int]map[uint32]interface{}{
+		pools: map[int]map[uint32]*trackerData{
 			1: {
 				1: nil,
 				2: nil,

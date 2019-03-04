@@ -6,6 +6,10 @@ import (
 	"github.com/cashshuffle/cashshuffle/message"
 )
 
+const (
+	playerBannedErrorMessage = "player banned"
+)
+
 // checkBanMessage checks to see if the player has sent a ban.
 func (pi *packetInfo) checkBanMessage() error {
 	if len(pi.message.Packet) != 1 {
@@ -28,7 +32,7 @@ func (pi *packetInfo) checkBanMessage() error {
 		bannedTrackerData := pi.tracker.getVerificationKeyData(banKey)
 
 		if bannedTrackerData == nil {
-			return errors.New("invalid ban")
+			return nil
 		}
 
 		td := pi.tracker.getTrackerData(pi.conn)
@@ -36,15 +40,21 @@ func (pi *packetInfo) checkBanMessage() error {
 			return nil
 		}
 
-		bannedTrackerData.mutex.Lock()
-		defer bannedTrackerData.mutex.Unlock()
-		bannedTrackerData.bannedBy[td.verificationKey] = nil
+		if bannedTrackerData.pool != td.pool {
+			return errors.New("invalid ban")
+		}
+
+		added := bannedTrackerData.addBannedBy(td.verificationKey)
+		if !added {
+			return nil
+		}
 
 		if pi.tracker.banned(bannedTrackerData) {
 			pi.tracker.banIP(bannedTrackerData.conn)
+			pi.tracker.decreasePoolSize(td.pool)
 		}
 
-		return errors.New("player banned")
+		return errors.New(playerBannedErrorMessage)
 	}
 
 	return nil
