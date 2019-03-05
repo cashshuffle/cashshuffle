@@ -109,7 +109,7 @@ func (t *Tracker) bannedByPool(p *playerData) bool {
 	defer t.mutex.RUnlock()
 
 	// the vote is all available voters - 1 for the accused
-	return len(p.blamedBy) >= t.poolVoters[p.pool] - 1
+	return len(p.blamedBy) >= t.poolVoters[p.pool]-1
 }
 
 // count returns the number of connections to the server.
