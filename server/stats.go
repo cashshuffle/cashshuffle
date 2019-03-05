@@ -33,7 +33,7 @@ func (t *Tracker) Stats(ip string, tor bool) *TrackerStats {
 	banned := false
 	var banScore uint32
 
-	data := t.banDatas[ip]
+	data := t.banData[ip]
 	if data != nil {
 		banScore = data.score
 		if data.score >= maxBanScore {

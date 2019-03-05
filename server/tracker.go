@@ -30,7 +30,7 @@ const (
 
 // Tracker is used to track connections to the server.
 type Tracker struct {
-	banDatas                map[string]*banData
+	banData                 map[string]*banData
 	connections             map[net.Conn]*playerData
 	verificationKeys        map[string]net.Conn
 	mutex                   sync.RWMutex
@@ -56,7 +56,7 @@ type banData struct {
 func NewTracker(poolSize int, shufflePort int, shuffleWebSocketPort int, torShufflePort int, torShuffleWebSocketPort int) *Tracker {
 	return &Tracker{
 		poolSize:                poolSize,
-		banDatas:                make(map[string]*banData),
+		banData:                 make(map[string]*banData),
 		connections:             make(map[net.Conn]*playerData),
 		verificationKeys:        make(map[string]net.Conn),
 		pools:                   make(map[int]map[uint32]*playerData),
@@ -128,7 +128,7 @@ func (t *Tracker) bannedByServer(conn net.Conn) bool {
 
 	ip, _, _ := net.SplitHostPort(conn.RemoteAddr().String())
 
-	banData := t.banDatas[ip]
+	banData := t.banData[ip]
 	if banData != nil && banData.score >= maxBanScore {
 		return true
 	}
@@ -143,10 +143,10 @@ func (t *Tracker) increaseBanScore(conn net.Conn) {
 
 	ip, _, _ := net.SplitHostPort(conn.RemoteAddr().String())
 
-	if _, ok := t.banDatas[ip]; ok {
-		t.banDatas[ip].score += banScoreTick
+	if _, ok := t.banData[ip]; ok {
+		t.banData[ip].score += banScoreTick
 	} else {
-		t.banDatas[ip] = &banData{
+		t.banData[ip] = &banData{
 			score: banScoreTick,
 		}
 	}
@@ -162,12 +162,12 @@ func (t *Tracker) cleanupBan(ip string) {
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
 
-	if _, ok := t.banDatas[ip]; ok {
-		t.banDatas[ip].score -= banScoreTick
+	if _, ok := t.banData[ip]; ok {
+		t.banData[ip].score -= banScoreTick
 	}
 
-	if t.banDatas[ip].score == 0 {
-		delete(t.banDatas, ip)
+	if t.banData[ip].score == 0 {
+		delete(t.banData, ip)
 	}
 }
 
