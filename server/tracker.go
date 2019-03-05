@@ -219,6 +219,7 @@ func (t *Tracker) assignPool(p *playerData) (int, uint32) {
 		t.poolVersions[num] = p.version
 		t.poolTypes[num] = p.shuffleType
 	}
+
 	t.pools[num][playerNum] = p
 
 	if len(t.pools[num]) == t.poolSize {
