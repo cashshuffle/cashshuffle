@@ -19,6 +19,12 @@ const (
 	// maxBanScore is the score the connection much reach to
 	// be banned by IP.
 	maxBanScore = 3
+
+	// firstPoolNum is the starting number for pools
+	firstPoolNum = 1
+
+	// firstPlayerNum is the starting number for players in a pool
+	firstPlayerNum = uint32(1)
 )
 
 // Tracker is used to track connections to the server.
@@ -204,7 +210,7 @@ func (t *Tracker) assignPool(data *trackerData) (int, uint32) {
 	num, playerNum, found := t.getAvailableSlot(data)
 	if !found {
 		num = t.getEmptyPool()
-		playerNum = uint32(1)
+		playerNum = firstPlayerNum
 		t.pools[num] = make(map[uint32]*trackerData)
 		t.poolAmounts[num] = data.amount
 		t.poolSizes[num] = t.poolSize
@@ -240,7 +246,7 @@ func (t *Tracker) getAvailableSlot(data *trackerData) (int, uint32, bool) {
 		}
 
 		// find a slot in the available pool
-		playerNum := uint32(1)
+		playerNum := firstPlayerNum
 		for {
 			if _, ok := t.pools[num][playerNum]; ok {
 				playerNum = playerNum + 1
@@ -256,7 +262,7 @@ func (t *Tracker) getAvailableSlot(data *trackerData) (int, uint32, bool) {
 
 // getEmptyPool finds the lowest empty pool number >=1
 func (t *Tracker) getEmptyPool() int {
-	num := 1
+	num := firstPoolNum
 	for {
 		if _, ok := t.pools[num]; !ok {
 			return num
