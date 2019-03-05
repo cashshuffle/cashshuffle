@@ -15,7 +15,7 @@ import (
 
 const (
 	appName                 = "cashshuffle"
-	version                 = "0.6.2"
+	version                 = "0.6.3"
 	defaultPort             = 1337
 	defaultWebSocketPort    = 1338
 	defaultTorPort          = 1339
