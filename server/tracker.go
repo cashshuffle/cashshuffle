@@ -20,6 +20,12 @@ const (
 	// maxBanScore is the score the connection much reach to
 	// be banned by IP.
 	maxBanScore = 3
+
+	// firstPoolNum is the starting number for pools
+	firstPoolNum = 1
+
+	// firstPlayerNum is the starting number for players in a pool
+	firstPlayerNum = uint32(1)
 )
 
 // Tracker is used to track connections to the server.
@@ -204,60 +210,68 @@ func (t *Tracker) generateSessionID() []byte {
 // assignPool assigns a user to a pool.
 // This method assumes the caller is holding the mutex.
 func (t *Tracker) assignPool(p *playerData) (int, uint32) {
-	num := 1
-
-	for {
-		if _, ok := t.pools[num]; ok {
-			if t.poolAmounts[num] != p.amount {
-				num = num + 1
-				continue
-			}
-
-			if t.poolVersions[num] != p.version {
-				num = num + 1
-				continue
-			}
-
-			if t.poolTypes[num] != p.shuffleType {
-				num = num + 1
-				continue
-			}
-
-			if _, ok := t.fullPools[num]; ok {
-				num = num + 1
-				continue
-			}
-		}
-
-		break
-	}
-
-	playerNum := uint32(1)
-	if _, ok := t.pools[num]; !ok {
+	num, playerNum, found := t.getAvailableSlot(p)
+	if !found {
+		num = t.getEmptyPool()
+		playerNum = firstPlayerNum
 		t.pools[num] = make(map[uint32]*playerData)
-		t.pools[num][1] = p
 		t.poolAmounts[num] = p.amount
 		t.poolVoters[num] = t.poolSize
 		t.poolVersions[num] = p.version
 		t.poolTypes[num] = p.shuffleType
-	} else {
-		for {
-			if _, ok := t.pools[num][playerNum]; ok {
-				playerNum = playerNum + 1
-				continue
-			}
-
-			break
-		}
-
-		t.pools[num][playerNum] = p
 	}
+	t.pools[num][playerNum] = p
 
 	if len(t.pools[num]) == t.poolSize {
 		t.fullPools[num] = nil
 	}
 
 	return num, playerNum
+}
+
+// getAvailableSlot finds an existing pool and open player slot for player data
+func (t *Tracker) getAvailableSlot(p *playerData) (int, uint32, bool) {
+	for num := range t.pools {
+		if t.poolAmounts[num] != p.amount {
+			continue
+		}
+
+		if t.poolVersions[num] != p.version {
+			continue
+		}
+
+		if t.poolTypes[num] != p.shuffleType {
+			continue
+		}
+
+		if _, ok := t.fullPools[num]; ok {
+			continue
+		}
+
+		// find a slot in the available pool
+		playerNum := firstPlayerNum
+		for {
+			if _, ok := t.pools[num][playerNum]; ok {
+				playerNum = playerNum + 1
+				continue
+			}
+			break
+		}
+
+		return num, playerNum, true
+	}
+	return 0, 0, false
+}
+
+// getEmptyPool finds the lowest empty pool number >=1
+func (t *Tracker) getEmptyPool() int {
+	num := firstPoolNum
+	for {
+		if _, ok := t.pools[num]; !ok {
+			return num
+		}
+		num++
+	}
 }
 
 // decreasePoolVoters decreases the voter count for a pool.
