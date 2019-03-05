@@ -5,9 +5,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/nats-io/nuid"
-
 	"github.com/cashshuffle/cashshuffle/message"
+
+	"github.com/nats-io/nuid"
 )
 
 const (

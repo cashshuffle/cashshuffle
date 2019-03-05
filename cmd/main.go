@@ -7,10 +7,10 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/cashshuffle/cashshuffle/server"
+
 	"github.com/spf13/cobra"
 	"golang.org/x/crypto/acme/autocert"
-
-	"github.com/cashshuffle/cashshuffle/server"
 )
 
 const (

@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
-
 	"github.com/cashshuffle/cashshuffle/message"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestTrackStats(t *testing.T) {
