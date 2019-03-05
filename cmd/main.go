@@ -8,9 +8,9 @@ import (
 	"path/filepath"
 
 	"github.com/cashshuffle/cashshuffle/server"
-	"golang.org/x/crypto/acme/autocert"
 
 	"github.com/spf13/cobra"
+	"golang.org/x/crypto/acme/autocert"
 )
 
 const (

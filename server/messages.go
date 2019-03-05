@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/cashshuffle/cashshuffle/message"
+
 	"github.com/golang/protobuf/proto"
 )
 
@@ -42,25 +43,25 @@ func startPacketInfoChan(c chan *packetInfo) {
 func (pi *packetInfo) processReceivedMessage() error {
 	// If we are not tracking the connection yet, the user must be
 	// registering with the server.
-	if pi.tracker.getTrackerData(pi.conn) == nil {
+	if pi.tracker.playerByConnection(pi.conn) == nil {
 		err := pi.registerClient()
 		if err != nil {
 			return err
 		}
 
-		playerData := pi.tracker.getTrackerData(pi.conn)
+		player := pi.tracker.playerByConnection(pi.conn)
 
 		// If a malicious client is connecting and disconnecting
 		// quickly it is possible that playerData will be nil.
 		// No need to return an error, just don't register them.
-		if playerData == nil {
+		if player == nil {
 			return nil
 		}
 
-		if pi.tracker.getPoolSize(playerData.pool) == pi.tracker.poolSize {
+		if pi.tracker.playerCount(player.pool) == pi.tracker.poolSize {
 			pi.announceStart()
 		} else {
-			pi.broadcastJoinedPool(playerData)
+			pi.broadcastJoinedPool(player)
 		}
 
 		return nil
@@ -70,10 +71,7 @@ func (pi *packetInfo) processReceivedMessage() error {
 		return err
 	}
 
-	if err := pi.checkBanMessage(); err != nil {
-		if err.Error() == playerBannedErrorMessage {
-			return nil
-		}
+	if err := pi.checkBlameMessage(); err != nil {
 		return err
 	}
 

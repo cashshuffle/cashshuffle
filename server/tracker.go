@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/cashshuffle/cashshuffle/message"
+
 	"github.com/nats-io/nuid"
 )
 
@@ -29,13 +30,13 @@ const (
 
 // Tracker is used to track connections to the server.
 type Tracker struct {
-	bannedIPs               map[string]*banData
-	connections             map[net.Conn]*trackerData
+	banData                 map[string]*banData
+	connections             map[net.Conn]*playerData
 	verificationKeys        map[string]net.Conn
 	mutex                   sync.RWMutex
-	pools                   map[int]map[uint32]*trackerData
+	pools                   map[int]map[uint32]*playerData
 	poolAmounts             map[int]uint64
-	poolSizes               map[int]int
+	poolVoters              map[int]int
 	poolVersions            map[int]uint64
 	poolTypes               map[int]message.ShuffleType
 	poolSize                int
@@ -55,12 +56,12 @@ type banData struct {
 func NewTracker(poolSize int, shufflePort int, shuffleWebSocketPort int, torShufflePort int, torShuffleWebSocketPort int) *Tracker {
 	return &Tracker{
 		poolSize:                poolSize,
-		bannedIPs:               make(map[string]*banData),
-		connections:             make(map[net.Conn]*trackerData),
+		banData:                 make(map[string]*banData),
+		connections:             make(map[net.Conn]*playerData),
 		verificationKeys:        make(map[string]net.Conn),
-		pools:                   make(map[int]map[uint32]*trackerData),
+		pools:                   make(map[int]map[uint32]*playerData),
 		poolAmounts:             make(map[int]uint64),
-		poolSizes:               make(map[int]int),
+		poolVoters:              make(map[int]int),
 		poolVersions:            make(map[int]uint64),
 		poolTypes:               make(map[int]message.ShuffleType),
 		fullPools:               make(map[int]interface{}),
@@ -72,17 +73,17 @@ func NewTracker(poolSize int, shufflePort int, shuffleWebSocketPort int, torShuf
 }
 
 // add adds a connection to the tracker.
-func (t *Tracker) add(data *trackerData) {
+func (t *Tracker) add(p *playerData) {
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
 
-	t.verificationKeys[data.verificationKey] = data.conn
+	t.verificationKeys[p.verificationKey] = p.conn
 
-	data.sessionID = t.generateSessionID()
+	p.sessionID = t.generateSessionID()
 
-	t.connections[data.conn] = data
+	t.connections[p.conn] = p
 
-	data.pool, data.number = t.assignPool(data)
+	p.pool, p.number = t.assignPool(p)
 }
 
 // remove removes the connection.
@@ -90,24 +91,25 @@ func (t *Tracker) remove(conn net.Conn) {
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
 
-	td := t.connections[conn]
-	if td != nil {
-		if td.verificationKey != "" {
-			delete(t.verificationKeys, td.verificationKey)
+	player := t.connections[conn]
+	if player != nil {
+		if player.verificationKey != "" {
+			delete(t.verificationKeys, player.verificationKey)
 		}
 
-		t.unassignPool(td)
+		t.unassignPool(player)
 
 		delete(t.connections, conn)
 	}
 }
 
-// banned returns true if the player has been banned.
-func (t *Tracker) banned(data *trackerData) bool {
+// bannedByPool returns true if the player has been banned by their pool.
+func (t *Tracker) bannedByPool(p *playerData) bool {
 	t.mutex.RLock()
 	defer t.mutex.RUnlock()
 
-	return t.poolSizes[data.pool] <= (len(data.bannedBy) + 1)
+	// the vote is all available voters - 1 for the accused
+	return len(p.blamedBy) >= t.poolVoters[p.pool] - 1
 }
 
 // count returns the number of connections to the server.
@@ -118,14 +120,14 @@ func (t *Tracker) count() int {
 	return len(t.connections)
 }
 
-// bannedIP returns true if the player has been banned from the server.
-func (t *Tracker) bannedIP(conn net.Conn) bool {
+// bannedByServer returns true if the player has been banned from the server.
+func (t *Tracker) bannedByServer(conn net.Conn) bool {
 	t.mutex.RLock()
 	defer t.mutex.RUnlock()
 
 	ip, _, _ := net.SplitHostPort(conn.RemoteAddr().String())
 
-	banData := t.bannedIPs[ip]
+	banData := t.banData[ip]
 	if banData != nil && banData.score >= maxBanScore {
 		return true
 	}
@@ -133,17 +135,17 @@ func (t *Tracker) bannedIP(conn net.Conn) bool {
 	return false
 }
 
-// banIP bans an IP on the server.
-func (t *Tracker) banIP(conn net.Conn) {
+// increaseBanScore increases the ban score for an IP on the server.
+func (t *Tracker) increaseBanScore(conn net.Conn) {
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
 
 	ip, _, _ := net.SplitHostPort(conn.RemoteAddr().String())
 
-	if _, ok := t.bannedIPs[ip]; ok {
-		t.bannedIPs[ip].score += banScoreTick
+	if _, ok := t.banData[ip]; ok {
+		t.banData[ip].score += banScoreTick
 	} else {
-		t.bannedIPs[ip] = &banData{
+		t.banData[ip] = &banData{
 			score: banScoreTick,
 		}
 	}
@@ -159,17 +161,17 @@ func (t *Tracker) cleanupBan(ip string) {
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
 
-	if _, ok := t.bannedIPs[ip]; ok {
-		t.bannedIPs[ip].score -= banScoreTick
+	if _, ok := t.banData[ip]; ok {
+		t.banData[ip].score -= banScoreTick
 	}
 
-	if t.bannedIPs[ip].score == 0 {
-		delete(t.bannedIPs, ip)
+	if t.banData[ip].score == 0 {
+		delete(t.banData, ip)
 	}
 }
 
-// getVerifcationKeyConn gets the connection for a verification key.
-func (t *Tracker) getVerificationKeyData(key string) *trackerData {
+// playerByVerificationKey gets the player for a verification key.
+func (t *Tracker) playerByVerificationKey(key string) *playerData {
 	t.mutex.RLock()
 	defer t.mutex.RUnlock()
 
@@ -180,16 +182,16 @@ func (t *Tracker) getVerificationKeyData(key string) *trackerData {
 	return nil
 }
 
-// getTrackerdData returns trackerdata associated with a connection.
-func (t *Tracker) getTrackerData(c net.Conn) *trackerData {
+// playerByConnection gets the player for a connection.
+func (t *Tracker) playerByConnection(c net.Conn) *playerData {
 	t.mutex.RLock()
 	defer t.mutex.RUnlock()
 
 	return t.connections[c]
 }
 
-// getPoolSize returns the pool size for the connection.
-func (t *Tracker) getPoolSize(pool int) int {
+// playerCount returns the number of players in a pool.
+func (t *Tracker) playerCount(pool int) int {
 	t.mutex.RLock()
 	defer t.mutex.RUnlock()
 
@@ -206,18 +208,19 @@ func (t *Tracker) generateSessionID() []byte {
 
 // assignPool assigns a user to a pool.
 // This method assumes the caller is holding the mutex.
-func (t *Tracker) assignPool(data *trackerData) (int, uint32) {
-	num, playerNum, found := t.getAvailableSlot(data)
+func (t *Tracker) assignPool(p *playerData) (int, uint32) {
+	num, playerNum, found := t.getAvailableSlot(p)
 	if !found {
 		num = t.getEmptyPool()
 		playerNum = firstPlayerNum
-		t.pools[num] = make(map[uint32]*trackerData)
-		t.poolAmounts[num] = data.amount
-		t.poolSizes[num] = t.poolSize
-		t.poolVersions[num] = data.version
-		t.poolTypes[num] = data.shuffleType
+		t.pools[num] = make(map[uint32]*playerData)
+		t.poolAmounts[num] = p.amount
+		t.poolVoters[num] = t.poolSize
+		t.poolVersions[num] = p.version
+		t.poolTypes[num] = p.shuffleType
 	}
-	t.pools[num][playerNum] = data
+
+	t.pools[num][playerNum] = p
 
 	if len(t.pools[num]) == t.poolSize {
 		t.fullPools[num] = nil
@@ -227,17 +230,17 @@ func (t *Tracker) assignPool(data *trackerData) (int, uint32) {
 }
 
 // getAvailableSlot finds an existing pool and open player slot for player data
-func (t *Tracker) getAvailableSlot(data *trackerData) (int, uint32, bool) {
+func (t *Tracker) getAvailableSlot(p *playerData) (int, uint32, bool) {
 	for num := range t.pools {
-		if t.poolAmounts[num] != data.amount {
+		if t.poolAmounts[num] != p.amount {
 			continue
 		}
 
-		if t.poolVersions[num] != data.version {
+		if t.poolVersions[num] != p.version {
 			continue
 		}
 
-		if t.poolTypes[num] != data.shuffleType {
+		if t.poolTypes[num] != p.shuffleType {
 			continue
 		}
 
@@ -271,26 +274,25 @@ func (t *Tracker) getEmptyPool() int {
 	}
 }
 
-// decreasePoolSize decreases the pool size being
-// tracked in trackerData after a blame occurs.
-func (t *Tracker) decreasePoolSize(pool int) {
+// decreasePoolVoters decreases the voter count for a pool.
+func (t *Tracker) decreasePoolVoters(pool int) {
 	t.mutex.RLock()
 	defer t.mutex.RUnlock()
 
-	t.poolSizes[pool]--
+	t.poolVoters[pool]--
 }
 
 // unassignPool removes a user from a pool.
 // This method assumes the caller is holding the mutex.
-func (t *Tracker) unassignPool(td *trackerData) {
-	delete(t.pools[td.pool], td.number)
+func (t *Tracker) unassignPool(p *playerData) {
+	delete(t.pools[p.pool], p.number)
 
-	if len(t.pools[td.pool]) == 0 {
-		delete(t.pools, td.pool)
-		delete(t.fullPools, td.pool)
-		delete(t.poolAmounts, td.pool)
-		delete(t.poolSizes, td.pool)
-		delete(t.poolVersions, td.pool)
-		delete(t.poolTypes, td.pool)
+	if len(t.pools[p.pool]) == 0 {
+		delete(t.pools, p.pool)
+		delete(t.fullPools, p.pool)
+		delete(t.poolAmounts, p.pool)
+		delete(t.poolVoters, p.pool)
+		delete(t.poolVersions, p.pool)
+		delete(t.poolTypes, p.pool)
 	}
 }

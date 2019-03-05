@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/cashshuffle/cashshuffle/message"
+
 	"github.com/golang/protobuf/proto"
 )
 

@@ -6,12 +6,13 @@ import (
 	"time"
 
 	"github.com/cashshuffle/cashshuffle/message"
+
 	"github.com/stretchr/testify/assert"
 )
 
 func TestTrackStats(t *testing.T) {
 	tracker := &Tracker{
-		connections: map[net.Conn]*trackerData{
+		connections: map[net.Conn]*playerData{
 			&fakeConn{}: {},
 			&fakeConn{}: {},
 			&fakeConn{}: {},
@@ -21,7 +22,7 @@ func TestTrackStats(t *testing.T) {
 			&fakeConn{}: {},
 			&fakeConn{}: {},
 		},
-		pools: map[int]map[uint32]*trackerData{
+		pools: map[int]map[uint32]*playerData{
 			1: {
 				1: nil,
 				2: nil,
@@ -55,7 +56,7 @@ func TestTrackStats(t *testing.T) {
 		shuffleWebSocketPort:    3001,
 		torShufflePort:          3002,
 		torShuffleWebSocketPort: 3003,
-		bannedIPs: map[string]*banData{
+		banData: map[string]*banData{
 			"8.8.8.8": {
 				score: maxBanScore,
 			},
