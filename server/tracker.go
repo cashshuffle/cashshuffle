@@ -38,7 +38,7 @@ type Tracker struct {
 	connections             map[net.Conn]*playerData
 	verificationKeys        map[string]net.Conn
 	mutex                   sync.RWMutex
-	denyIPMatch             map[string]map[string]time.Time
+	denyIPMatch             map[ipPair]time.Time
 	pools                   map[int]map[uint32]*playerData
 	poolAmounts             map[int]uint64
 	poolVoters              map[int]int
@@ -57,6 +57,19 @@ type banData struct {
 	score uint32
 }
 
+// ipPair is a canonically sorted pair of IPs
+type ipPair struct {
+	left  string
+	right string
+}
+
+func newIPPair(a, b string) ipPair {
+	if a < b {
+		return ipPair{a, b}
+	}
+	return ipPair{b, a}
+}
+
 // NewTracker instantiates a new tracker
 func NewTracker(poolSize int, shufflePort int, shuffleWebSocketPort int, torShufflePort int, torShuffleWebSocketPort int) *Tracker {
 	return &Tracker{
@@ -64,7 +77,7 @@ func NewTracker(poolSize int, shufflePort int, shuffleWebSocketPort int, torShuf
 		banData:                 make(map[string]*banData),
 		connections:             make(map[net.Conn]*playerData),
 		verificationKeys:        make(map[string]net.Conn),
-		denyIPMatch:             make(map[string]map[string]time.Time),
+		denyIPMatch:             make(map[ipPair]time.Time),
 		pools:                   make(map[int]map[uint32]*playerData),
 		poolAmounts:             make(map[int]uint64),
 		poolVoters:              make(map[int]int),
@@ -148,24 +161,14 @@ func (t *Tracker) addDenyIPMatch(player1 net.Conn, pool int) {
 	defer t.mutex.Unlock()
 
 	ip, _, _ := net.SplitHostPort(player1.RemoteAddr().String())
-	if _, ok := t.denyIPMatch[ip]; !ok {
-		t.denyIPMatch[ip] = make(map[string]time.Time)
-	}
-
 	for _, otherPlayer := range t.pools[pool] {
 		otherIP, _, _ := net.SplitHostPort(otherPlayer.conn.RemoteAddr().String())
-
 		if ip == otherIP {
 			continue
 		}
 
-		if _, ok := t.denyIPMatch[otherIP]; !ok {
-			t.denyIPMatch[otherIP] = make(map[string]time.Time)
-		}
-
-		// Tracking on two keys for faster lookup later.
-		t.denyIPMatch[ip][otherIP] = time.Now()
-		t.denyIPMatch[otherIP][ip] = time.Now()
+		// if a ban somehow already exists, extend it
+		t.denyIPMatch[newIPPair(ip, otherIP)] = time.Now()
 	}
 }
 
@@ -173,13 +176,10 @@ func (t *Tracker) addDenyIPMatch(player1 net.Conn, pool int) {
 // Caller should hold the mutex.
 func (t *Tracker) deniedByIPMatch(player net.Conn, pool int) bool {
 	ip, _, _ := net.SplitHostPort(player.RemoteAddr().String())
-	if _, ok := t.denyIPMatch[ip]; !ok {
-		return false
-	}
-
 	for _, otherPlayer := range t.pools[pool] {
 		otherIP, _, _ := net.SplitHostPort(otherPlayer.conn.RemoteAddr().String())
-		if _, ok := t.denyIPMatch[ip][otherIP]; ok {
+
+		if _, ok := t.denyIPMatch[newIPPair(ip, otherIP)]; ok {
 			return true
 		}
 	}
@@ -192,11 +192,9 @@ func (t *Tracker) CleanupDeniedByIPMatch() {
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
 
-	for ip, deniedIPs := range t.denyIPMatch {
-		for deniedIP, deniedTime := range deniedIPs {
-			if deniedTime.Add(denyIPTime).Before(time.Now()) {
-				delete(t.denyIPMatch[ip], deniedIP)
-			}
+	for pair, deniedTime := range t.denyIPMatch {
+		if deniedTime.Add(denyIPTime).Before(time.Now()) {
+			delete(t.denyIPMatch, pair)
 		}
 	}
 }

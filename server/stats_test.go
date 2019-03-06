@@ -22,7 +22,7 @@ func TestTrackStats(t *testing.T) {
 			&fakeConn{}: {},
 			&fakeConn{}: {},
 		},
-		denyIPMatch: map[string]map[string]time.Time{},
+		denyIPMatch: map[ipPair]time.Time{},
 		pools: map[int]map[uint32]*playerData{
 			1: {
 				1: nil,
