@@ -22,6 +22,7 @@ func TestTrackStats(t *testing.T) {
 			&fakeConn{}: {},
 			&fakeConn{}: {},
 		},
+		denyIPMatch: map[string]map[string]time.Time{},
 		pools: map[int]map[uint32]*playerData{
 			1: {
 				1: nil,
@@ -69,7 +70,7 @@ func TestTrackStats(t *testing.T) {
 	// Test with ban.
 	stats := tracker.Stats("8.8.8.8", false)
 
-	assert.Equal(t, uint32(3), stats.BanScore)
+	assert.Equal(t, uint32(5), stats.BanScore)
 	assert.Equal(t, true, stats.Banned)
 	assert.Equal(t, 8, stats.Connections)
 	assert.Equal(t, 5, stats.PoolSize)
@@ -96,7 +97,7 @@ func TestTrackStats(t *testing.T) {
 	// Test without ban.
 	stats2 := tracker.Stats("8.8.4.4", true)
 
-	assert.Equal(t, uint32(2), stats2.BanScore)
+	assert.Equal(t, uint32(4), stats2.BanScore)
 	assert.Equal(t, false, stats2.Banned)
 	assert.Equal(t, 8, stats2.Connections)
 	assert.Equal(t, 5, stats2.PoolSize)
