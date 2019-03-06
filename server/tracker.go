@@ -14,12 +14,16 @@ const (
 	// banTime is the amount of time to ban an IP.
 	banTime = 15 * time.Minute
 
+	// denyIPTime is the amount of time to avoid matching with other
+	// IPs that have banned you from pools in the past.
+	denyIPTime = 2 * time.Hour
+
 	// banScoreTick is the ban score increment on each pool ban.
 	banScoreTick = 1
 
 	// maxBanScore is the score the connection much reach to
 	// be banned by IP.
-	maxBanScore = 3
+	maxBanScore = 5
 
 	// firstPoolNum is the starting number for pools
 	firstPoolNum = 1
@@ -34,6 +38,7 @@ type Tracker struct {
 	connections             map[net.Conn]*playerData
 	verificationKeys        map[string]net.Conn
 	mutex                   sync.RWMutex
+	denyIPMatch             map[string]map[string]time.Time
 	pools                   map[int]map[uint32]*playerData
 	poolAmounts             map[int]uint64
 	poolVoters              map[int]int
@@ -59,6 +64,7 @@ func NewTracker(poolSize int, shufflePort int, shuffleWebSocketPort int, torShuf
 		banData:                 make(map[string]*banData),
 		connections:             make(map[net.Conn]*playerData),
 		verificationKeys:        make(map[string]net.Conn),
+		denyIPMatch:             make(map[string]map[string]time.Time),
 		pools:                   make(map[int]map[uint32]*playerData),
 		poolAmounts:             make(map[int]uint64),
 		poolVoters:              make(map[int]int),
@@ -133,6 +139,66 @@ func (t *Tracker) bannedByServer(conn net.Conn) bool {
 	}
 
 	return false
+}
+
+// addDenyIPMatch prevents an IP from joining a pool with the other
+// pool member IPs for a timeout period.
+func (t *Tracker) addDenyIPMatch(player1 net.Conn, pool int) {
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
+
+	ip, _, _ := net.SplitHostPort(player1.RemoteAddr().String())
+	if _, ok := t.denyIPMatch[ip]; !ok {
+		t.denyIPMatch[ip] = make(map[string]time.Time)
+	}
+
+	for _, otherPlayer := range t.pools[pool] {
+		otherIP, _, _ := net.SplitHostPort(otherPlayer.conn.RemoteAddr().String())
+
+		if ip == otherIP {
+			continue
+		}
+
+		if _, ok := t.denyIPMatch[otherIP]; !ok {
+			t.denyIPMatch[otherIP] = make(map[string]time.Time)
+		}
+
+		// Tracking on two keys for faster lookup later.
+		t.denyIPMatch[ip][otherIP] = time.Now()
+		t.denyIPMatch[otherIP][ip] = time.Now()
+	}
+}
+
+// deniedByIPMatch returns true if an IP should be denied access to a pool.
+// Caller should hold the mutex.
+func (t *Tracker) deniedByIPMatch(player net.Conn, pool int) bool {
+	ip, _, _ := net.SplitHostPort(player.RemoteAddr().String())
+	if _, ok := t.denyIPMatch[ip]; !ok {
+		return false
+	}
+
+	for _, otherPlayer := range t.pools[pool] {
+		otherIP, _, _ := net.SplitHostPort(otherPlayer.conn.RemoteAddr().String())
+		if _, ok := t.denyIPMatch[ip][otherIP]; ok {
+			return true
+		}
+	}
+
+	return false
+}
+
+// CleanupDeniedByIPMatch removes timed out denyIPMatch entries.
+func (t *Tracker) CleanupDeniedByIPMatch() {
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
+
+	for ip, deniedIPs := range t.denyIPMatch {
+		for deniedIP, deniedTime := range deniedIPs {
+			if deniedTime.Add(denyIPTime).Before(time.Now()) {
+				delete(t.denyIPMatch[ip], deniedIP)
+			}
+		}
+	}
 }
 
 // increaseBanScore increases the ban score for an IP on the server.
@@ -245,6 +311,10 @@ func (t *Tracker) getAvailableSlot(p *playerData) (int, uint32, bool) {
 		}
 
 		if _, ok := t.fullPools[num]; ok {
+			continue
+		}
+
+		if t.deniedByIPMatch(p.conn, num) {
 			continue
 		}
 
