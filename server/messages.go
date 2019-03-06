@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/binary"
+	"encoding/json"
 	"fmt"
 	"net"
 	"os"
@@ -178,6 +179,11 @@ func sendToPacketInfoChan(b *bytes.Buffer, conn net.Conn, c chan *packetInfo, t 
 
 	if debugMode {
 		fmt.Println("[Received]", pdata)
+		jsonData, err := json.MarshalIndent(pdata, "", "  ")
+		if err != nil {
+			return err
+		}
+		fmt.Printf("%s\n", jsonData)
 	}
 
 	data := &packetInfo{

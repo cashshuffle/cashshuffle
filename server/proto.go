@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/binary"
+	"encoding/json"
 	"fmt"
 	"net"
 	"time"
@@ -28,6 +29,11 @@ func writeMessage(conn net.Conn, msgs []*message.Signed) error {
 
 	if debugMode {
 		fmt.Println("[Sent]", packets)
+		jsonData, err := json.MarshalIndent(packets, "", "  ")
+		if err != nil {
+			return err
+		}
+		fmt.Printf("%s\n", jsonData)
 	}
 
 	_, err = conn.Write(frameMessage(reply))
