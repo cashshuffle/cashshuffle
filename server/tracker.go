@@ -165,8 +165,8 @@ func (t *Tracker) addDenyIPMatch(player1 net.Conn, pool int) {
 	}
 }
 
-// deniedByIPMatch returns if two IPs should be allowed in the same
-// pool. Caller should hold the mutex.
+// deniedByIPMatch returns true if an IP should be denied access to a pool.
+// Caller should hold the mutex.
 func (t *Tracker) deniedByIPMatch(player net.Conn, pool int) bool {
 	ip, _, _ := net.SplitHostPort(player.RemoteAddr().String())
 	if _, ok := t.denyIPMatch[ip]; !ok {
