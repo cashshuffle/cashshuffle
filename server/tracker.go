@@ -137,8 +137,8 @@ func (t *Tracker) bannedByServer(conn net.Conn) bool {
 	return false
 }
 
-// addDenyIPMatch prevents two ips from joining the same pool for
-// a timeout period.
+// addDenyIPMatch prevents an IP from joining a pool with the other
+// pool member IPs for a timeout period.
 func (t *Tracker) addDenyIPMatch(player1 net.Conn, pool int) {
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
