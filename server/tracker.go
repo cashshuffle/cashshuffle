@@ -14,6 +14,10 @@ const (
 	// banTime is the amount of time to ban an IP.
 	banTime = 15 * time.Minute
 
+	// denyIPTime is the amount of time to avoid matching with other
+	// IPs that have banned you from pools in the past.
+	denyIPTime = 2 * time.Hour
+
 	// banScoreTick is the ban score increment on each pool ban.
 	banScoreTick = 1
 
@@ -190,7 +194,7 @@ func (t *Tracker) CleanupDeniedByIPMatch() {
 
 	for ip, deniedIPs := range t.denyIPMatch {
 		for deniedIP, deniedTime := range deniedIPs {
-			if deniedTime.Add(banTime).Before(time.Now()) {
+			if deniedTime.Add(denyIPTime).Before(time.Now()) {
 				delete(t.denyIPMatch[ip], deniedIP)
 			}
 		}
