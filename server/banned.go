@@ -48,6 +48,7 @@ func (pi *packetInfo) checkBlameMessage() error {
 		if pi.tracker.bannedByPool(accused) {
 			pi.tracker.increaseBanScore(accused.conn)
 			pi.tracker.decreasePoolVoters(blamer.pool)
+			pi.tracker.addDenyIPMatch(blamer.conn, blamer.pool)
 		}
 	}
 

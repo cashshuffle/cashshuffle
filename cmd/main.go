@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/cashshuffle/cashshuffle/server"
 
@@ -134,6 +135,14 @@ func performCommand(cmd *cobra.Command, args []string) chan error {
 	}
 
 	t := server.NewTracker(config.PoolSize, config.Port, config.WebSocketPort, config.TorPort, config.TorWebSocketPort)
+
+	cleanupDeniedTicker := time.NewTicker(time.Minute)
+	defer cleanupDeniedTicker.Stop()
+	go func() {
+		for range cleanupDeniedTicker.C {
+			t.CleanupDeniedByIPMatch()
+		}
+	}()
 
 	m, err := getLetsEncryptManager()
 	if err != nil {
