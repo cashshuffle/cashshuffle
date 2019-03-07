@@ -346,8 +346,8 @@ func (t *Tracker) getEmptyPool() int {
 
 // decreasePoolVoters decreases the voter count for a pool.
 func (t *Tracker) decreasePoolVoters(pool int) {
-	t.mutex.RLock()
-	defer t.mutex.RUnlock()
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
 
 	t.poolVoters[pool]--
 }
