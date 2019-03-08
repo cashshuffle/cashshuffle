@@ -10,7 +10,7 @@ env:
 install:
   - go get -v github.com/cashshuffle/cashshuffle
 script:
-  - go build
+  - go build ./...
   - go fmt $(go list ./...)
   - go vet $(go list ./...)
   - go test -i -race $(go list ./...)
