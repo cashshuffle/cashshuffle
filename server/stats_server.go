@@ -44,9 +44,9 @@ func newStatsServer(addr string, mux *http.ServeMux, m *autocert.Manager) *http.
 		Addr:         addr,
 		Handler:      mux,
 		TLSConfig:    &tls.Config{},
-		ReadTimeout:  30 * time.Second,
-		WriteTimeout: 30 * time.Second,
-		IdleTimeout:  5 * time.Minute,
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 10 * time.Second,
+		IdleTimeout:  15 * time.Second,
 	}
 
 	if m != nil {

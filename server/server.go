@@ -74,9 +74,9 @@ func StartWebsocket(ip string, port int, cert string, key string, debug bool, t 
 		Handler:      mux,
 		TLSConfig:    &tls.Config{},
 		TLSNextProto: make(map[string]func(*http.Server, *tls.Conn, http.Handler), 0),
-		ReadTimeout:  30 * time.Second,
-		WriteTimeout: 30 * time.Second,
-		IdleTimeout:  5 * time.Minute,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 15 * time.Second,
+		IdleTimeout:  deadline,
 	}
 
 	if m != nil {
@@ -109,7 +109,7 @@ func handleConnection(conn net.Conn, c chan *packetInfo, tracker *Tracker) {
 	defer conn.Close()
 
 	// They just connected, set the deadline to prevent leaked connections.
-	conn.SetDeadline(time.Now().Add(deadline))
+	conn.SetDeadline(time.Now().Add(connectDeadline))
 
 	if !tracker.bannedByServer(conn) {
 		processMessages(conn, c, tracker)

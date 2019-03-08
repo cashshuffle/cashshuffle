@@ -13,7 +13,8 @@ import (
 )
 
 const (
-	deadline = 180 * time.Second
+	deadline        = 180 * time.Second
+	connectDeadline = 15 * time.Second
 )
 
 // writeMessage writes a *message.Signed to the connection via protobuf.
