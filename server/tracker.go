@@ -123,9 +123,14 @@ func (t *Tracker) remove(conn net.Conn) {
 }
 
 // bannedByPool returns true if the player has been banned by their pool.
-func (t *Tracker) bannedByPool(p *playerData) bool {
-	t.mutex.RLock()
-	defer t.mutex.RUnlock()
+func (t *Tracker) bannedByPool(p *playerData, lock bool) bool {
+	if lock {
+		t.mutex.RLock()
+		defer t.mutex.RUnlock()
+	}
+
+	p.mutex.RLock()
+	defer p.mutex.RUnlock()
 
 	// the vote is all available voters - 1 for the accused
 	return len(p.blamedBy) >= t.poolVoters[p.pool]-1
