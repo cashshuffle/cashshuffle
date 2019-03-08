@@ -54,10 +54,12 @@ func Start(ip string, port int, cert string, key string, debug bool, t *Tracker,
 
 		context, err := limit.Get(nil, ip)
 		if err != nil {
+			conn.Close()
 			continue
 		}
 
 		if context.Reached {
+			conn.Close()
 			continue
 		}
 
