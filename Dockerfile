@@ -10,6 +10,9 @@ ADD . /go/src/github.com/cashshuffle/cashshuffle
 # Switch to the correct working directory.
 WORKDIR /go/src/github.com/cashshuffle/cashshuffle
 
+# Turn on Go module support.
+ARG GO111MODULE=on
+
 # Build the code.
 RUN make install
 

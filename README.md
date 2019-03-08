@@ -8,6 +8,7 @@ A CashShuffle server implented in Go. For more information on CashShuffle visit 
 ```
 go get -v github.com/cashshuffle/cashshuffle
 cd $GOPATH/src/github.com/cashshuffle/cashshuffle
+export GO111MODULE=on
 make
 make install
 ```
