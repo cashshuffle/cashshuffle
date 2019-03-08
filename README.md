@@ -8,16 +8,9 @@ A CashShuffle server implented in Go. For more information on CashShuffle visit 
 ```
 go get -v github.com/cashshuffle/cashshuffle
 cd $GOPATH/src/github.com/cashshuffle/cashshuffle
+export GO111MODULE=on
 make
 make install
-```
-
-If you have issues building `cashshuffle`, you can vendor the dependencies by using [gvt](https://github.com/FiloSottile/gvt):
-
-```
-go get -u github.com/FiloSottile/gvt
-cd $GOPATH/src/github.com/cashshuffle/cashshuffle
-gvt restore
 ```
 
 ## Usage

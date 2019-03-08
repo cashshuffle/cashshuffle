@@ -1,23 +1,22 @@
 language: go
 go:
-  - 1.8.3
-  - 1.9
+  - 1.12
   - tip
 os:
   - linux
   - osx
+env:
+  - GO111MODULE=on
 install:
-  - go get -u github.com/FiloSottile/gvt
   - go get -v github.com/cashshuffle/cashshuffle
 script:
-  - gvt restore
-  - go build
-  - go fmt $(go list ./... | grep -v /vendor/)
-  - go vet $(go list ./... | grep -v /vendor/)
-  - go test -i -race $(go list ./... | grep -v /vendor/)
-  - go test -v -race $(go list ./... | grep -v /vendor/)
+  - go build ./...
+  - go fmt $(go list ./...)
+  - go vet $(go list ./...)
+  - go test -i -race $(go list ./...)
+  - go test -v -race $(go list ./...)
 after_script:
-  - if [ "$TRAVIS_GO_VERSION" = "1.9" ] && [ "$TRAVIS_OS_NAME" = "linux" ] && [ "$TRAVIS_TAG" != "" ]; then go get github.com/inconshreveable/mousetrap; fi
-  - if [ "$TRAVIS_GO_VERSION" = "1.9" ] && [ "$TRAVIS_OS_NAME" = "linux" ] && [ "$TRAVIS_TAG" != "" ]; then go get github.com/mitchellh/gox; fi
-  - if [ "$TRAVIS_GO_VERSION" = "1.9" ] && [ "$TRAVIS_OS_NAME" = "linux" ] && [ "$TRAVIS_TAG" != "" ]; then go get github.com/tcnksm/ghr; fi
-  - if [ "$TRAVIS_GO_VERSION" = "1.9" ] && [ "$TRAVIS_OS_NAME" = "linux" ] && [ "$TRAVIS_TAG" != "" ]; then make compile; ghr --username cashshuffle --token $GITHUB_TOKEN --replace $TRAVIS_TAG pkg/; fi
+  - if [ "$TRAVIS_GO_VERSION" = "1.12" ] && [ "$TRAVIS_OS_NAME" = "linux" ] && [ "$TRAVIS_TAG" != "" ]; then go get github.com/inconshreveable/mousetrap; fi
+  - if [ "$TRAVIS_GO_VERSION" = "1.12" ] && [ "$TRAVIS_OS_NAME" = "linux" ] && [ "$TRAVIS_TAG" != "" ]; then go get github.com/mitchellh/gox; fi
+  - if [ "$TRAVIS_GO_VERSION" = "1.12" ] && [ "$TRAVIS_OS_NAME" = "linux" ] && [ "$TRAVIS_TAG" != "" ]; then go get github.com/tcnksm/ghr; fi
+  - if [ "$TRAVIS_GO_VERSION" = "1.12" ] && [ "$TRAVIS_OS_NAME" = "linux" ] && [ "$TRAVIS_TAG" != "" ]; then make compile; ghr --username cashshuffle --token $GITHUB_TOKEN --replace $TRAVIS_TAG pkg/; fi
