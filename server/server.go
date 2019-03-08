@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/ulule/limiter"
+	"github.com/ulule/limiter/drivers/middleware/stdlib"
 	"golang.org/x/crypto/acme/autocert"
 	"golang.org/x/net/websocket"
 )
@@ -14,7 +16,7 @@ import (
 var debugMode bool
 
 // Start brings up the TCP server.
-func Start(ip string, port int, cert string, key string, debug bool, t *Tracker, m *autocert.Manager, tor bool) (err error) {
+func Start(ip string, port int, cert string, key string, debug bool, t *Tracker, m *autocert.Manager, tor bool, limit *limiter.Limiter) (err error) {
 	var listener net.Listener
 
 	debugMode = debug
@@ -48,12 +50,23 @@ func Start(ip string, port int, cert string, key string, debug bool, t *Tracker,
 			continue
 		}
 
+		ip, _, _ := net.SplitHostPort(conn.RemoteAddr().String())
+
+		context, err := limit.Get(nil, ip)
+		if err != nil {
+			continue
+		}
+
+		if context.Reached {
+			continue
+		}
+
 		go handleConnection(conn, packetInfoChan, t)
 	}
 }
 
 // StartWebsocket brings up the websocket server.
-func StartWebsocket(ip string, port int, cert string, key string, debug bool, t *Tracker, m *autocert.Manager, tor bool) (err error) {
+func StartWebsocket(ip string, port int, cert string, key string, debug bool, t *Tracker, m *autocert.Manager, tor bool, limit *limiter.Limiter) (err error) {
 	packetInfoChan := make(chan *packetInfo)
 	go startPacketInfoChan(packetInfoChan)
 
@@ -67,7 +80,8 @@ func StartWebsocket(ip string, port int, cert string, key string, debug bool, t 
 	portString := fmt.Sprintf("%s:%d", ip, port)
 
 	mux := http.NewServeMux()
-	mux.Handle("/", websocket.Handler(handleConnectionFunc))
+	middleware := stdlib.NewMiddleware(limit)
+	mux.Handle("/", middleware.Handler(websocket.Handler(handleConnectionFunc)))
 
 	srv := &http.Server{
 		Addr:         portString,

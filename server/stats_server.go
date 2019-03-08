@@ -8,13 +8,17 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/ulule/limiter"
+	"github.com/ulule/limiter/drivers/middleware/stdlib"
 	"golang.org/x/crypto/acme/autocert"
 )
 
 // StartStatsServer creates a new server to serve stats
-func StartStatsServer(ip string, port int, cert string, key string, si StatsInformer, m *autocert.Manager, tor bool) error {
+func StartStatsServer(ip string, port int, cert string, key string, si StatsInformer, m *autocert.Manager, tor bool, limit *limiter.Limiter) error {
 	mux := http.NewServeMux()
-	mux.HandleFunc("/stats", statsJSON(si, tor))
+	middleware := stdlib.NewMiddleware(limit)
+	statsJSONHandler := http.HandlerFunc(statsJSON(si, tor))
+	mux.Handle("/stats", middleware.Handler(statsJSONHandler))
 	s := newStatsServer(fmt.Sprintf("%s:%d", ip, port), mux, m)
 	tls := tlsEnabled(cert, key, m)
 

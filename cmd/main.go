@@ -11,6 +11,8 @@ import (
 	"github.com/cashshuffle/cashshuffle/server"
 
 	"github.com/spf13/cobra"
+	"github.com/ulule/limiter"
+	"github.com/ulule/limiter/drivers/store/memory"
 	"golang.org/x/crypto/acme/autocert"
 )
 
@@ -25,6 +27,9 @@ const (
 	defaultTorStatsPort     = 8081
 	defaultPoolSize         = 5
 	defaultTorBindIP        = "127.0.0.1"
+
+	ipRateLimit    = "100-M"
+	torIPRateLimit = "500-M"
 )
 
 // Stores configuration data.
@@ -150,44 +155,69 @@ func performCommand(cmd *cobra.Command, args []string) chan error {
 		return errChan
 	}
 
+	limit, torLimit, err := getLimiters()
+	if err != nil {
+		errChan <- err
+		return errChan
+	}
+
 	// enable stats if port specified
 	if config.StatsPort > 0 {
 		go func() {
-			errChan <- server.StartStatsServer(config.BindIP, config.StatsPort, config.Cert, config.Key, t, m, false)
+			errChan <- server.StartStatsServer(config.BindIP, config.StatsPort, config.Cert, config.Key, t, m, false, limit)
 		}()
 	}
 
 	if config.Tor && config.TorStatsPort > 0 {
 		go func() {
-			errChan <- server.StartStatsServer(config.TorBindIP, config.TorStatsPort, "", "", t, nil, true)
+			errChan <- server.StartStatsServer(config.TorBindIP, config.TorStatsPort, "", "", t, nil, true, torLimit)
 		}()
 	}
 
 	// enable websocket port if specified.
 	if config.WebSocketPort > 0 {
 		go func() {
-			errChan <- server.StartWebsocket(config.BindIP, config.WebSocketPort, config.Cert, config.Key, config.Debug, t, m, false)
+			errChan <- server.StartWebsocket(config.BindIP, config.WebSocketPort, config.Cert, config.Key, config.Debug, t, m, false, limit)
 		}()
 	}
 
 	if config.Tor && config.TorWebSocketPort > 0 {
 		go func() {
-			errChan <- server.StartWebsocket(config.TorBindIP, config.TorWebSocketPort, "", "", config.Debug, t, nil, true)
+			errChan <- server.StartWebsocket(config.TorBindIP, config.TorWebSocketPort, "", "", config.Debug, t, nil, true, torLimit)
 		}()
 	}
 
 	// enable tor server if specified.
 	if config.Tor {
 		go func() {
-			errChan <- server.Start(config.TorBindIP, config.TorPort, "", "", config.Debug, t, nil, true)
+			errChan <- server.Start(config.TorBindIP, config.TorPort, "", "", config.Debug, t, nil, true, torLimit)
 		}()
 	}
 
 	go func() {
-		errChan <- server.Start(config.BindIP, config.Port, config.Cert, config.Key, config.Debug, t, m, false)
+		errChan <- server.Start(config.BindIP, config.Port, config.Cert, config.Key, config.Debug, t, m, false, limit)
 	}()
 
 	return errChan
+}
+
+func getLimiters() (*limiter.Limiter, *limiter.Limiter, error) {
+	var rate limiter.Rate
+
+	rate, err := limiter.NewRateFromFormatted(ipRateLimit)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	torRate, err := limiter.NewRateFromFormatted(torIPRateLimit)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	limit := limiter.New(memory.NewStore(), rate, limiter.WithTrustForwardHeader(true))
+	torLimit := limiter.New(memory.NewStore(), torRate)
+
+	return limit, torLimit, nil
 }
 
 func getLetsEncryptManager() (*autocert.Manager, error) {
