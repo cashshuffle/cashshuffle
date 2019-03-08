@@ -28,7 +28,7 @@ const (
 	defaultPoolSize         = 5
 	defaultTorBindIP        = "127.0.0.1"
 
-	ipRateLimit    = "120-M"
+	ipRateLimit    = "180-M"
 	torIPRateLimit = "500-M"
 )
 
