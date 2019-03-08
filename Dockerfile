@@ -10,10 +10,6 @@ ADD . /go/src/github.com/cashshuffle/cashshuffle
 # Switch to the correct working directory.
 WORKDIR /go/src/github.com/cashshuffle/cashshuffle
 
-# Restore vendored packages.
-RUN go get -u github.com/FiloSottile/gvt
-RUN gvt restore
-
 # Build the code.
 RUN make install
 

@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/ulule/limiter"
-	"github.com/ulule/limiter/drivers/middleware/stdlib"
+	"github.com/ulule/limiter/v3"
+	"github.com/ulule/limiter/v3/drivers/middleware/stdlib"
 	"golang.org/x/crypto/acme/autocert"
 	"golang.org/x/net/websocket"
 )

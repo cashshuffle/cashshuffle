@@ -11,8 +11,8 @@ import (
 	"github.com/cashshuffle/cashshuffle/server"
 
 	"github.com/spf13/cobra"
-	"github.com/ulule/limiter"
-	"github.com/ulule/limiter/drivers/store/memory"
+	"github.com/ulule/limiter/v3"
+	"github.com/ulule/limiter/v3/drivers/store/memory"
 	"golang.org/x/crypto/acme/autocert"
 )
 
@@ -28,7 +28,7 @@ const (
 	defaultPoolSize         = 5
 	defaultTorBindIP        = "127.0.0.1"
 
-	ipRateLimit    = "100-M"
+	ipRateLimit    = "120-M"
 	torIPRateLimit = "500-M"
 )
 
