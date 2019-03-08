@@ -12,14 +12,6 @@ make
 make install
 ```
 
-If you have issues building `cashshuffle`, you can vendor the dependencies by using [gvt](https://github.com/FiloSottile/gvt):
-
-```
-go get -u github.com/FiloSottile/gvt
-cd $GOPATH/src/github.com/cashshuffle/cashshuffle
-gvt restore
-```
-
 ## Usage
 
 To start the server, just set the pool size and add your SSL cert and key.
