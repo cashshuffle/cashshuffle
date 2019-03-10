@@ -16,6 +16,53 @@ var (
 	testTempKey int
 )
 
+func TestHappyShuffle(t *testing.T) {
+	poolSize := 3
+	h := testNewHarness(t, poolSize)
+	bch1 := uint64(100000000)
+	version := uint64(999)
+
+	// clients join the pool, one at a time
+	clients := make([]*testClient, 0)
+	for i := 0; i < poolSize; i++ {
+		client := h.NewClient()
+		clients = append(clients, client)
+
+		client.Register(bch1, version)
+		if i < poolSize-1 {
+			h.AssertBroadcastNewPlayer(client, clients)
+		}
+	}
+	// the pool is full and the shuffle starts
+	h.AssertBroadcastPhase1Announcement(clients)
+
+	// confirm basic state on the server side
+	h.AssertPools([]poolState{
+		{
+			value:   bch1,
+			version: version,
+			players: len(clients),
+			isFull:  true,
+		},
+	})
+
+	// the shuffle succeeded, and clients leave with no blame
+	for _, c := range clients {
+		err := c.conn.Close()
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	// after the clients leave, the pool should be removed
+	h.AssertPools([]poolState{})
+
+	// all messages should be consumed through the assertions
+	// if anything is remaining, it is outside of specification
+	// or something unexpected happened
+	h.AssertEmptyInboxes(clients)
+}
+
 // testHarness holds the pieces required for automating a shuffle
 type testHarness struct {
 	tracker *Tracker
@@ -143,53 +190,6 @@ type poolState struct {
 	version uint64
 	players int
 	isFull  bool
-}
-
-func TestHappyShuffle(t *testing.T) {
-	poolSize := 3
-	h := testNewHarness(t, poolSize)
-	bch1 := uint64(100000000)
-	version := uint64(999)
-
-	// clients join the pool, one at a time
-	clients := make([]*testClient, 0)
-	for i := 0; i < poolSize; i++ {
-		client := h.NewClient()
-		clients = append(clients, client)
-
-		client.Register(bch1, version)
-		if i < poolSize-1 {
-			h.AssertBroadcastNewPlayer(client, clients)
-		}
-	}
-	// the pool is full and the shuffle starts
-	h.AssertBroadcastPhase1Announcement(clients)
-
-	// confirm basic state on the server side
-	h.AssertPools([]poolState{
-		{
-			value:   bch1,
-			version: version,
-			players: len(clients),
-			isFull:  true,
-		},
-	})
-
-	// the shuffle succeeded, and clients leave with no blame
-	for _, c := range clients {
-		err := c.conn.Close()
-		if err != nil {
-			t.Fatal(err)
-		}
-	}
-
-	// after the clients leave, the pool should be removed
-	h.AssertPools([]poolState{})
-
-	// all messages should be consumed through the assertions
-	// if anything is remaining, it is outside of specification
-	// or something unexpected happened
-	h.AssertEmptyInboxes(clients)
 }
 
 func (h *testHarness) AssertRegistered(c *testClient) (uint32, []byte) {
