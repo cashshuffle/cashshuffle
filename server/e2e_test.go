@@ -2,7 +2,6 @@ package server
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"net"
 	"strconv"
 	"sync"
@@ -10,6 +9,14 @@ import (
 	"time"
 
 	"github.com/cashshuffle/cashshuffle/message"
+
+	"github.com/stretchr/testify/assert"
+)
+
+const (
+	basicPoolSize = 3
+	anyAmount     = uint64(100000000)
+	anyVersion    = uint64(999)
 )
 
 var (
@@ -18,42 +25,8 @@ var (
 
 // TestHappyShuffle simulates a complete shuffle
 func TestHappyShuffle(t *testing.T) {
-	poolSize := 3
-	h := newTestHarness(t, poolSize)
-	bch1 := uint64(100000000)
-	version := uint64(999)
-
-	// clients join the pool, one at a time
-	clients := make([]*testClient, 0)
-	for i := 0; i < poolSize; i++ {
-		client := h.NewTestClient()
-		clients = append(clients, client)
-
-		client.Register(bch1, version)
-		if i < poolSize-1 {
-			// new players are announced while the pool is not full
-			h.AssertBroadcastNewPlayer(client, clients)
-			h.AssertPoolStates([]poolState{
-				{
-					value:   bch1,
-					version: version,
-					players: len(clients),
-					isFull:  false,
-				},
-			})
-		}
-	}
-
-	// the pool is full and the shuffle starts
-	h.AssertBroadcastPhase1Announcement(clients)
-	h.AssertPoolStates([]poolState{
-		{
-			value:   bch1,
-			version: version,
-			players: len(clients),
-			isFull:  true,
-		},
-	})
+	h := newTestHarness(t, basicPoolSize)
+	clients := h.FillOnePool(basicPoolSize, anyAmount, anyVersion)
 
 	// the shuffle succeeded, and clients leave with no blame
 	for _, c := range clients {
@@ -64,12 +37,30 @@ func TestHappyShuffle(t *testing.T) {
 	}
 
 	// after the clients leave, the pool should be removed
-	h.AssertPoolStates([]poolState{})
+	h.AssertPoolStates([]testPoolState{}, true)
 
 	// all messages should be consumed through the assertions
 	// if anything is remaining, it is outside of specification
 	// or something unexpected happened
 	h.AssertEmptyInboxes(clients)
+}
+
+// TestNonUnanimousBlameDoesNothing confirms no effect when less than
+// a unanimous vote occurs
+func TestNonUnanimousBlameDoesNothing(t *testing.T) {
+	h := newTestHarness(t, 5)
+	clients := h.FillOnePool(5, anyAmount, anyVersion)
+	troubleClient := clients[0]
+	otherClients := clients[1:]
+
+	// all but one other client blames troubleClient
+	for i := 0; i < len(otherClients)-1; i++ {
+		otherClients[i].Blame(troubleClient)
+	}
+
+	// nobody gets a ban score since it was not a unanimous vote
+	h.AssertP2PBans([]testP2PBan{})
+	h.AssertServerBans([]testServerBanData{})
 }
 
 // testHarness holds the pieces required for automating a shuffle
@@ -94,6 +85,42 @@ func newTestHarness(t *testing.T, poolSize int) *testHarness {
 	}
 }
 
+// FillOnePool simulates one pool filling up and consumes all expected messages.
+func (h *testHarness) FillOnePool(poolSize int, value, version uint64) []*testClient {
+	// clients join the pool, one at a time
+	clients := make([]*testClient, 0)
+	for i := 0; i < poolSize; i++ {
+		client := h.NewTestClient()
+		clients = append(clients, client)
+
+		client.Register(value, version)
+		if i < poolSize-1 {
+			// new players are announced while the pool is not full
+			h.AssertBroadcastNewPlayer(client, clients)
+			h.AssertPoolStates([]testPoolState{
+				{
+					value:   value,
+					version: version,
+					players: len(clients),
+					isFull:  false,
+				},
+			}, false)
+		}
+	}
+
+	// the pool is full and the shuffle starts
+	h.AssertBroadcastPhase1Announcement(clients)
+	h.AssertPoolStates([]testPoolState{
+		{
+			value:   value,
+			version: version,
+			players: len(clients),
+			isFull:  true,
+		},
+	}, false)
+	return clients
+}
+
 // NewTestClient creates a client with an in-memory connection to server
 func (h *testHarness) NewTestClient() *testClient {
 	clientConn, serverConn := net.Pipe()
@@ -105,35 +132,39 @@ func (h *testHarness) NewTestClient() *testClient {
 	inbox := newTestInbox(clientConn)
 
 	// return a client that has done nothing but connect
+	testTempKey++
 	return &testClient{
-		h:     h,
-		conn:  clientConn,
-		inbox: inbox,
+		h:               h,
+		conn:            clientConn,
+		remoteConn:      serverConn,
+		verificationKey: strconv.Itoa(testTempKey),
+		inbox:           inbox,
 	}
 }
 
 // testClient represents a single actor connected to the server
 type testClient struct {
-	h         *testHarness
-	conn      net.Conn
-	inbox     *testInbox
-	amount    uint64
-	version   uint64
-	session   []byte
-	playerNum uint32
+	h               *testHarness
+	conn            net.Conn
+	remoteConn      net.Conn
+	inbox           *testInbox
+	amount          uint64
+	version         uint64
+	session         []byte
+	verificationKey string
+	playerNum       uint32
 }
 
-// Register has each connection request a registration
+// Register sends a registration message to the server and completes the process
 // https://github.com/cashshuffle/cashshuffle/wiki/CashShuffle-Server-Specification#entering-a-shuffle
-func (client *testClient) Register(amount, version uint64) {
-	client.amount = amount
-	client.version = version
+func (c *testClient) Register(amount, version uint64) {
+	c.amount = amount
+	c.version = version
 
-	testTempKey++
-	registrationMessage := &message.Signed{
+	msg := &message.Signed{
 		Packet: &message.Packet{
 			FromKey: &message.VerificationKey{
-				Key: strconv.Itoa(testTempKey),
+				Key: c.verificationKey,
 			},
 			Registration: &message.Registration{
 				Amount:  amount,
@@ -144,12 +175,40 @@ func (client *testClient) Register(amount, version uint64) {
 		Signature: nil,
 	}
 
-	err := writeMessage(client.conn, []*message.Signed{registrationMessage})
+	err := writeMessage(c.conn, []*message.Signed{msg})
 	if err != nil {
-		client.h.t.Fatal(err)
+		c.h.t.Fatal(err)
 	}
 
-	client.playerNum, client.session = client.h.AssertRegistered(client)
+	c.playerNum, c.session = c.h.AssertRegistered(c)
+}
+
+// Blame sends a blame message to the server against other
+// https://github.com/cashshuffle/cashshuffle/wiki/CashShuffle-Server-Specification#blame-messages
+func (c *testClient) Blame(other *testClient) {
+	msg := &message.Signed{
+		Packet: &message.Packet{
+			Number:  c.playerNum,
+			Session: c.session,
+			FromKey: &message.VerificationKey{
+				Key: c.verificationKey,
+			},
+			Message: &message.Message{
+				Blame: &message.Blame{
+					Reason: message.Reason_LIAR,
+					Accused: &message.VerificationKey{
+						Key: other.verificationKey,
+					},
+				},
+			},
+		},
+		Signature: nil,
+	}
+
+	err := writeMessage(c.conn, []*message.Signed{msg})
+	if err != nil {
+		c.h.t.Fatal(err)
+	}
 }
 
 // testInbox collects all incoming client messages in the background
@@ -183,32 +242,22 @@ func newTestInbox(conn net.Conn) *testInbox {
 // PopOldest pops the oldest message and returns it or returns an error
 // if no message appears within a short time period.
 func (ib *testInbox) PopOldest() (*packetInfo, error) {
-	var p *packetInfo
+	// just wait
+	time.Sleep(2 * time.Millisecond)
+	ib.mutex.Lock()
+	defer ib.mutex.Unlock()
 
-	for i := 0; i < 2; i++ {
-		ib.mutex.Lock()
-		if len(ib.packets) > 0 {
-			p = ib.packets[0]
-			ib.packets = ib.packets[1:]
-			ib.mutex.Unlock()
-			return p, nil
-		}
-		ib.mutex.Unlock()
-		time.Sleep(1 * time.Millisecond)
+	if len(ib.packets) == 0 {
+		return nil, fmt.Errorf("empty inbox")
 	}
-	return nil, fmt.Errorf("empty inbox")
-}
 
-// poolState describes the state of a pool
-type poolState struct {
-	value   uint64
-	version uint64
-	players int
-	isFull  bool
+	p := ib.packets[0]
+	ib.packets = ib.packets[1:]
+	return p, nil
 }
 
 // AssertRegistered confirms registration, consumes expected registration
-// messages, and returns registration details
+// message, and returns registration details
 func (h *testHarness) AssertRegistered(c *testClient) (uint32, []byte) {
 	response, err := c.inbox.PopOldest()
 	if err != nil {
@@ -260,28 +309,28 @@ func (h *testHarness) AssertBroadcastPhase1Announcement(all []*testClient) {
 	}
 }
 
-// AssertPoolStates confirms the server is in the expected state
-func (h *testHarness) AssertPoolStates(states []poolState) {
-	// wait for the server to catch up
-	for i := 0; i < 2; i++ {
-		h.tracker.mutex.RLock()
-		if len(h.tracker.pools) != len(states) {
-			h.tracker.mutex.RUnlock()
-			time.Sleep(1 * time.Millisecond)
-			continue
-		}
-		h.tracker.mutex.RUnlock()
-		break
-	}
+// testPoolState describes the state of a pool
+type testPoolState struct {
+	value   uint64
+	version uint64
+	players int
+	isFull  bool
+}
 
-	// in any case, check the server state
+// AssertPoolStates confirms the server is in the expected state
+func (h *testHarness) AssertPoolStates(expected []testPoolState, completeState bool) {
+	// just wait
+	time.Sleep(2 * time.Millisecond)
+	h.tracker.mutex.RLock()
+	defer h.tracker.mutex.RUnlock()
+
 	h.tracker.mutex.RLock()
 	defer h.tracker.mutex.RUnlock()
 	// convert pools into simple states
-	actualStates := make([]poolState, 0)
+	actualStates := make([]testPoolState, 0)
 	for poolNum := range h.tracker.pools {
 		_, isFull := h.tracker.fullPools[poolNum]
-		actualStates = append(actualStates, poolState{
+		actualStates = append(actualStates, testPoolState{
 			value:   h.tracker.poolAmounts[poolNum],
 			version: h.tracker.poolVersions[poolNum],
 			players: len(h.tracker.pools[poolNum]),
@@ -289,8 +338,63 @@ func (h *testHarness) AssertPoolStates(states []poolState) {
 		})
 	}
 
-	// check for each state in the pools
-	assert.ElementsMatch(h.t, states, actualStates)
+	if completeState {
+		assert.ElementsMatch(h.t, actualStates, expected)
+	} else {
+		for _, s := range expected {
+			assert.Contains(h.t, actualStates, s)
+		}
+	}
+}
+
+type testP2PBan struct {
+	a *testClient
+	b *testClient
+}
+
+func (h *testHarness) AssertP2PBans(bans []testP2PBan) {
+	// just wait a short time
+	time.Sleep(2 * time.Millisecond)
+
+	expectedPairs := make([]ipPair, 0)
+	for _, ban := range bans {
+		ipA, _, _ := net.SplitHostPort(ban.a.remoteConn.RemoteAddr().String())
+		ipB, _, _ := net.SplitHostPort(ban.b.remoteConn.RemoteAddr().String())
+		expectedPairs = append(expectedPairs, newIPPair(ipA, ipB))
+	}
+
+	h.tracker.mutex.RLock()
+	actualPairs := make([]ipPair, 0)
+	for p := range h.tracker.denyIPMatch {
+		actualPairs = append(actualPairs, p)
+	}
+	h.tracker.mutex.RUnlock()
+
+	assert.ElementsMatch(h.t, expectedPairs, actualPairs)
+}
+
+type testServerBanData struct {
+	client  *testClient
+	banData banData
+}
+
+func (h *testHarness) AssertServerBans(cbs []testServerBanData) {
+	// just wait a short time
+	time.Sleep(2 * time.Millisecond)
+
+	// convert client bans into server-side bans
+	expectedBanData := make(map[string]banData)
+	for _, bd := range cbs {
+		ip, _, _ := net.SplitHostPort(bd.client.remoteConn.RemoteAddr().String())
+		expectedBanData[ip] = bd.banData
+	}
+
+	actualBanData := make(map[string]banData)
+	for ip, bd := range h.tracker.banData {
+		actualBanData[ip] = *bd
+	}
+
+	assert.Equal(h.t, expectedBanData, actualBanData)
 }
 
 // AssertEmptyInboxes confirms that clients received no unexpected messages
