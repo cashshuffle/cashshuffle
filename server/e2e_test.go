@@ -250,13 +250,19 @@ func (h *testHarness) AssertBroadcastPhase1Announcement(all []*testClient) {
 func (h *testHarness) AssertServerState(states []serverState) {
 	// wait for the server to catch up
 	for i := 0; i < 2; i++ {
+		h.tracker.mutex.RLock()
 		if len(h.tracker.pools) != len(states) {
+			h.tracker.mutex.RUnlock()
 			time.Sleep(1 * time.Millisecond)
 			continue
 		}
+		h.tracker.mutex.RUnlock()
 		break
 	}
 
+	// in any case, check the server state
+	h.tracker.mutex.RLock()
+	defer h.tracker.mutex.RUnlock()
 	// convert pools into simple states
 	actualStates := make([]serverState, 0)
 	for poolNum := range h.tracker.pools {
