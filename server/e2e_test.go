@@ -30,14 +30,22 @@ func TestHappyShuffle(t *testing.T) {
 
 		client.Register(bch1, version)
 		if i < poolSize-1 {
+			// new players are announced while the pool is not full
 			h.AssertBroadcastNewPlayer(client, clients)
+			h.AssertServerState([]serverState{
+				{
+					value:   bch1,
+					version: version,
+					players: len(clients),
+					isFull:  false,
+				},
+			})
 		}
 	}
+
 	// the pool is full and the shuffle starts
 	h.AssertBroadcastPhase1Announcement(clients)
-
-	// confirm basic state on the server side
-	h.AssertPools([]poolState{
+	h.AssertServerState([]serverState{
 		{
 			value:   bch1,
 			version: version,
@@ -55,7 +63,7 @@ func TestHappyShuffle(t *testing.T) {
 	}
 
 	// after the clients leave, the pool should be removed
-	h.AssertPools([]poolState{})
+	h.AssertServerState([]serverState{})
 
 	// all messages should be consumed through the assertions
 	// if anything is remaining, it is outside of specification
@@ -185,7 +193,7 @@ func (ib *testInbox) PopOldest() (*packetInfo, error) {
 	return nil, fmt.Errorf("empty inbox")
 }
 
-type poolState struct {
+type serverState struct {
 	value   uint64
 	version uint64
 	players int
@@ -239,7 +247,7 @@ func (h *testHarness) AssertBroadcastPhase1Announcement(all []*testClient) {
 	}
 }
 
-func (h *testHarness) AssertPools(states []poolState) {
+func (h *testHarness) AssertServerState(states []serverState) {
 	// wait for the server to catch up
 	for i := 0; i < 2; i++ {
 		if len(h.tracker.pools) != len(states) {
@@ -250,10 +258,10 @@ func (h *testHarness) AssertPools(states []poolState) {
 	}
 
 	// convert pools into simple states
-	actualStates := make([]poolState, 0)
+	actualStates := make([]serverState, 0)
 	for poolNum := range h.tracker.pools {
 		_, isFull := h.tracker.fullPools[poolNum]
-		actualStates = append(actualStates, poolState{
+		actualStates = append(actualStates, serverState{
 			value:   h.tracker.poolAmounts[poolNum],
 			version: h.tracker.poolVersions[poolNum],
 			players: len(h.tracker.pools[poolNum]),
