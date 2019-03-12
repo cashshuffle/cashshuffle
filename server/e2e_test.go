@@ -69,8 +69,8 @@ func TestUnanimousBlamesLeadToServerBan(t *testing.T) {
 		// because this is now a unanimous vote
 		if len(expectedBanData) == 0 {
 			expectedBanData = append(expectedBanData, testServerBanData{
-					client: troubleClient,
-					banData: banData{score: 1},
+				client:  troubleClient,
+				banData: banData{score: 1},
 			})
 		} else {
 			expectedBanData[0].banData.score++
@@ -172,14 +172,14 @@ type testClient struct {
 	h               *testHarness
 	verificationKey string
 	// setup on connection
-	conn            net.Conn
-	remoteConn      net.Conn
-	inbox           *testInbox
+	conn       net.Conn
+	remoteConn net.Conn
+	inbox      *testInbox
 	// setup on registration
-	amount          uint64
-	version         uint64
-	session         []byte
-	playerNum       uint32
+	amount    uint64
+	version   uint64
+	session   []byte
+	playerNum uint32
 }
 
 // NewTestClient creates a client that is ready to connect to the server
