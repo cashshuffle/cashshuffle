@@ -15,8 +15,8 @@ import (
 
 const (
 	basicPoolSize = 3
-	anyAmount     = uint64(100000000)
-	anyVersion    = uint64(999)
+	someAmount    = uint64(100000000)
+	someVersion   = uint64(999)
 )
 
 var (
@@ -26,7 +26,7 @@ var (
 // TestHappyShuffle simulates a complete shuffle
 func TestHappyShuffle(t *testing.T) {
 	h := newTestHarness(t, basicPoolSize)
-	clients := h.FillOnePool(basicPoolSize, anyAmount, anyVersion)
+	clients := h.FillOnePool(basicPoolSize, someAmount, someVersion)
 
 	// the shuffle succeeded, and clients leave with no blame
 	for _, c := range clients {
@@ -45,22 +45,30 @@ func TestHappyShuffle(t *testing.T) {
 	h.AssertEmptyInboxes(clients)
 }
 
-// TestNonUnanimousBlameDoesNothing confirms no effect when less than
-// a unanimous vote occurs
-func TestNonUnanimousBlameDoesNothing(t *testing.T) {
+// TestUnanimousBlamesLeadToServerBan confirms an increase in ban score
+// when a player is blamed by all other players in their pool, with repeated
+// unanimous blames leading to a server ban
+func TestUnanimousBlamesLeadToServerBan(t *testing.T) {
 	h := newTestHarness(t, 5)
-	clients := h.FillOnePool(5, anyAmount, anyVersion)
+	clients := h.FillOnePool(5, someAmount, someVersion)
 	troubleClient := clients[0]
-	otherClients := clients[1:]
 
 	// all but one other client blames troubleClient
-	for i := 0; i < len(otherClients)-1; i++ {
-		otherClients[i].Blame(troubleClient)
-	}
-
-	// nobody gets a ban score since it was not a unanimous vote
-	h.AssertP2PBans([]testP2PBan{})
+	clients[1].Blame(troubleClient)
+	clients[2].Blame(troubleClient)
+	clients[3].Blame(troubleClient)
+	// troubleClient does not get a ban score since it was not a unanimous vote
 	h.AssertServerBans([]testServerBanData{})
+
+	// the last other client also blames troubleClient
+	clients[4].Blame(troubleClient)
+	// troubleClient's ban score increases because this is now a unanimous vote
+	h.AssertServerBans([]testServerBanData{
+		{
+			client: troubleClient,
+			banData: banData{score: 1},
+		},
+	})
 }
 
 // testHarness holds the pieces required for automating a shuffle
@@ -354,7 +362,7 @@ type testP2PBan struct {
 
 func (h *testHarness) AssertP2PBans(bans []testP2PBan) {
 	// just wait a short time
-	time.Sleep(2 * time.Millisecond)
+	time.Sleep(10 * time.Millisecond)
 
 	expectedPairs := make([]ipPair, 0)
 	for _, ban := range bans {
@@ -380,7 +388,7 @@ type testServerBanData struct {
 
 func (h *testHarness) AssertServerBans(cbs []testServerBanData) {
 	// just wait a short time
-	time.Sleep(2 * time.Millisecond)
+	time.Sleep(10 * time.Millisecond)
 
 	// convert client bans into server-side bans
 	expectedBanData := make(map[string]banData)
@@ -389,6 +397,8 @@ func (h *testHarness) AssertServerBans(cbs []testServerBanData) {
 		expectedBanData[ip] = bd.banData
 	}
 
+	h.tracker.mutex.RLock()
+	defer h.tracker.mutex.RUnlock()
 	actualBanData := make(map[string]banData)
 	for ip, bd := range h.tracker.banData {
 		actualBanData[ip] = *bd
