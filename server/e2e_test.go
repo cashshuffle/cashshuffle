@@ -341,7 +341,7 @@ func (inbox *testInbox) PopOldest() (*packetInfo, error) {
 			// retain the lock if we find a message
 			return nil
 		},
-		retry.Attempts(20),
+		retry.Attempts(100),
 		retry.Delay(1*time.Millisecond),
 	)
 	if err != nil {
@@ -431,7 +431,7 @@ func (h *testHarness) AssertNotConnected(c *testClient) {
 			}
 			return fmt.Errorf("still connected")
 		},
-		retry.Attempts(20),
+		retry.Attempts(100),
 		retry.Delay(1*time.Millisecond),
 	)
 	if err != nil {
