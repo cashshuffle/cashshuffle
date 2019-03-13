@@ -3,6 +3,7 @@ module github.com/cashshuffle/cashshuffle
 go 1.12
 
 require (
+	github.com/avast/retry-go v2.2.0+incompatible
 	github.com/golang/protobuf v1.3.0
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
