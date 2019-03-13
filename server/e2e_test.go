@@ -5,6 +5,7 @@ import (
 	"io"
 	"net"
 	"strconv"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -56,15 +57,16 @@ func TestUnanimousBlamesLeadToServerBan(t *testing.T) {
 	for i := 0; i < maxBanScore; i++ {
 		// make a new pool
 		otherClients := h.FillOnePool(poolSize, someAmount, someVersion, troubleClient)
+		allClients := append([]*testClient{troubleClient}, otherClients...)
 
 		// all but one other client blames troubleClient
-		otherClients[0].Blame(troubleClient)
-		otherClients[1].Blame(troubleClient)
-		otherClients[2].Blame(troubleClient)
+		otherClients[0].Blame(troubleClient, allClients)
+		otherClients[1].Blame(troubleClient, allClients)
+		otherClients[2].Blame(troubleClient, allClients)
 		// ban score does not change yet because it is not a unanimous vote
 		h.AssertServerBans(expectedBanData)
 		// the last other client also blames troubleClient
-		otherClients[3].Blame(troubleClient)
+		otherClients[3].Blame(troubleClient, otherClients)
 		// troubleClient gets a new or increased ban score
 		// because this is now a unanimous vote
 		if len(expectedBanData) == 0 {
@@ -78,15 +80,17 @@ func TestUnanimousBlamesLeadToServerBan(t *testing.T) {
 		h.AssertServerBans(expectedBanData)
 
 		// everybody drops
-		troubleClient.Disconnect()
-		for _, c := range otherClients {
+		for _, c := range allClients {
 			c.Disconnect()
 		}
+		// all messages should be consumed through the assertions
+		// if anything is remaining, it is outside of specification
+		// or something unexpected happened
+		h.AssertEmptyInboxes(allClients)
 	}
 
 	// confirm that troubleClient is banned and cannot connect to the server
 	troubleClient.Connect()
-	time.Sleep(10 * time.Millisecond)
 	h.AssertNotConnected(troubleClient)
 
 	// confirm after time limit troubleClient can connect again
@@ -242,9 +246,10 @@ func (c *testClient) Register(amount, version uint64) {
 	c.playerNum, c.session = c.h.AssertRegistered(c)
 }
 
-// Blame sends a blame message to the server against other
+// Blame sends a blame message to the server against accused and asserts
+// receipt of the blame by the list of clients.
 // https://github.com/cashshuffle/cashshuffle/wiki/CashShuffle-Server-Specification#blame-messages
-func (c *testClient) Blame(other *testClient) {
+func (c *testClient) Blame(accused *testClient, shouldBeNotified []*testClient) {
 	msg := &message.Signed{
 		Packet: &message.Packet{
 			Number:  c.playerNum,
@@ -256,18 +261,19 @@ func (c *testClient) Blame(other *testClient) {
 				Blame: &message.Blame{
 					Reason: message.Reason_LIAR,
 					Accused: &message.VerificationKey{
-						Key: other.verificationKey,
+						Key: accused.verificationKey,
 					},
 				},
 			},
 		},
 		Signature: nil,
 	}
-
 	err := writeMessage(c.conn, []*message.Signed{msg})
 	if err != nil {
 		panic(err)
 	}
+
+	c.h.AssertBroadcastBlame(msg, shouldBeNotified)
 }
 
 // testInbox collects all incoming client messages in the background
@@ -302,7 +308,7 @@ func newTestInbox(conn net.Conn) *testInbox {
 // if no message appears within a short time period.
 func (inbox *testInbox) PopOldest() (*packetInfo, error) {
 	// just wait
-	time.Sleep(5 * time.Millisecond)
+	time.Sleep(10 * time.Millisecond)
 
 	inbox.mutex.Lock()
 	defer inbox.mutex.Unlock()
@@ -369,8 +375,23 @@ func (h *testHarness) AssertBroadcastPhase1Announcement(all []*testClient) {
 	}
 }
 
+// AssertBroadcastBlame confirms and consumes the blame broadcast to all
+// pool players.
+func (h *testHarness) AssertBroadcastBlame(expected *message.Signed, pool []*testClient) {
+	for _, c := range pool {
+		actualPacket, err := c.inbox.PopOldest()
+		if err != nil {
+			panic(err)
+		}
+		assert.Len(h.t, actualPacket.message.GetPacket(), 1)
+		actualMsg := actualPacket.message.GetPacket()[0]
+		assert.Equal(h.t, expected, actualMsg)
+	}
+}
+
 // AssertNotConnected confirms that the client is not connected to a server
 func (h *testHarness) AssertNotConnected(c *testClient) {
+	time.Sleep(10 * time.Millisecond)
 	_, err := c.conn.Read([]byte{})
 	assert.Equal(h.t, io.EOF, err)
 }
@@ -386,7 +407,7 @@ type testPoolState struct {
 // AssertPoolStates confirms the server pools are in the expected state
 func (h *testHarness) AssertPoolStates(expected []testPoolState, completeState bool) {
 	// just wait
-	time.Sleep(5 * time.Millisecond)
+	time.Sleep(10 * time.Millisecond)
 	h.tracker.mutex.RLock()
 	defer h.tracker.mutex.RUnlock()
 
@@ -420,7 +441,7 @@ type testP2PBan struct {
 
 func (h *testHarness) AssertP2PBans(bans []testP2PBan) {
 	// just wait a short time
-	time.Sleep(5 * time.Millisecond)
+	time.Sleep(10 * time.Millisecond)
 
 	expectedPairs := make([]ipPair, 0)
 	for _, ban := range bans {
@@ -446,7 +467,7 @@ type testServerBanData struct {
 
 func (h *testHarness) AssertServerBans(cbs []testServerBanData) {
 	// just wait a short time
-	time.Sleep(5 * time.Millisecond)
+	time.Sleep(10 * time.Millisecond)
 
 	// convert client bans into server-side bans
 	expectedBanData := make(map[string]banData)
@@ -467,14 +488,17 @@ func (h *testHarness) AssertServerBans(cbs []testServerBanData) {
 
 // AssertEmptyInboxes confirms that clients received no unexpected messages
 func (h *testHarness) AssertEmptyInboxes(clients []*testClient) {
+	lines := make([]string, 0)
 	for _, c := range clients {
 		c.inbox.mutex.Lock()
 		if len(c.inbox.packets) != 0 {
-			e := fmt.Sprintf("inbox #%d not empty:\n", c.playerNum)
+			lines = append(lines, fmt.Sprintf("inbox #%d not empty:", c.playerNum))
 			for _, pkt := range c.inbox.packets {
-				e = e + fmt.Sprintf("  %+v\n", pkt.message.GetPacket())
+				lines = append(lines, fmt.Sprintf("  %+v\n", pkt.message.GetPacket()))
 			}
-			panic(e)
 		}
+	}
+	if len(lines) != 0 {
+		panic(strings.Join(lines, "\n"))
 	}
 }
