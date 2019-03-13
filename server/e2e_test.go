@@ -99,9 +99,10 @@ func TestUnanimousBlamesLeadToServerBan(t *testing.T) {
 	// and then waiting for it to clean up.
 }
 
-// TestBlameOnlyWithinPool demonstrates that players in different pools
-// cannot blame each other
-func TestBlameOnlyWithinPool(t *testing.T) {
+// TestBlameOnlyWithinPool confirms specifically that players in different
+// pools cannot blame each other and more generally that the server
+// does not broadcast messages between pools
+func TestBlameAndBroadcastOnlyWithinPool(t *testing.T) {
 	h := newTestHarness(t, basicPoolSize)
 	poolA := h.NewPool(basicPoolSize, someAmount, someVersion, nil)
 	poolB := h.NewPool(basicPoolSize, someAmount, someVersion, nil)
