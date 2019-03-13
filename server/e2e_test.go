@@ -19,8 +19,8 @@ import (
 
 const (
 	basicPoolSize = 3
-	someAmount    = uint64(100000000)
-	someVersion   = uint64(999)
+	testAmount    = uint64(100000000)
+	testVersion   = uint64(999)
 )
 
 var (
@@ -30,7 +30,7 @@ var (
 // TestHappyShuffle simulates a complete shuffle
 func TestHappyShuffle(t *testing.T) {
 	h := newTestHarness(t, basicPoolSize)
-	clients := h.NewPool(basicPoolSize, someAmount, someVersion, nil)
+	clients := h.NewPool(basicPoolSize, testAmount, testVersion, nil)
 
 	// the shuffle succeeded, and clients leave with no blame
 	for _, c := range clients {
@@ -56,7 +56,7 @@ func TestUnanimousBlamesLeadToServerBan(t *testing.T) {
 	// repeat the new pool and blame process until troubleClient is banned
 	for i := 0; i < maxBanScore; i++ {
 		// make a new pool
-		otherClients := h.NewPool(poolSize, someAmount, someVersion, troubleClient)
+		otherClients := h.NewPool(poolSize, testAmount, testVersion, troubleClient)
 		allClients := append([]*testClient{troubleClient}, otherClients...)
 
 		// all but one other client blames troubleClient
@@ -106,8 +106,8 @@ func TestUnanimousBlamesLeadToServerBan(t *testing.T) {
 // does not broadcast messages between pools
 func TestBlameAndBroadcastOnlyWithinPool(t *testing.T) {
 	h := newTestHarness(t, basicPoolSize)
-	poolA := h.NewPool(basicPoolSize, someAmount, someVersion, nil)
-	poolB := h.NewPool(basicPoolSize, someAmount, someVersion, nil)
+	poolA := h.NewPool(basicPoolSize, testAmount, testVersion, nil)
+	poolB := h.NewPool(basicPoolSize, testAmount, testVersion, nil)
 
 	// All of poolA blames one of poolB users
 	// but no notifications should be generated
