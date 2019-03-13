@@ -99,6 +99,28 @@ func TestUnanimousBlamesLeadToServerBan(t *testing.T) {
 	// and then waiting for it to clean up.
 }
 
+// TestBlameOnlyWithinPool demonstrates that players in different pools
+// cannot blame each other
+func TestBlameOnlyWithinPool(t *testing.T) {
+	h := newTestHarness(t, basicPoolSize)
+	poolA := h.NewPool(basicPoolSize, someAmount, someVersion, nil)
+	poolB := h.NewPool(basicPoolSize, someAmount, someVersion, nil)
+
+	// All of poolA blames one of poolB users
+	// but no notifications should be generated
+	noNotifications := make([]*testClient, 0)
+	for _, cA := range poolA {
+		cA.Blame(poolB[0], noNotifications)
+	}
+	// and no ban scores should appear
+	noBanData := []testServerBanData{}
+	h.AssertServerBans(noBanData)
+
+	// confirm no out of spec messages
+	h.AssertEmptyInboxes(poolA)
+	h.AssertEmptyInboxes(poolB)
+}
+
 // testHarness holds the pieces required for automating a shuffle
 type testHarness struct {
 	tracker *Tracker
