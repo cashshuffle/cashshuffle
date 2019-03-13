@@ -27,7 +27,7 @@ var (
 	testTempKey int
 )
 
-// TestHappyShuffle simulates a complete shuffle
+// TestHappyShuffle simulates a complete shuffle.
 func TestHappyShuffle(t *testing.T) {
 	h := newTestHarness(t, basicPoolSize)
 	clients := h.NewPool(basicPoolSize, testAmount, testVersion, nil)
@@ -46,7 +46,7 @@ func TestHappyShuffle(t *testing.T) {
 
 // TestUnanimousBlamesLeadToServerBan confirms an increase in ban score
 // when a player is blamed by all other players in their pool, with repeated
-// unanimous blames leading to a server ban
+// unanimous blames leading to a server ban.
 func TestUnanimousBlamesLeadToServerBan(t *testing.T) {
 	poolSize := 5
 	h := newTestHarness(t, poolSize)
@@ -103,7 +103,7 @@ func TestUnanimousBlamesLeadToServerBan(t *testing.T) {
 
 // TestBlameOnlyWithinPool confirms specifically that players in different
 // pools cannot blame each other and more generally that the server
-// does not broadcast messages between pools
+// does not broadcast messages between pools.
 func TestBlameAndBroadcastOnlyWithinPool(t *testing.T) {
 	h := newTestHarness(t, basicPoolSize)
 	poolA := h.NewPool(basicPoolSize, testAmount, testVersion, nil)
@@ -124,14 +124,14 @@ func TestBlameAndBroadcastOnlyWithinPool(t *testing.T) {
 	h.WaitEmptyInboxes(poolB)
 }
 
-// testHarness holds the pieces required for automating a shuffle
+// testHarness holds the pieces required for automating a shuffle.
 type testHarness struct {
 	tracker *Tracker
 	packets chan *packetInfo
 	t       *testing.T
 }
 
-// newTestHarness sets up the required parts for automating a shuffle
+// newTestHarness sets up the required parts for automating a shuffle.
 func newTestHarness(t *testing.T, poolSize int) *testHarness {
 	// prepare shuffle environment: tracker, packet channel, connections
 	anyPort := 0
@@ -176,7 +176,7 @@ func (h *testHarness) NewPool(poolSize int, value, version uint64,
 	return newClients
 }
 
-// testClient represents a single actor connected to the server
+// testClient represents a single actor connected to the server.
 type testClient struct {
 	// setup on creation
 	h               *testHarness
@@ -192,7 +192,7 @@ type testClient struct {
 	playerNum uint32
 }
 
-// NewTestClient creates a client that is ready to connect to the server
+// newTestClient creates a client that is ready to connect to the server.
 func newTestClient(h *testHarness) *testClient {
 	testTempKey++
 	return &testClient{
@@ -201,7 +201,7 @@ func newTestClient(h *testHarness) *testClient {
 	}
 }
 
-// Connect sets up a connection between client and server
+// Connect sets up a connection between client and server.
 func (c *testClient) Connect() {
 	c.conn, c.remoteConn = net.Pipe()
 
@@ -224,7 +224,8 @@ func (c *testClient) Disconnect() {
 	c.h.WaitNotConnected(c)
 }
 
-// Register sends a registration message to the server and completes the process
+// Register sends a registration message to the server and consumes the
+// registration response to complete the process.
 // https://github.com/cashshuffle/cashshuffle/wiki/CashShuffle-Server-Specification#entering-a-shuffle
 func (c *testClient) Register(amount, version uint64,
 	shouldBeNotified []*testClient, isFullPool bool) {
@@ -300,13 +301,13 @@ func (c *testClient) Blame(accused *testClient, shouldBeNotified []*testClient) 
 	c.h.WaitBroadcastBlame(msg, shouldBeNotified)
 }
 
-// testInbox collects all incoming client messages in the background
+// testInbox collects all incoming client messages in the background.
 type testInbox struct {
 	packets []*packetInfo
 	mutex   sync.Mutex
 }
 
-// newTestInbox creates an active inbox watching the connection
+// newTestInbox creates an active inbox watching the connection.
 func newTestInbox(conn net.Conn) *testInbox {
 	inbox := &testInbox{
 		packets: make([]*packetInfo, 0),
@@ -420,7 +421,7 @@ func (h *testHarness) WaitBroadcastBlame(expected *message.Signed, pool []*testC
 }
 
 // WaitNotConnected confirms that both sides of the client connection are closed
-// and that client's connection is not in the server's lookup table
+// and that client's connection is not in the server's lookup table.
 func (h *testHarness) WaitNotConnected(c *testClient) {
 	err := retry.Do(
 		func() error {
@@ -456,7 +457,7 @@ func (h *testHarness) WaitNotConnected(c *testClient) {
 	}
 }
 
-// testPoolState describes the state of a pool
+// testPoolState describes the state of a pool.
 type testPoolState struct {
 	value   uint64
 	version uint64
@@ -492,7 +493,7 @@ func (h *testHarness) AssertPoolStates(expected []testPoolState, completeState b
 	}
 }
 
-// testP2PBan identifies the two clients involved in a p2p ban
+// testP2PBan identifies the two clients involved in a p2p ban.
 type testP2PBan struct {
 	a *testClient
 	b *testClient
@@ -518,7 +519,7 @@ func (h *testHarness) AssertP2PBans(bans []testP2PBan) {
 	assert.ElementsMatch(h.t, expectedPairs, actualPairs)
 }
 
-// testServerBanData describes a client and their server ban status
+// testServerBanData describes a client and their server ban status.
 type testServerBanData struct {
 	client  *testClient
 	banData banData
@@ -543,7 +544,7 @@ func (h *testHarness) AssertServerBans(cbs []testServerBanData) {
 	assert.Equal(h.t, expectedBanData, actualBanData)
 }
 
-// WaitEmptyInboxes confirms that clients received no unexpected messages
+// WaitEmptyInboxes confirms that clients received no unexpected messages.
 func (h *testHarness) WaitEmptyInboxes(clients []*testClient) {
 	err := retry.Do(
 		func() error {
