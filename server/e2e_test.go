@@ -12,6 +12,7 @@ import (
 
 	"github.com/cashshuffle/cashshuffle/message"
 
+	"github.com/avast/retry-go"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -330,15 +331,23 @@ func newTestInbox(conn net.Conn) *testInbox {
 // PopOldest pops the oldest message and returns it or returns an error
 // if no message appears within a short time period.
 func (inbox *testInbox) PopOldest() (*packetInfo, error) {
-	// just wait
-	time.Sleep(10 * time.Millisecond)
-
-	inbox.mutex.Lock()
-	defer inbox.mutex.Unlock()
-
-	if len(inbox.packets) == 0 {
-		return nil, fmt.Errorf("empty inbox")
+	err := retry.Do(
+		func() error {
+			inbox.mutex.Lock()
+			if len(inbox.packets) == 0 {
+				inbox.mutex.Unlock()
+				return fmt.Errorf("empty inbox")
+			}
+			// retain the lock if we find a message
+			return nil
+		},
+		retry.Attempts(20),
+		retry.Delay(1*time.Millisecond),
+	)
+	if err != nil {
+		panic(err)
 	}
+	defer inbox.mutex.Unlock()
 
 	p := inbox.packets[0]
 	inbox.packets = inbox.packets[1:]
@@ -414,9 +423,20 @@ func (h *testHarness) AssertBroadcastBlame(expected *message.Signed, pool []*tes
 
 // AssertNotConnected confirms that the client is not connected to a server
 func (h *testHarness) AssertNotConnected(c *testClient) {
-	time.Sleep(10 * time.Millisecond)
-	_, err := c.conn.Read([]byte{})
-	assert.Equal(h.t, io.EOF, err)
+	err := retry.Do(
+		func() error {
+			_, err := c.conn.Read([]byte{})
+			if err == io.EOF {
+				return nil
+			}
+			return fmt.Errorf("still connected")
+		},
+		retry.Attempts(20),
+		retry.Delay(1*time.Millisecond),
+	)
+	if err != nil {
+		panic(err)
+	}
 }
 
 // testPoolState describes the state of a pool
