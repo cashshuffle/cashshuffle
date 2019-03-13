@@ -28,7 +28,7 @@ var (
 // TestHappyShuffle simulates a complete shuffle
 func TestHappyShuffle(t *testing.T) {
 	h := newTestHarness(t, basicPoolSize)
-	clients := h.FillOnePool(basicPoolSize, someAmount, someVersion, nil)
+	clients := h.NewPool(basicPoolSize, someAmount, someVersion, nil)
 
 	// the shuffle succeeded, and clients leave with no blame
 	for _, c := range clients {
@@ -56,7 +56,7 @@ func TestUnanimousBlamesLeadToServerBan(t *testing.T) {
 	// repeat the new pool and blame process until troubleClient is banned
 	for i := 0; i < maxBanScore; i++ {
 		// make a new pool
-		otherClients := h.FillOnePool(poolSize, someAmount, someVersion, troubleClient)
+		otherClients := h.NewPool(poolSize, someAmount, someVersion, troubleClient)
 		allClients := append([]*testClient{troubleClient}, otherClients...)
 
 		// all but one other client blames troubleClient
@@ -121,10 +121,10 @@ func newTestHarness(t *testing.T, poolSize int) *testHarness {
 	}
 }
 
-// FillOnePool simulates one pool filling up and consumes all expected messages.
+// NewPool simulates one pool filling up and consumes all expected messages.
 // fixedClient will be used in place of one new client if provided.
 // Returns all newly created clients.
-func (h *testHarness) FillOnePool(poolSize int, value, version uint64,
+func (h *testHarness) NewPool(poolSize int, value, version uint64,
 	fixedClient *testClient) []*testClient {
 	var c *testClient
 	allClients := make([]*testClient, 0)
