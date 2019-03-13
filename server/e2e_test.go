@@ -450,7 +450,7 @@ type testPoolState struct {
 // AssertPoolStates confirms the server pools are in the expected state
 func (h *testHarness) AssertPoolStates(expected []testPoolState, completeState bool) {
 	// just wait
-	time.Sleep(10 * time.Millisecond)
+	time.Sleep(50 * time.Millisecond)
 	h.tracker.mutex.RLock()
 	defer h.tracker.mutex.RUnlock()
 
@@ -484,7 +484,7 @@ type testP2PBan struct {
 
 func (h *testHarness) AssertP2PBans(bans []testP2PBan) {
 	// just wait a short time
-	time.Sleep(10 * time.Millisecond)
+	time.Sleep(50 * time.Millisecond)
 
 	expectedPairs := make([]ipPair, 0)
 	for _, ban := range bans {
@@ -510,7 +510,7 @@ type testServerBanData struct {
 
 func (h *testHarness) AssertServerBans(cbs []testServerBanData) {
 	// just wait a short time
-	time.Sleep(10 * time.Millisecond)
+	time.Sleep(50 * time.Millisecond)
 
 	// convert client bans into server-side bans
 	expectedBanData := make(map[string]banData)
