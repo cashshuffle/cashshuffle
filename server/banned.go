@@ -2,6 +2,7 @@ package server
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/cashshuffle/cashshuffle/message"
 )
@@ -48,6 +49,7 @@ func (pi *packetInfo) checkBlameMessage() error {
 		if pi.tracker.bannedByPool(accused, true) {
 			pi.tracker.increaseBanScore(accused.conn)
 			pi.tracker.decreasePoolVoters(accused.pool)
+			fmt.Printf("Adding IP BAN for accused %#v\n", accused)
 			pi.tracker.addDenyIPMatch(accused.conn, accused.pool)
 		}
 	}

@@ -4,6 +4,7 @@ import (
 	"net"
 	"sync"
 	"time"
+	"fmt"
 
 	"github.com/cashshuffle/cashshuffle/message"
 
@@ -169,10 +170,12 @@ func (t *Tracker) addDenyIPMatch(player1 net.Conn, pool int) {
 	for _, otherPlayer := range t.pools[pool] {
 		otherIP, _, _ := net.SplitHostPort(otherPlayer.conn.RemoteAddr().String())
 		if ip == otherIP {
+			fmt.Printf("SKIPPING BAN FOR %#v to %#v\n", ip, otherIP)
 			continue
 		}
 
 		// if a ban somehow already exists, extend it
+		fmt.Printf("ADDING REAL BAN FOR %#v to %#v\n", ip, otherIP)
 		t.denyIPMatch[newIPPair(ip, otherIP)] = time.Now()
 	}
 }
@@ -183,12 +186,15 @@ func (t *Tracker) deniedByIPMatch(player net.Conn, pool int) bool {
 	ip, _, _ := net.SplitHostPort(player.RemoteAddr().String())
 	for _, otherPlayer := range t.pools[pool] {
 		otherIP, _, _ := net.SplitHostPort(otherPlayer.conn.RemoteAddr().String())
+		fmt.Printf("CHECKING IP FOR POOL ENTRY %#v to %#v\n", ip, otherIP)
 
 		if _, ok := t.denyIPMatch[newIPPair(ip, otherIP)]; ok {
+			fmt.Printf("DENYING IP FOR POOL ENTRY %#v to %#v\n", ip, otherIP)
 			return true
 		}
 	}
 
+	fmt.Printf("NO DENIAL FOUND \n")
 	return false
 }
 
