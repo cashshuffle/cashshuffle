@@ -7,12 +7,12 @@ import (
 )
 
 var validBlamereasons = []message.Reason{
+	message.Reason_LIAR,
 	message.Reason_INSUFFICIENTFUNDS,
 	message.Reason_DOUBLESPEND,
 	message.Reason_EQUIVOCATIONFAILURE,
 	message.Reason_SHUFFLEFAILURE,
 	message.Reason_SHUFFLEANDEQUIVOCATIONFAILURE,
-	message.Reason_INVALIDSIGNATURE,
 	message.Reason_MISSINGOUTPUT,
 	message.Reason_INVALIDSIGNATURE,
 	message.Reason_INVALIDFORMAT,
