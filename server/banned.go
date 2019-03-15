@@ -6,6 +6,18 @@ import (
 	"github.com/cashshuffle/cashshuffle/message"
 )
 
+var validBlamereasons = []message.Reason{
+	message.Reason_INSUFFICIENTFUNDS,
+	message.Reason_DOUBLESPEND,
+	message.Reason_EQUIVOCATIONFAILURE,
+	message.Reason_SHUFFLEFAILURE,
+	message.Reason_SHUFFLEANDEQUIVOCATIONFAILURE,
+	message.Reason_INVALIDSIGNATURE,
+	message.Reason_MISSINGOUTPUT,
+	message.Reason_INVALIDSIGNATURE,
+	message.Reason_INVALIDFORMAT,
+}
+
 // checkBlameMessage checks to see if the player has sent a blame.
 func (pi *packetInfo) checkBlameMessage() error {
 	if len(pi.message.Packet) != 1 {
@@ -24,17 +36,6 @@ func (pi *packetInfo) checkBlameMessage() error {
 	}
 
 	validBlame := false
-	validBlamereasons := []message.Reason{
-		message.Reason_INSUFFICIENTFUNDS,
-		message.Reason_DOUBLESPEND,
-		message.Reason_EQUIVOCATIONFAILURE,
-		message.Reason_SHUFFLEFAILURE,
-		message.Reason_SHUFFLEANDEQUIVOCATIONFAILURE,
-		message.Reason_INVALIDSIGNATURE,
-		message.Reason_MISSINGOUTPUT,
-		message.Reason_INVALIDSIGNATURE,
-		message.Reason_INVALIDFORMAT,
-	}
 
 	for _, reason := range validBlamereasons {
 		if packet.Message.Blame.Reason == reason {
