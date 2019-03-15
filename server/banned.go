@@ -23,7 +23,26 @@ func (pi *packetInfo) checkBlameMessage() error {
 		return nil
 	}
 
-	if packet.Message.Blame.Reason == message.Reason_LIAR {
+	validBlame := false
+	validBlamereasons := []message.Reason{
+		message.Reason_INSUFFICIENTFUNDS,
+		message.Reason_DOUBLESPEND,
+		message.Reason_EQUIVOCATIONFAILURE,
+		message.Reason_SHUFFLEFAILURE,
+		message.Reason_SHUFFLEANDEQUIVOCATIONFAILURE,
+		message.Reason_INVALIDSIGNATURE,
+		message.Reason_MISSINGOUTPUT,
+		message.Reason_INVALIDSIGNATURE,
+		message.Reason_INVALIDFORMAT,
+	}
+
+	for _, reason := range validBlamereasons {
+		if packet.Message.Blame.Reason == reason {
+			validBlame = true
+		}
+	}
+
+	if validBlame {
 		accusedKey := packet.Message.Blame.Accused.String()
 		accused := pi.tracker.playerByVerificationKey(accusedKey)
 
