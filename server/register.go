@@ -2,12 +2,14 @@ package server
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/cashshuffle/cashshuffle/message"
 )
 
 // registerClient registers a new session.
 func (pi *packetInfo) registerClient() error {
+	var player *playerData
 	if len(pi.message.Packet) == 1 {
 		signed := pi.message.Packet[0]
 
@@ -15,9 +17,16 @@ func (pi *packetInfo) registerClient() error {
 			p := signed.GetPacket()
 			registration := p.GetRegistration()
 
-			if p.FromKey.String() != "" && registration != nil {
+			verificationKey := p.FromKey.String()
+			player = pi.tracker.playerByVerificationKey(verificationKey)
+			if player != nil {
+				return fmt.Errorf("server already has a player "+
+					"with verification key %s", verificationKey)
+			}
+
+			if verificationKey != "" && registration != nil {
 				player := playerData{
-					verificationKey: p.FromKey.String(),
+					verificationKey: verificationKey,
 					conn:            pi.conn,
 					blamedBy:        make(map[string]interface{}),
 					amount:          registration.GetAmount(),

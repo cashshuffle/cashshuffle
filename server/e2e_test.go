@@ -126,6 +126,26 @@ func TestBlameAndBroadcastOnlyWithinPool(t *testing.T) {
 	h.WaitEmptyInboxes(poolB)
 }
 
+func TestOnlyUniqueVerificationKeysCanRegister(t *testing.T) {
+	var expectSuccess bool
+	h := newTestHarness(t, basicPoolSize)
+
+	// client registers normally
+	client := newTestClient(h)
+	client.Connect()
+	expectSuccess = true
+	client.Register(testAmount, testVersion, []*testClient{client}, false, expectSuccess)
+
+	// client with same verification key is unable to register
+	clone := &testClient{
+		h:               client.h,
+		verificationKey: client.verificationKey,
+	}
+	clone.Connect()
+	expectSuccess = false
+	clone.Register(testAmount, testVersion, nil, false, expectSuccess)
+}
+
 // testHarness holds the pieces required for automating a shuffle.
 type testHarness struct {
 	tracker *Tracker
@@ -173,7 +193,7 @@ func (h *testHarness) NewPool(poolSize int, value, version uint64,
 
 		c.Connect()
 		isFullPool := i == poolSize-1
-		c.Register(value, version, allClients, isFullPool)
+		c.Register(value, version, allClients, isFullPool, true)
 	}
 	return newClients
 }
@@ -230,7 +250,7 @@ func (c *testClient) Disconnect() {
 // registration response to complete the process.
 // https://github.com/cashshuffle/cashshuffle/wiki/CashShuffle-Server-Specification#entering-a-shuffle
 func (c *testClient) Register(amount, version uint64,
-	shouldBeNotified []*testClient, isFullPool bool) {
+	shouldBeNotified []*testClient, isFullPool bool, expectSuccess bool) {
 	c.amount = amount
 	c.version = version
 
@@ -251,6 +271,11 @@ func (c *testClient) Register(amount, version uint64,
 	err := writeMessage(c.conn, []*message.Signed{msg})
 	if err != nil {
 		c.h.t.Fatal(err)
+	}
+
+	if !expectSuccess {
+		c.h.WaitNotConnected(c)
+		return
 	}
 
 	// consume the registration response
