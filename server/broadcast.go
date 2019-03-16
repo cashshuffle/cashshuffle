@@ -38,11 +38,17 @@ func (pi *packetInfo) broadcastMessage() error {
 				return nil
 			}
 		} else {
+			sendingPlayer := pi.tracker.playerByConnection(pi.conn)
 			player := pi.tracker.playerByVerificationKey(strings.TrimLeft(vk, playerPrefix))
 			if player == nil {
 				pi.broadcastNewRound(true)
 
 				// Don't disconnect
+				return nil
+			}
+
+			if player == sendingPlayer {
+				// Don't allow players to send messages to themselves.
 				return nil
 			}
 
