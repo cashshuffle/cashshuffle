@@ -428,6 +428,17 @@ func (h *testHarness) WaitBroadcastBlame(expected *message.Signed, pool []*testC
 func (h *testHarness) WaitNotConnected(c *testClient) {
 	err := retry.Do(
 		func() error {
+			// confirm client side of the connection is closed
+			if c.conn != nil {
+				_ = c.conn.SetReadDeadline(time.Now())
+				_, err := c.conn.Read([]byte{})
+				if (err != io.EOF) && (err != io.ErrClosedPipe) {
+					return fmt.Errorf("client side of connection still active")
+				}
+				c.conn = nil
+			}
+
+			// then make sure the server drops the client from the tracker
 			h.tracker.mutex.RLock()
 			defer h.tracker.mutex.RUnlock()
 			// confirm removed from connection lookup
@@ -436,21 +447,6 @@ func (h *testHarness) WaitNotConnected(c *testClient) {
 				return fmt.Errorf("server thinks client is still connected")
 			}
 
-			// confirm both sides of connection are closed
-			if c.conn != nil {
-				_ = c.conn.SetReadDeadline(time.Now())
-				_, err := c.conn.Read([]byte{})
-				if (err != io.EOF) && (err != io.ErrClosedPipe) {
-					return fmt.Errorf("client side of connection still active")
-				}
-			}
-			if c.remoteConn != nil {
-				_ = c.remoteConn.SetReadDeadline(time.Now())
-				_, err := c.remoteConn.Read([]byte{})
-				if (err != io.EOF) && (err != io.ErrClosedPipe) {
-					return fmt.Errorf("server side of connection still active")
-				}
-			}
 			// all evidence says client is disconnected
 			return nil
 		},
