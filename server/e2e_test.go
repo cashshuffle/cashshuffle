@@ -62,6 +62,8 @@ func TestUnanimousBlamesLeadToServerBan(t *testing.T) {
 		// all but one other client blames troubleClient
 		otherClients[0].Blame(troubleClient, allClients)
 		otherClients[1].Blame(troubleClient, allClients)
+		// duplicate blames from the same client should not be counted twice!
+		otherClients[2].Blame(troubleClient, allClients)
 		otherClients[2].Blame(troubleClient, allClients)
 		// ban score does not change yet because it is not a unanimous vote
 		h.AssertServerBans(expectedBanData)
