@@ -422,8 +422,8 @@ func (h *testHarness) WaitBroadcastBlame(expected *message.Signed, pool []*testC
 	}
 }
 
-// WaitNotConnected confirms that both sides of the client connection are closed
-// and that client's connection is not in the server's lookup table.
+// WaitNotConnected confirms that client's connection is not
+// in the server's lookup table.
 func (h *testHarness) WaitNotConnected(c *testClient) {
 	err := retry.Do(
 		func() error {
