@@ -349,6 +349,7 @@ func (inbox *testInbox) PopOldest() (*packetInfo, error) {
 		},
 		retry.Attempts(100),
 		retry.Delay(5*time.Millisecond),
+		retry.DelayType(retry.FixedDelay),
 	)
 	return packet, err
 }
@@ -437,12 +438,14 @@ func (h *testHarness) WaitNotConnected(c *testClient) {
 
 			// confirm both sides of connection are closed
 			if c.conn != nil {
+				_ = c.conn.SetReadDeadline(time.Now())
 				_, err := c.conn.Read([]byte{})
 				if (err != io.EOF) && (err != io.ErrClosedPipe) {
 					return fmt.Errorf("client side of connection still active")
 				}
 			}
 			if c.remoteConn != nil {
+				_ = c.remoteConn.SetReadDeadline(time.Now())
 				_, err := c.remoteConn.Read([]byte{})
 				if (err != io.EOF) && (err != io.ErrClosedPipe) {
 					return fmt.Errorf("server side of connection still active")
@@ -453,6 +456,7 @@ func (h *testHarness) WaitNotConnected(c *testClient) {
 		},
 		retry.Attempts(100),
 		retry.Delay(5*time.Millisecond),
+		retry.DelayType(retry.FixedDelay),
 	)
 	if err != nil {
 		h.t.Fatal(err)
@@ -568,6 +572,7 @@ func (h *testHarness) WaitEmptyInboxes(clients []*testClient) {
 		},
 		retry.Attempts(100),
 		retry.Delay(5*time.Millisecond),
+		retry.DelayType(retry.FixedDelay),
 	)
 	if err != nil {
 		h.t.Fatal(err)
