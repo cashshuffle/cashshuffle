@@ -44,20 +44,20 @@ func (pi *packetInfo) checkBlameMessage() error {
 	}
 
 	if validBlame {
-		accusedKey := packet.Message.Blame.Accused.String()
-		accused := pi.tracker.playerByVerificationKey(accusedKey)
-
-		if accused == nil {
-			return nil
-		}
-
 		blamer := pi.tracker.playerByConnection(pi.conn)
 		if blamer == nil {
 			return nil
 		}
 
+		accusedKey := packet.Message.Blame.Accused.String()
+		players := pi.tracker.blameablePlayers(blamer.pool)
+		accused := players[accusedKey]
+		if accused == nil {
+			return errors.New("invalid blame")
+		}
+
 		if accused.pool != blamer.pool {
-			return errors.New("invalid ban")
+			return errors.New("invalid blame")
 		}
 
 		added := accused.addBlame(blamer.verificationKey)
