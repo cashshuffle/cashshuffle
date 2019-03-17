@@ -46,7 +46,7 @@ type Tracker struct {
 	poolTypes               map[int]message.ShuffleType
 	poolSize                int
 	fullPools               map[int]interface{}
-	poolDisconnectedCache   map[int]map[string]*playerData  // pool > vk > player
+	poolDisconnectedCache   map[int]map[string]*playerData // pool > vk > player
 	shufflePort             int
 	shuffleWebSocketPort    int
 	torShufflePort          int
