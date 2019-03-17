@@ -50,8 +50,7 @@ func (pi *packetInfo) checkBlameMessage() error {
 		}
 
 		accusedKey := packet.Message.Blame.Accused.String()
-		players := pi.tracker.blameablePlayers(blamer.pool)
-		accused := players[accusedKey]
+		accused := pi.tracker.fullPoolSnapshot[blamer.pool][accusedKey]
 		if accused == nil {
 			return errors.New("invalid blame")
 		}

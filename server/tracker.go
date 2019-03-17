@@ -46,7 +46,7 @@ type Tracker struct {
 	poolTypes               map[int]message.ShuffleType
 	poolSize                int
 	fullPools               map[int]interface{}
-	poolDisconnectedCache   map[int]map[string]*playerData // pool > vk > player
+	fullPoolSnapshot        map[int]map[string]*playerData // pool > vk > player
 	shufflePort             int
 	shuffleWebSocketPort    int
 	torShufflePort          int
@@ -78,7 +78,6 @@ func NewTracker(poolSize int, shufflePort int, shuffleWebSocketPort int, torShuf
 		banData:                 make(map[string]*banData),
 		connections:             make(map[net.Conn]*playerData),
 		verificationKeys:        make(map[string]net.Conn),
-		poolDisconnectedCache:   make(map[int]map[string]*playerData),
 		denyIPMatch:             make(map[ipPair]time.Time),
 		pools:                   make(map[int]map[uint32]*playerData),
 		poolAmounts:             make(map[int]uint64),
@@ -86,6 +85,7 @@ func NewTracker(poolSize int, shufflePort int, shuffleWebSocketPort int, torShuf
 		poolVersions:            make(map[int]uint64),
 		poolTypes:               make(map[int]message.ShuffleType),
 		fullPools:               make(map[int]interface{}),
+		fullPoolSnapshot:        make(map[int]map[string]*playerData),
 		shufflePort:             shufflePort,
 		shuffleWebSocketPort:    shuffleWebSocketPort,
 		torShufflePort:          torShufflePort,
@@ -116,12 +116,6 @@ func (t *Tracker) remove(conn net.Conn) {
 	if player != nil {
 		if player.verificationKey != "" {
 			delete(t.verificationKeys, player.verificationKey)
-
-			// If player dropped from a full pool, track them for blame
-			// until the pool is fully dissolved.
-			if _, ok := t.fullPools[player.pool]; ok {
-				t.addToDisconnectedCache(player)
-			}
 		}
 
 		t.unassignPool(player)
@@ -174,9 +168,8 @@ func (t *Tracker) addDenyIPMatch(player1 net.Conn, pool int) {
 	defer t.mutex.Unlock()
 
 	ip, _, _ := net.SplitHostPort(player1.RemoteAddr().String())
-	players := t.blameablePlayers(pool)
 
-	for _, otherPlayer := range players {
+	for _, otherPlayer := range t.fullPoolSnapshot[pool] {
 		otherIP, _, _ := net.SplitHostPort(otherPlayer.conn.RemoteAddr().String())
 		if ip == otherIP {
 			continue
@@ -303,6 +296,7 @@ func (t *Tracker) assignPool(p *playerData) (int, uint32) {
 
 	if len(t.pools[num]) == t.poolSize {
 		t.fullPools[num] = nil
+		t.fullPoolSnapshot[num] = t.takePoolSnapshot(num)
 	}
 
 	return num, playerNum
@@ -377,27 +371,23 @@ func (t *Tracker) unassignPool(p *playerData) {
 		delete(t.poolVoters, p.pool)
 		delete(t.poolVersions, p.pool)
 		delete(t.poolTypes, p.pool)
-		delete(t.poolDisconnectedCache, p.pool)
+		delete(t.fullPoolSnapshot, p.pool)
 	}
+}
+
+// takePoolSnapshot gets a lookup of all players in the pool
+func (t *Tracker) takePoolSnapshot(n int) map[string]*playerData {
+	snapshot := make(map[string]*playerData)
+	for _, p := range t.pools[n] {
+		snapshot[p.verificationKey] = p
+	}
+	return snapshot
 }
 
 // addToDisconnectedCache tracks a user that disconnected from a pool
 func (t *Tracker) addToDisconnectedCache(p *playerData) {
-	if t.poolDisconnectedCache[p.pool] == nil {
-		t.poolDisconnectedCache[p.pool] = make(map[string]*playerData)
+	if t.fullPoolSnapshot[p.pool] == nil {
+		t.fullPoolSnapshot[p.pool] = make(map[string]*playerData)
 	}
-	t.poolDisconnectedCache[p.pool][p.verificationKey] = p
-}
-
-// blameablePlayers returns all players that were in the pool when
-// the pool became full even if they have disconnected.
-func (t *Tracker) blameablePlayers(pool int) map[string]*playerData {
-	players := make(map[string]*playerData)
-	for _, p := range t.pools[pool] {
-		players[p.verificationKey] = p
-	}
-	for vk, p := range t.poolDisconnectedCache[pool] {
-		players[vk] = p
-	}
-	return players
+	t.fullPoolSnapshot[p.pool][p.verificationKey] = p
 }
