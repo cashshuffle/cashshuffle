@@ -25,7 +25,7 @@ func (pi *packetInfo) registerClient() error {
 			}
 
 			if verificationKey != "" && registration != nil {
-				player := playerData{
+				player = &playerData{
 					verificationKey: verificationKey,
 					conn:            pi.conn,
 					blamedBy:        make(map[string]interface{}),
@@ -33,9 +33,9 @@ func (pi *packetInfo) registerClient() error {
 					shuffleType:     registration.GetType(),
 					version:         registration.GetVersion(),
 				}
-				pi.tracker.add(&player)
+				pi.tracker.add(player)
 
-				err := pi.registrationSuccess(&player)
+				err := pi.registrationSuccess(player)
 				if err != nil {
 					pi.tracker.remove(pi.conn)
 				}
