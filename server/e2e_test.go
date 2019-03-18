@@ -3,6 +3,7 @@ package server
 import (
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"strconv"
 	"strings"
@@ -134,6 +135,26 @@ func TestBlameAndBroadcastOnlyWithinPool(t *testing.T) {
 	h.WaitEmptyInboxes(poolB)
 }
 
+func TestOnlyUniqueVerificationKeysCanRegister(t *testing.T) {
+	var expectSuccess bool
+	h := newTestHarness(t, basicPoolSize)
+
+	// client registers normally
+	client := newTestClient(h)
+	client.Connect()
+	expectSuccess = true
+	client.Register(testAmount, testVersion, []*testClient{client}, false, expectSuccess)
+
+	// client with same verification key is unable to register
+	clone := &testClient{
+		h:               client.h,
+		verificationKey: client.verificationKey,
+	}
+	clone.Connect()
+	expectSuccess = false
+	clone.Register(testAmount, testVersion, nil, false, expectSuccess)
+}
+
 // testHarness holds the pieces required for automating a shuffle.
 type testHarness struct {
 	tracker *Tracker
@@ -181,7 +202,7 @@ func (h *testHarness) NewPool(poolSize int, value, version uint64,
 
 		c.Connect()
 		isFullPool := i == poolSize-1
-		c.Register(value, version, allClients, isFullPool)
+		c.Register(value, version, allClients, isFullPool, true)
 	}
 	return newClients
 }
@@ -238,7 +259,7 @@ func (c *testClient) Disconnect() {
 // registration response to complete the process.
 // https://github.com/cashshuffle/cashshuffle/wiki/CashShuffle-Server-Specification#entering-a-shuffle
 func (c *testClient) Register(amount, version uint64,
-	shouldBeNotified []*testClient, isFullPool bool) {
+	shouldBeNotified []*testClient, isFullPool bool, expectSuccess bool) {
 	c.amount = amount
 	c.version = version
 
@@ -259,6 +280,11 @@ func (c *testClient) Register(amount, version uint64,
 	err := writeMessage(c.conn, []*message.Signed{msg})
 	if err != nil {
 		c.h.t.Fatal(err)
+	}
+
+	if !expectSuccess {
+		c.h.WaitNotConnected(c)
+		return
 	}
 
 	// consume the registration response
@@ -432,17 +458,27 @@ func (h *testHarness) WaitBroadcastBlame(expected *message.Signed, pool []*testC
 	}
 }
 
-// WaitNotConnected confirms that both sides of the client connection are closed
-// and that client's connection is not in the server's lookup table.
+// WaitNotConnected confirms that client's connection is not
+// in the server's lookup table and that the connection has been closed.
 func (h *testHarness) WaitNotConnected(c *testClient) {
 	err := retry.Do(
 		func() error {
+			// first check the connection
+			if c.conn != nil {
+				_ = c.conn.SetReadDeadline(time.Now())
+				_, err := c.conn.Read([]byte{})
+				if (err != io.EOF) && (err != io.ErrClosedPipe) {
+					return fmt.Errorf("connection still active (with retry error %v)", err)
+				}
+			}
+
+			// next make sure the server drops the client from the tracker
 			h.tracker.mutex.RLock()
 			defer h.tracker.mutex.RUnlock()
-			// make sure the server drops the client from the tracker
+
 			_, isTracked := h.tracker.connections[c.remoteConn]
 			if isTracked {
-				return fmt.Errorf("server thinks client is still connected")
+				return errors.New("server thinks client is still connected")
 			}
 			return nil
 		},
