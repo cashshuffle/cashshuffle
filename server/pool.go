@@ -1,8 +1,9 @@
 package server
 
 import (
-	"github.com/cashshuffle/cashshuffle/message"
 	"sync"
+
+	"github.com/cashshuffle/cashshuffle/message"
 )
 
 const (
@@ -10,6 +11,7 @@ const (
 	firstPlayerNum = uint32(1)
 )
 
+// Pool groups players together for a shuffle
 type Pool struct {
 	num            int
 	mutex          sync.RWMutex
