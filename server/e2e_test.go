@@ -3,7 +3,6 @@ package server
 import (
 	"errors"
 	"fmt"
-	"io"
 	"net"
 	"strconv"
 	"strings"
@@ -61,15 +60,24 @@ func TestUnanimousBlamesLeadToServerBan(t *testing.T) {
 
 		// all but one other client blames troubleClient
 		otherClients[0].Blame(troubleClient, allClients)
-		otherClients[1].Blame(troubleClient, allClients)
+
+		// troubleClient tries to avoid blame by disconnecting!
+		// It should not work - troubleClient should still be banned eventually.
+		troubleClient.Disconnect()
+
+		// Blames continue.
+		// Also since troubleClient disconnected, we only expect notifications
+		// to go to remaining clients.
+		otherClients[1].Blame(troubleClient, otherClients)
+
 		// duplicate blames from the same client should not be counted twice!
-		otherClients[2].Blame(troubleClient, allClients)
-		otherClients[2].Blame(troubleClient, allClients)
+		otherClients[2].Blame(troubleClient, otherClients)
+		otherClients[2].Blame(troubleClient, otherClients)
+
 		// ban score does not change yet because it is not a unanimous vote
 		h.AssertServerBans(expectedBanData)
 		// the last other client also blames troubleClient
-		// this should cause troubleClient to be banned from the current
-		// pool and not receive the notification
+		// this should cause troubleClient to be banned from the current pool
 		otherClients[3].Blame(troubleClient, otherClients)
 		// troubleClient also gets a new or increased ban score
 		// because this is now a unanimous vote
@@ -349,6 +357,7 @@ func (inbox *testInbox) PopOldest() (*packetInfo, error) {
 		},
 		retry.Attempts(100),
 		retry.Delay(5*time.Millisecond),
+		retry.DelayType(retry.FixedDelay),
 	)
 	return packet, err
 }
@@ -429,30 +438,16 @@ func (h *testHarness) WaitNotConnected(c *testClient) {
 		func() error {
 			h.tracker.mutex.RLock()
 			defer h.tracker.mutex.RUnlock()
-			// confirm removed from connection lookup
+			// make sure the server drops the client from the tracker
 			_, isTracked := h.tracker.connections[c.remoteConn]
 			if isTracked {
 				return fmt.Errorf("server thinks client is still connected")
 			}
-
-			// confirm both sides of connection are closed
-			if c.conn != nil {
-				_, err := c.conn.Read([]byte{})
-				if (err != io.EOF) && (err != io.ErrClosedPipe) {
-					return fmt.Errorf("client side of connection still active")
-				}
-			}
-			if c.remoteConn != nil {
-				_, err := c.remoteConn.Read([]byte{})
-				if (err != io.EOF) && (err != io.ErrClosedPipe) {
-					return fmt.Errorf("server side of connection still active")
-				}
-			}
-			// all evidence says client is disconnected
 			return nil
 		},
 		retry.Attempts(100),
 		retry.Delay(5*time.Millisecond),
+		retry.DelayType(retry.FixedDelay),
 	)
 	if err != nil {
 		h.t.Fatal(err)
@@ -568,6 +563,7 @@ func (h *testHarness) WaitEmptyInboxes(clients []*testClient) {
 		},
 		retry.Attempts(100),
 		retry.Delay(5*time.Millisecond),
+		retry.DelayType(retry.FixedDelay),
 	)
 	if err != nil {
 		h.t.Fatal(err)

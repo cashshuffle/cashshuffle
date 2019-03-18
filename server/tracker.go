@@ -46,6 +46,7 @@ type Tracker struct {
 	poolTypes               map[int]message.ShuffleType
 	poolSize                int
 	fullPools               map[int]interface{}
+	fullPoolSnapshot        map[int]map[string]*playerData // pool > vk > player
 	shufflePort             int
 	shuffleWebSocketPort    int
 	torShufflePort          int
@@ -84,6 +85,7 @@ func NewTracker(poolSize int, shufflePort int, shuffleWebSocketPort int, torShuf
 		poolVersions:            make(map[int]uint64),
 		poolTypes:               make(map[int]message.ShuffleType),
 		fullPools:               make(map[int]interface{}),
+		fullPoolSnapshot:        make(map[int]map[string]*playerData),
 		shufflePort:             shufflePort,
 		shuffleWebSocketPort:    shuffleWebSocketPort,
 		torShufflePort:          torShufflePort,
@@ -166,7 +168,8 @@ func (t *Tracker) addDenyIPMatch(player1 net.Conn, pool int) {
 	defer t.mutex.Unlock()
 
 	ip, _, _ := net.SplitHostPort(player1.RemoteAddr().String())
-	for _, otherPlayer := range t.pools[pool] {
+
+	for _, otherPlayer := range t.fullPoolSnapshot[pool] {
 		otherIP, _, _ := net.SplitHostPort(otherPlayer.conn.RemoteAddr().String())
 		if ip == otherIP {
 			continue
@@ -293,6 +296,7 @@ func (t *Tracker) assignPool(p *playerData) (int, uint32) {
 
 	if len(t.pools[num]) == t.poolSize {
 		t.fullPools[num] = nil
+		t.fullPoolSnapshot[num] = t.takePoolSnapshot(num)
 	}
 
 	return num, playerNum
@@ -367,5 +371,16 @@ func (t *Tracker) unassignPool(p *playerData) {
 		delete(t.poolVoters, p.pool)
 		delete(t.poolVersions, p.pool)
 		delete(t.poolTypes, p.pool)
+		delete(t.fullPoolSnapshot, p.pool)
 	}
+}
+
+// takePoolSnapshot gets a lookup of all players in the pool
+// This method assumes the caller is holding the mutex.
+func (t *Tracker) takePoolSnapshot(n int) map[string]*playerData {
+	snapshot := make(map[string]*playerData)
+	for _, p := range t.pools[n] {
+		snapshot[p.verificationKey] = p
+	}
+	return snapshot
 }
