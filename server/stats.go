@@ -61,14 +61,13 @@ func (t *Tracker) Stats(ip string, tor bool) *TrackerStats {
 		ShuffleWebSocketPort: wssp,
 	}
 
-	for k, p := range t.pools {
-		_, full := t.fullPools[k]
+	for _, p := range t.pools {
 		ps := PoolStats{
-			Members: len(p),
-			Amount:  t.poolAmounts[k],
-			Type:    t.poolTypes[k].String(),
-			Full:    full,
-			Version: t.poolVersions[k],
+			Members: p.PlayerCount(),
+			Amount:  p.amount,
+			Type:    p.shuffleType.String(),
+			Full:    p.IsFrozen(),
+			Version: p.version,
 		}
 		ts.Pools = append(ts.Pools, ps)
 	}

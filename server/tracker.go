@@ -5,8 +5,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cashshuffle/cashshuffle/message"
-
 	"github.com/nats-io/nuid"
 )
 
@@ -27,9 +25,6 @@ const (
 
 	// firstPoolNum is the starting number for pools
 	firstPoolNum = 1
-
-	// firstPlayerNum is the starting number for players in a pool
-	firstPlayerNum = uint32(1)
 )
 
 // Tracker is used to track connections to the server.
@@ -39,14 +34,8 @@ type Tracker struct {
 	verificationKeys        map[string]net.Conn
 	mutex                   sync.RWMutex
 	denyIPMatch             map[ipPair]time.Time
-	pools                   map[int]map[uint32]*playerData
-	poolAmounts             map[int]uint64
-	poolVoters              map[int]int
-	poolVersions            map[int]uint64
-	poolTypes               map[int]message.ShuffleType
+	pools                   map[int]*Pool
 	poolSize                int
-	fullPools               map[int]interface{}
-	fullPoolSnapshot        map[int]map[string]*playerData // pool > vk > player
 	shufflePort             int
 	shuffleWebSocketPort    int
 	torShufflePort          int
@@ -79,13 +68,7 @@ func NewTracker(poolSize int, shufflePort int, shuffleWebSocketPort int, torShuf
 		connections:             make(map[net.Conn]*playerData),
 		verificationKeys:        make(map[string]net.Conn),
 		denyIPMatch:             make(map[ipPair]time.Time),
-		pools:                   make(map[int]map[uint32]*playerData),
-		poolAmounts:             make(map[int]uint64),
-		poolVoters:              make(map[int]int),
-		poolVersions:            make(map[int]uint64),
-		poolTypes:               make(map[int]message.ShuffleType),
-		fullPools:               make(map[int]interface{}),
-		fullPoolSnapshot:        make(map[int]map[string]*playerData),
+		pools:                   make(map[int]*Pool),
 		shufflePort:             shufflePort,
 		shuffleWebSocketPort:    shuffleWebSocketPort,
 		torShufflePort:          torShufflePort,
@@ -104,7 +87,7 @@ func (t *Tracker) add(p *playerData) {
 
 	t.connections[p.conn] = p
 
-	p.pool, p.number = t.assignPool(p)
+	t.assignPool(p)
 }
 
 // remove removes the connection.
@@ -122,20 +105,6 @@ func (t *Tracker) remove(conn net.Conn) {
 
 		delete(t.connections, conn)
 	}
-}
-
-// bannedByPool returns true if the player has been banned by their pool.
-func (t *Tracker) bannedByPool(p *playerData, lock bool) bool {
-	if lock {
-		t.mutex.RLock()
-		defer t.mutex.RUnlock()
-	}
-
-	p.mutex.RLock()
-	defer p.mutex.RUnlock()
-
-	// the vote is all available voters - 1 for the accused
-	return len(p.blamedBy) >= t.poolVoters[p.pool]-1
 }
 
 // count returns the number of connections to the server.
@@ -163,13 +132,13 @@ func (t *Tracker) bannedByServer(conn net.Conn) bool {
 
 // addDenyIPMatch prevents an IP from joining a pool with the other
 // pool member IPs for a timeout period.
-func (t *Tracker) addDenyIPMatch(player1 net.Conn, pool int) {
+func (t *Tracker) addDenyIPMatch(player1 net.Conn, pool *Pool) {
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
 
 	ip, _, _ := net.SplitHostPort(player1.RemoteAddr().String())
 
-	for _, otherPlayer := range t.fullPoolSnapshot[pool] {
+	for _, otherPlayer := range pool.frozenSnapshot {
 		otherIP, _, _ := net.SplitHostPort(otherPlayer.conn.RemoteAddr().String())
 		if ip == otherIP {
 			continue
@@ -182,9 +151,9 @@ func (t *Tracker) addDenyIPMatch(player1 net.Conn, pool int) {
 
 // deniedByIPMatch returns true if an IP should be denied access to a pool.
 // Caller should hold the mutex.
-func (t *Tracker) deniedByIPMatch(player net.Conn, pool int) bool {
+func (t *Tracker) deniedByIPMatch(player net.Conn, pool *Pool) bool {
 	ip, _, _ := net.SplitHostPort(player.RemoteAddr().String())
-	for _, otherPlayer := range t.pools[pool] {
+	for _, otherPlayer := range pool.players {
 		otherIP, _, _ := net.SplitHostPort(otherPlayer.conn.RemoteAddr().String())
 
 		if _, ok := t.denyIPMatch[newIPPair(ip, otherIP)]; ok {
@@ -262,14 +231,6 @@ func (t *Tracker) playerByConnection(c net.Conn) *playerData {
 	return t.connections[c]
 }
 
-// playerCount returns the number of players in a pool.
-func (t *Tracker) playerCount(pool int) int {
-	t.mutex.RLock()
-	defer t.mutex.RUnlock()
-
-	return len(t.pools[pool])
-}
-
 // generateSessionID generates a unique session id.
 // This method assumes the caller is holding the mutex.
 func (t *Tracker) generateSessionID() []byte {
@@ -280,107 +241,49 @@ func (t *Tracker) generateSessionID() []byte {
 
 // assignPool assigns a user to a pool.
 // This method assumes the caller is holding the mutex.
-func (t *Tracker) assignPool(p *playerData) (int, uint32) {
-	num, playerNum, found := t.getAvailableSlot(p)
-	if !found {
-		num = t.getEmptyPool()
-		playerNum = firstPlayerNum
-		t.pools[num] = make(map[uint32]*playerData)
-		t.poolAmounts[num] = p.amount
-		t.poolVoters[num] = t.poolSize
-		t.poolVersions[num] = p.version
-		t.poolTypes[num] = p.shuffleType
+func (t *Tracker) assignPool(p *playerData) {
+	pool := t.assignExistingPool(p)
+	if pool == nil {
+		t.assignNewPool(p)
 	}
-
-	t.pools[num][playerNum] = p
-
-	if len(t.pools[num]) == t.poolSize {
-		t.fullPools[num] = nil
-		t.fullPoolSnapshot[num] = t.takePoolSnapshot(num)
-	}
-
-	return num, playerNum
 }
 
-// getAvailableSlot finds an existing pool and open player slot for player data
-func (t *Tracker) getAvailableSlot(p *playerData) (int, uint32, bool) {
-	for num := range t.pools {
-		if t.poolAmounts[num] != p.amount {
+// assignExistingPool finds an existing pool and places the player or returns
+// nil if there is not an available slot
+// This method assumes the caller is holding the mutex.
+func (t *Tracker) assignExistingPool(p *playerData) *Pool {
+	for _, pool := range t.pools {
+		if t.deniedByIPMatch(p.conn, pool) {
 			continue
 		}
-
-		if t.poolVersions[num] != p.version {
-			continue
+		ok := pool.AddPlayer(p)
+		if ok {
+			return pool
 		}
-
-		if t.poolTypes[num] != p.shuffleType {
-			continue
-		}
-
-		if _, ok := t.fullPools[num]; ok {
-			continue
-		}
-
-		if t.deniedByIPMatch(p.conn, num) {
-			continue
-		}
-
-		// find a slot in the available pool
-		playerNum := firstPlayerNum
-		for {
-			if _, ok := t.pools[num][playerNum]; ok {
-				playerNum = playerNum + 1
-				continue
-			}
-			break
-		}
-
-		return num, playerNum, true
 	}
-	return 0, 0, false
+	return nil
 }
 
-// getEmptyPool finds the lowest empty pool number >=1
-func (t *Tracker) getEmptyPool() int {
+// assignNewPool assigns player to the lowest empty pool number >=1
+// This method assumes the caller is holding the mutex.
+func (t *Tracker) assignNewPool(player *playerData) {
 	num := firstPoolNum
 	for {
 		if _, ok := t.pools[num]; !ok {
-			return num
+			break
 		}
 		num++
 	}
-}
-
-// decreasePoolVoters decreases the voter count for a pool.
-func (t *Tracker) decreasePoolVoters(pool int) {
-	t.mutex.Lock()
-	defer t.mutex.Unlock()
-
-	t.poolVoters[pool]--
+	pool := newPool(num, player, t.poolSize)
+	t.pools[num] = pool
 }
 
 // unassignPool removes a user from a pool.
 // This method assumes the caller is holding the mutex.
 func (t *Tracker) unassignPool(p *playerData) {
-	delete(t.pools[p.pool], p.number)
-
-	if len(t.pools[p.pool]) == 0 {
-		delete(t.pools, p.pool)
-		delete(t.fullPools, p.pool)
-		delete(t.poolAmounts, p.pool)
-		delete(t.poolVoters, p.pool)
-		delete(t.poolVersions, p.pool)
-		delete(t.poolTypes, p.pool)
-		delete(t.fullPoolSnapshot, p.pool)
+	pool := p.pool
+	pool.RemovePlayer(p)
+	if pool.PlayerCount() == 0 {
+		delete(t.pools, pool.num)
 	}
-}
-
-// takePoolSnapshot gets a lookup of all players in the pool
-// This method assumes the caller is holding the mutex.
-func (t *Tracker) takePoolSnapshot(n int) map[string]*playerData {
-	snapshot := make(map[string]*playerData)
-	for _, p := range t.pools[n] {
-		snapshot[p.verificationKey] = p
-	}
-	return snapshot
 }

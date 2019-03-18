@@ -48,9 +48,8 @@ func (pi *packetInfo) checkBlameMessage() error {
 		if blamer == nil {
 			return nil
 		}
-
 		accusedKey := packet.Message.Blame.Accused.String()
-		accused := pi.tracker.fullPoolSnapshot[blamer.pool][accusedKey]
+		accused := blamer.pool.PlayerFromSnapshot(accusedKey)
 		if accused == nil {
 			return errors.New("invalid blame")
 		}
@@ -64,9 +63,9 @@ func (pi *packetInfo) checkBlameMessage() error {
 			return nil
 		}
 
-		if pi.tracker.bannedByPool(accused, true) {
+		if blamer.pool.IsBanned(accused) {
 			pi.tracker.increaseBanScore(accused.conn)
-			pi.tracker.decreasePoolVoters(accused.pool)
+			blamer.pool.DecreaseVoters()
 			pi.tracker.addDenyIPMatch(accused.conn, accused.pool)
 		}
 	}

@@ -5,8 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cashshuffle/cashshuffle/message"
-
 	"github.com/stretchr/testify/assert"
 )
 
@@ -23,34 +21,43 @@ func TestTrackStats(t *testing.T) {
 			&fakeConn{}: {},
 		},
 		denyIPMatch: map[ipPair]time.Time{},
-		pools: map[int]map[uint32]*playerData{
+		pools: map[int]*Pool{
 			1: {
-				1: nil,
-				2: nil,
-				3: nil,
-				4: nil,
-				5: nil,
+				num: 1,
+				players: map[uint32]*playerData{
+					1: nil,
+					2: nil,
+					3: nil,
+					4: nil,
+					5: nil,
+				},
+				size: 5,
+				voterCount: 5,
+				amount: 100,
+				shuffleType: 0,
+				version: 0,
+				frozenSnapshot: map[string]*playerData{
+					"1": nil,
+					"2": nil,
+					"3": nil,
+					"4": nil,
+					"5": nil,
+				},
 			},
 			2: {
-				6: nil,
-				7: nil,
-				8: nil,
+				num: 2,
+				players: map[uint32]*playerData{
+					6: nil,
+					7: nil,
+					8: nil,
+				},
+				size: 5,
+				voterCount: 5,
+				amount: 1000,
+				shuffleType: 1,
+				version: 1,
+				frozenSnapshot: map[string]*playerData{},
 			},
-		},
-		poolAmounts: map[int]uint64{
-			1: 100,
-			2: 1000,
-		},
-		poolTypes: map[int]message.ShuffleType{
-			1: 0,
-			2: 1,
-		},
-		poolVersions: map[int]uint64{
-			1: 0,
-			2: 1,
-		},
-		fullPools: map[int]interface{}{
-			1: nil,
 		},
 		poolSize:                5,
 		shufflePort:             3000,
