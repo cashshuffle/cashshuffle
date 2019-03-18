@@ -376,18 +376,11 @@ func (t *Tracker) unassignPool(p *playerData) {
 }
 
 // takePoolSnapshot gets a lookup of all players in the pool
+// This method assumes the caller is holding the mutex.
 func (t *Tracker) takePoolSnapshot(n int) map[string]*playerData {
 	snapshot := make(map[string]*playerData)
 	for _, p := range t.pools[n] {
 		snapshot[p.verificationKey] = p
 	}
 	return snapshot
-}
-
-// addToDisconnectedCache tracks a user that disconnected from a pool
-func (t *Tracker) addToDisconnectedCache(p *playerData) {
-	if t.fullPoolSnapshot[p.pool] == nil {
-		t.fullPoolSnapshot[p.pool] = make(map[string]*playerData)
-	}
-	t.fullPoolSnapshot[p.pool][p.verificationKey] = p
 }
