@@ -120,7 +120,7 @@ func (pool *Pool) RemovePlayer(player *playerData) {
 // are not in the snapshot.
 func (pool *Pool) PlayerFromSnapshot(verificationKey string) *playerData {
 	pool.mutex.RLock()
-	pool.mutex.RUnlock()
+	defer pool.mutex.RUnlock()
 
 	if pool.frozenSnapshot == nil {
 		return nil
