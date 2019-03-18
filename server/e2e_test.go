@@ -509,13 +509,12 @@ func (h *testHarness) AssertPoolStates(expected []testPoolState, completeState b
 
 	// convert pools into simple states
 	actualStates := make([]testPoolState, 0)
-	for poolNum := range h.tracker.pools {
-		_, isFull := h.tracker.fullPools[poolNum]
+	for _, pool := range h.tracker.pools {
 		actualStates = append(actualStates, testPoolState{
-			value:   h.tracker.poolAmounts[poolNum],
-			version: h.tracker.poolVersions[poolNum],
-			players: len(h.tracker.pools[poolNum]),
-			isFull:  isFull,
+			value:   pool.amount,
+			version: pool.version,
+			players: pool.PlayerCount(),
+			isFull:  pool.IsFrozen(),
 		})
 	}
 

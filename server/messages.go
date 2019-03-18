@@ -59,7 +59,7 @@ func (pi *packetInfo) processReceivedMessage() error {
 			return nil
 		}
 
-		if pi.tracker.playerCount(player.pool) == pi.tracker.poolSize {
+		if player.pool.IsFrozen() {
 			pi.announceStart()
 		} else {
 			pi.broadcastJoinedPool(player)

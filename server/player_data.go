@@ -14,7 +14,7 @@ type playerData struct {
 	number          uint32
 	conn            net.Conn
 	verificationKey string
-	pool            int
+	pool            *Pool
 	blamedBy        map[string]interface{}
 	amount          uint64
 	version         uint64
