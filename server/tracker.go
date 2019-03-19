@@ -132,9 +132,11 @@ func (t *Tracker) bannedByServer(conn net.Conn) bool {
 
 // addDenyIPMatch prevents an IP from joining a pool with the other
 // pool member IPs for a timeout period.
-func (t *Tracker) addDenyIPMatch(player1 net.Conn, pool *Pool) {
-	t.mutex.Lock()
-	defer t.mutex.Unlock()
+func (t *Tracker) addDenyIPMatch(player1 net.Conn, pool *Pool, haveLock bool) {
+	if !haveLock {
+		t.mutex.Lock()
+		defer t.mutex.Unlock()
+	}
 
 	ip, _, _ := net.SplitHostPort(player1.RemoteAddr().String())
 
@@ -177,9 +179,11 @@ func (t *Tracker) CleanupDeniedByIPMatch() {
 }
 
 // increaseBanScore increases the ban score for an IP on the server.
-func (t *Tracker) increaseBanScore(conn net.Conn) {
-	t.mutex.Lock()
-	defer t.mutex.Unlock()
+func (t *Tracker) increaseBanScore(conn net.Conn, haveLock bool) {
+	if !haveLock {
+		t.mutex.Lock()
+		defer t.mutex.Unlock()
+	}
 
 	ip, _, _ := net.SplitHostPort(conn.RemoteAddr().String())
 
@@ -281,6 +285,16 @@ func (t *Tracker) assignNewPool(player *playerData) {
 // unassignPool removes a user from a pool.
 // This method assumes the caller is holding the mutex.
 func (t *Tracker) unassignPool(p *playerData) {
+	// A passive player gets ban score and p2p ban because they never
+	// attempted to announce their verification key,
+	// are unblameable by other players,
+	// and probably caused the failure of a shuffle.
+	if p.isPassive {
+		t.increaseBanScore(p.conn, true)
+		p.pool.DecreaseVoters()
+		t.addDenyIPMatch(p.conn, p.pool, true)
+	}
+
 	pool := p.pool
 	pool.RemovePlayer(p)
 	if pool.PlayerCount() == 0 {

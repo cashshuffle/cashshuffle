@@ -19,6 +19,7 @@ type playerData struct {
 	amount          uint64
 	version         uint64
 	shuffleType     message.ShuffleType
+	isPassive       bool
 }
 
 // addBlame adds a verification key to the blamedBy map.
