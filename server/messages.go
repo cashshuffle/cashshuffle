@@ -77,6 +77,7 @@ func (pi *packetInfo) processReceivedMessage() error {
 	// to broadcast a valid message with their verification key. We unset
 	// the passive flag so that they will not get a ban score / p2p ban
 	// when leaving the pool.
+	// At least this must happen before blame checking logic happens.
 	if player = pi.tracker.playerByConnection(pi.conn); player != nil {
 		player.isPassive = false
 	}
