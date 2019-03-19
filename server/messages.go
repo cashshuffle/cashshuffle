@@ -42,6 +42,7 @@ func startPacketInfoChan(c chan *packetInfo) {
 
 // processReceivedMessage reads the message and processes it.
 func (pi *packetInfo) processReceivedMessage() error {
+	var player *playerData
 	// If we are not tracking the connection yet, the user must be
 	// registering with the server.
 	if pi.tracker.playerByConnection(pi.conn) == nil {
@@ -50,7 +51,7 @@ func (pi *packetInfo) processReceivedMessage() error {
 			return err
 		}
 
-		player := pi.tracker.playerByConnection(pi.conn)
+		player = pi.tracker.playerByConnection(pi.conn)
 
 		// If a malicious client is connecting and disconnecting
 		// quickly it is possible that playerData will be nil.
@@ -70,6 +71,14 @@ func (pi *packetInfo) processReceivedMessage() error {
 
 	if err := pi.verifyMessage(); err != nil {
 		return err
+	}
+
+	// At this point we are confident that the user has at least attempted
+	// to broadcast a valid message with their verification key. We unset
+	// the passive flag so that they will not get a ban score / p2p ban
+	// when leaving the pool.
+	if player = pi.tracker.playerByConnection(pi.conn); player != nil {
+		player.isPassive = false
 	}
 
 	if err := pi.checkBlameMessage(); err != nil {

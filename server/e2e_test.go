@@ -32,6 +32,12 @@ func TestHappyShuffle(t *testing.T) {
 	h := newTestHarness(t, basicPoolSize)
 	clients := h.NewPool(basicPoolSize, testAmount, testVersion, nil)
 
+	// the announcement phase is reached so everyone must make at least one
+	// broadcast to avoid "passive" label and ban score
+	for _, c := range clients {
+		c.BroadcastVerificationKey(clients)
+	}
+
 	// the shuffle succeeded, and clients leave with no blame
 	for _, c := range clients {
 		c.Disconnect()
@@ -39,6 +45,10 @@ func TestHappyShuffle(t *testing.T) {
 
 	// after the clients leave, the pool should be removed
 	h.AssertPoolStates([]testPoolState{}, true)
+
+	// everyone should have a clean record with no bans
+	noBans := make([]testServerBanData, 0)
+	h.AssertServerBans(noBans)
 
 	// confirm no out of spec messages
 	h.WaitEmptyInboxes(clients)
@@ -58,6 +68,10 @@ func TestUnanimousBlamesLeadToServerBan(t *testing.T) {
 		// make a new pool
 		otherClients := h.NewPool(poolSize, testAmount, testVersion, troubleClient)
 		allClients := append([]*testClient{troubleClient}, otherClients...)
+		// everyone say something to avoid passive ban
+		for _, c := range allClients {
+			c.BroadcastVerificationKey(allClients)
+		}
 
 		// all but one other client blames troubleClient
 		otherClients[0].Blame(troubleClient, allClients)
@@ -135,6 +149,8 @@ func TestBlameAndBroadcastOnlyWithinPool(t *testing.T) {
 	h.WaitEmptyInboxes(poolB)
 }
 
+// TestOnlyUniqueVerificationKeysCanRegister confirms that a player with
+// a non-unique verification key is not allowed to register.
 func TestOnlyUniqueVerificationKeysCanRegister(t *testing.T) {
 	var expectSuccess bool
 	h := newTestHarness(t, basicPoolSize)
@@ -153,6 +169,42 @@ func TestOnlyUniqueVerificationKeysCanRegister(t *testing.T) {
 	clone.Connect()
 	expectSuccess = false
 	clone.Register(testAmount, testVersion, nil, false, expectSuccess)
+}
+
+// TestPassivePlayersGetBanEffects confirms that a silent player who never
+// announces their verification key after ANNOUNCEMENT phase gets a server
+// ban score and also gets IP banned from the other players.
+func TestPassivePlayersGetBanEffects(t *testing.T) {
+	h := newTestHarness(t, basicPoolSize)
+	passiveClient := newTestClient(h)
+	otherClients := h.NewPool(basicPoolSize, testAmount, testVersion, passiveClient)
+	allClients := append([]*testClient{passiveClient}, otherClients...)
+
+	// The announcement phase is reached so everyone must make at least one
+	// broadcast to avoid "passive" label and ban score.
+	// However one client is passive and does nothing.
+	for _, c := range otherClients {
+		c.BroadcastVerificationKey(allClients)
+	}
+
+	// The shuffle fails, and clients leave. They are not able to blame
+	// the passive user since they do not have the verification key.
+	for _, c := range allClients {
+		c.Disconnect()
+	}
+
+	// however the server noticed the passive user and gives them a global ban
+	// score as well as p2p ban for the other players in the pool.
+	passiveGotBanScore := []testServerBanData{
+		{
+			client:  passiveClient,
+			banData: banData{score: 1},
+		},
+	}
+	h.AssertServerBans(passiveGotBanScore)
+
+	// confirm no out of spec messages
+	h.WaitEmptyInboxes(allClients)
 }
 
 // testHarness holds the pieces required for automating a shuffle.
@@ -308,6 +360,29 @@ func (c *testClient) Register(amount, version uint64,
 	c.h.AssertPoolStates(expectedStates, false)
 }
 
+// BroadcastVerificationKey sends a minimal valid message that
+// includes their verification key.
+// https://github.com/cashshuffle/cashshuffle/wiki/CashShuffle-Server-Specification#player-messaging
+func (c *testClient) BroadcastVerificationKey(shouldBeNotified []*testClient) {
+	msg := &message.Signed{
+		Packet: &message.Packet{
+			Number:  c.playerNum,
+			Session: c.session,
+			FromKey: &message.VerificationKey{
+				Key: c.verificationKey,
+			},
+		},
+		Signature: nil,
+	}
+
+	err := writeMessage(c.conn, []*message.Signed{msg})
+	if err != nil {
+		c.h.t.Fatal(err)
+	}
+
+	c.h.WaitBroadcastVerificationKey(c.verificationKey, shouldBeNotified)
+}
+
 // Blame sends a blame message to the server against accused and asserts
 // receipt of the blame by the list of clients.
 // https://github.com/cashshuffle/cashshuffle/wiki/CashShuffle-Server-Specification#blame-messages
@@ -441,6 +516,23 @@ func (h *testHarness) WaitBroadcastPhase1Announcement(all []*testClient) {
 
 		assert.Equal(h.t, message.Phase_ANNOUNCEMENT, packet.GetPhase())
 		assert.Equal(h.t, uint32(h.tracker.poolSize), packet.GetNumber())
+	}
+}
+
+// WaitBroadcastVerificationKey confirms that a client's message was broadcast
+// to the pool and consumes all expected broadcast messages.
+func (h *testHarness) WaitBroadcastVerificationKey(vk string, pool []*testClient) {
+	for _, eachClient := range pool {
+		// popping messages is where the wait happens
+		response, err := eachClient.inbox.PopOldest()
+		if err != nil {
+			h.t.Fatal(err)
+		}
+		signedPackets := response.message.GetPacket()
+		assert.Len(h.t, signedPackets, 1)
+		packet := signedPackets[0].Packet
+
+		assert.Equal(h.t, vk, packet.GetFromKey().GetKey())
 	}
 }
 
