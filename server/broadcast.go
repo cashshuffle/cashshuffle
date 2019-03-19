@@ -117,6 +117,10 @@ func (pi *packetInfo) announceStart() {
 			// Don't disconnect
 			return
 		}
+
+		// the player now has an obligation to send verification key or
+		// receive ban effects
+		player.isPassive = true
 	}
 }
 

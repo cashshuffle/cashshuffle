@@ -32,7 +32,7 @@ func (pi *packetInfo) registerClient() error {
 					amount:          registration.GetAmount(),
 					shuffleType:     registration.GetType(),
 					version:         registration.GetVersion(),
-					isPassive:       true,
+					isPassive:       false,
 				}
 				pi.tracker.add(player)
 
