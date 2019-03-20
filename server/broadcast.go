@@ -85,10 +85,6 @@ func (pi *packetInfo) announceStart() {
 	}
 
 	for _, player := range sender.pool.players {
-		if player == sender.pool.firstBan {
-			continue
-		}
-
 		m := message.Signed{
 			Packet: &message.Packet{
 				Phase:  message.Phase_ANNOUNCEMENT,
