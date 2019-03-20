@@ -22,7 +22,7 @@ func (pi *packetInfo) verifyMessage() error {
 			return errors.New("invalid verification key")
 		}
 
-		if player.pool.IsBanned(player) {
+		if player == player.pool.firstBan {
 			return errors.New("banned player")
 		}
 

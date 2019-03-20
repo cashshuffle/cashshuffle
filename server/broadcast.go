@@ -14,7 +14,7 @@ var (
 
 // broadcastMessage processes messages and either broadcasts
 // them to all connected users, or to a single user.
-func (pi *packetInfo) broadcastMessage() error {
+func (pi *packetInfo) broadcastMessage() {
 	msgMap := make(map[string][]*message.Signed)
 
 	for _, signed := range pi.message.GetPacket() {
@@ -30,37 +30,29 @@ func (pi *packetInfo) broadcastMessage() error {
 
 	for vk, msgs := range msgMap {
 		if vk == broadcastKey {
-			err := pi.broadcastAll(msgs)
-			if err != nil {
-				// Don't disconnect
-				return nil
-			}
+			pi.broadcastAll(msgs)
 		} else {
 			sendingPlayer := pi.tracker.playerByConnection(pi.conn)
 			player := pi.tracker.playerByVerificationKey(strings.TrimLeft(vk, playerPrefix))
 			if player == nil {
-				// Don't disconnect
-				return nil
+				return
 			}
 
 			if player == sendingPlayer {
 				// Don't allow players to send messages to themselves.
-				return nil
+				return
 			}
 
-			err := writeMessage(player.conn, msgs)
-			if err != nil {
-				// Don't disconnect
-				return nil
+			// stop sending messages after the first error
+			if err := writeMessage(player.conn, msgs); err != nil {
+				return
 			}
 		}
 	}
-
-	return nil
 }
 
 // broadcastAll broadcasts to all participants.
-func (pi *packetInfo) broadcastAll(msgs []*message.Signed) error {
+func (pi *packetInfo) broadcastAll(msgs []*message.Signed) {
 	pi.tracker.mutex.RLock()
 	defer pi.tracker.mutex.RUnlock()
 
@@ -69,21 +61,13 @@ func (pi *packetInfo) broadcastAll(msgs []*message.Signed) error {
 	// If the user has disconnected, then no need to send
 	// the broadcast.
 	if sender == nil {
-		return nil
+		return
 	}
 
-	for conn, player := range pi.tracker.connections {
-		if (sender.pool != player.pool) || sender.pool.IsBanned(player) {
-			continue
-		}
-
-		err := writeMessage(conn, msgs)
-		if err != nil {
-			return err
-		}
+	for _, player := range sender.pool.players {
+		// Try to send the message to remaining players even if errors.
+		_ = writeMessage(player.conn, msgs)
 	}
-
-	return nil
 }
 
 // announceStart sends an announcement message if the pool
@@ -100,8 +84,8 @@ func (pi *packetInfo) announceStart() {
 		return
 	}
 
-	for conn, player := range pi.tracker.connections {
-		if sender.pool != player.pool || sender.pool.IsBanned(player) {
+	for _, player := range sender.pool.players {
+		if player == sender.pool.firstBan {
 			continue
 		}
 
@@ -111,25 +95,22 @@ func (pi *packetInfo) announceStart() {
 				Number: uint32(pi.tracker.poolSize),
 			},
 		}
-
-		err := writeMessage(conn, []*message.Signed{&m})
-		if err != nil {
-			// Don't disconnect
-			return
-		}
-
-		// the player now has an obligation to send verification key or
-		// receive ban effects
+		// The player now has an obligation to send verification key.
+		// Since we cannot differentiate between a user ignoring the message
+		// and an honest miss, we assume the user always receives the message.
 		player.isPassive = true
+
+		// Try to send the message to remaining players even if errors.
+		_ = writeMessage(player.conn, []*message.Signed{&m})
 	}
 }
 
-func (pi *packetInfo) broadcastJoinedPool(p *playerData) error {
+func (pi *packetInfo) broadcastJoinedPool(p *playerData) {
 	m := message.Signed{
 		Packet: &message.Packet{
 			Number: p.number,
 		},
 	}
 
-	return pi.broadcastAll([]*message.Signed{&m})
+	pi.broadcastAll([]*message.Signed{&m})
 }

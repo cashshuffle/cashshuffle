@@ -18,7 +18,7 @@ type Pool struct {
 	players        map[uint32]*playerData
 	size           int
 	amount         uint64
-	voterCount     int
+	firstBan       *playerData
 	version        uint64
 	shuffleType    message.ShuffleType
 	frozenSnapshot map[string]*playerData // vk > player
@@ -33,7 +33,7 @@ func newPool(num int, player *playerData, size int) *Pool {
 		mutex:          sync.RWMutex{},
 		players:        make(map[uint32]*playerData),
 		amount:         player.amount,
-		voterCount:     size,
+		firstBan:       nil,
 		version:        player.version,
 		shuffleType:    player.shuffleType,
 		frozenSnapshot: make(map[string]*playerData),
@@ -51,12 +51,13 @@ func (pool *Pool) IsFrozen() bool {
 }
 
 // IsBanned returns true if the player has been banned by their pool.
+// This assumes that only one ban will happen per pool.
 func (pool *Pool) IsBanned(player *playerData) bool {
 	pool.mutex.RLock()
 	defer pool.mutex.RUnlock()
 
 	// the vote is all available voters - 1 for the accused
-	return len(player.blamedBy) >= pool.voterCount-1
+	return len(player.blamedBy) >= pool.size-1
 }
 
 // PlayerCount returns the number of players in a pool.
@@ -126,14 +127,6 @@ func (pool *Pool) PlayerFromSnapshot(verificationKey string) *playerData {
 		return nil
 	}
 	return pool.frozenSnapshot[verificationKey]
-}
-
-// DecreaseVoters decreases the voter count for a pool.
-func (pool *Pool) DecreaseVoters() {
-	pool.mutex.Lock()
-	defer pool.mutex.Unlock()
-
-	pool.voterCount--
 }
 
 // takeSnapshot gets a static lookup of all players in the pool

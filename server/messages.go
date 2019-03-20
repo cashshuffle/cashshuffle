@@ -86,7 +86,8 @@ func (pi *packetInfo) processReceivedMessage() error {
 		return err
 	}
 
-	return pi.broadcastMessage()
+	pi.broadcastMessage()
+	return nil
 }
 
 // processMessages reads messages from the connection and begins processing.
