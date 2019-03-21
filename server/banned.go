@@ -58,15 +58,22 @@ func (pi *packetInfo) checkBlameMessage() error {
 			return errors.New("invalid blame")
 		}
 
+		// After validating everything, we can skip the actual ban
+		// if the pool already has banned someone.
+		if blamer.pool.firstBan != nil {
+			return nil
+		}
+
 		added := accused.addBlame(blamer.verificationKey)
 		if !added {
 			return nil
 		}
 
 		if blamer.pool.IsBanned(accused) {
+			blamer.pool.firstBan = accused
 			pi.tracker.increaseBanScore(accused.conn, false)
-			blamer.pool.DecreaseVoters()
 			pi.tracker.addDenyIPMatch(accused.conn, accused.pool, false)
+			pi.tracker.remove(accused.conn)
 		}
 	}
 

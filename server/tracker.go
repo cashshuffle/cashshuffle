@@ -291,7 +291,6 @@ func (t *Tracker) unassignPool(p *playerData) {
 	// and probably caused the failure of a shuffle.
 	if p.isPassive {
 		t.increaseBanScore(p.conn, true)
-		p.pool.DecreaseVoters()
 		t.addDenyIPMatch(p.conn, p.pool, true)
 	}
 

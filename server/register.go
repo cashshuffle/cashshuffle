@@ -62,8 +62,7 @@ func (pi *packetInfo) registrationSuccess(p *playerData) error {
 		},
 	}
 
-	err := writeMessage(pi.conn, []*message.Signed{&m})
-	return err
+	return writeMessage(pi.conn, []*message.Signed{&m})
 }
 
 // registrationFailed sends a registration failed reply.
@@ -78,6 +77,5 @@ func (pi *packetInfo) registrationFailed() error {
 		},
 	}
 
-	err := writeMessage(pi.conn, []*message.Signed{&m})
-	return err
+	return writeMessage(pi.conn, []*message.Signed{&m})
 }
