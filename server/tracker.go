@@ -13,8 +13,9 @@ const (
 	banTime = 15 * time.Minute
 
 	// denyIPTime is the amount of time to avoid matching with other
-	// IPs that have banned you from pools in the past.
-	denyIPTime = 2 * time.Hour
+	// IPs that have banned you from pools in the past or have
+	// disconnected after the shuffle was announced.
+	denyIPTime = 5 * time.Minute
 
 	// banScoreTick is the ban score increment on each pool ban.
 	banScoreTick = 1
