@@ -5,10 +5,10 @@ FROM golang:1.12
 MAINTAINER Josh Ellithorpe <quest@mac.com>
 
 # Copy the local package files to the container's workspace.
-ADD . /go/src/github.com/cashshuffle/cashshuffle
+ADD . /go/src/github.com/cculianu/cashshuffle
 
 # Switch to the correct working directory.
-WORKDIR /go/src/github.com/cashshuffle/cashshuffle
+WORKDIR /go/src/github.com/cculianu/cashshuffle
 
 # Turn on Go module support.
 ARG GO111MODULE=on

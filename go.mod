@@ -1,4 +1,4 @@
-module github.com/cashshuffle/cashshuffle
+module github.com/cculianu/cashshuffle
 
 go 1.12
 

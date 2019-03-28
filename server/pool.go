@@ -3,7 +3,7 @@ package server
 import (
 	"sync"
 
-	"github.com/cashshuffle/cashshuffle/message"
+	"github.com/cculianu/cashshuffle/message"
 )
 
 const (

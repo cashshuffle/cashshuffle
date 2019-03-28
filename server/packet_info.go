@@ -3,7 +3,7 @@ package server
 import (
 	"net"
 
-	"github.com/cashshuffle/cashshuffle/message"
+	"github.com/cculianu/cashshuffle/message"
 )
 
 // packetInfo is a type to represent the received Packets message

@@ -10,7 +10,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/cashshuffle/cashshuffle/message"
+	"github.com/cculianu/cashshuffle/message"
 
 	"github.com/golang/protobuf/proto"
 )

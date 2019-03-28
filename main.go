@@ -5,7 +5,7 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/cashshuffle/cashshuffle/cmd"
+	"github.com/cculianu/cashshuffle/cmd"
 )
 
 func main() {

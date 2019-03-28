@@ -4,7 +4,7 @@ import (
 	"net"
 	"sync"
 
-	"github.com/cashshuffle/cashshuffle/message"
+	"github.com/cculianu/cashshuffle/message"
 )
 
 // PlayerData is data needed about each connection.

@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/cashshuffle/cashshuffle/message"
+	"github.com/cculianu/cashshuffle/message"
 )
 
 var validBlamereasons = []message.Reason{

@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/cashshuffle/cashshuffle/server"
+	"github.com/cculianu/cashshuffle/server"
 
 	"github.com/spf13/cobra"
 	"github.com/ulule/limiter/v3"
@@ -18,7 +18,7 @@ import (
 
 const (
 	appName                 = "cashshuffle"
-	version                 = "0.6.16"
+	version                 = "0.9.99"
 	defaultPort             = 1337
 	defaultWebSocketPort    = 1338
 	defaultTorPort          = 1339
@@ -28,7 +28,7 @@ const (
 	defaultPoolSize         = 5
 	defaultTorBindIP        = "127.0.0.1"
 
-	ipRateLimit    = "180-M"
+	ipRateLimit    = "300-M"
 	torIPRateLimit = "500-M"
 )
 
@@ -142,7 +142,6 @@ func performCommand(cmd *cobra.Command, args []string) chan error {
 	t := server.NewTracker(config.PoolSize, config.Port, config.WebSocketPort, config.TorPort, config.TorWebSocketPort)
 
 	cleanupDeniedTicker := time.NewTicker(time.Minute)
-	defer cleanupDeniedTicker.Stop()
 	go func() {
 		for range cleanupDeniedTicker.C {
 			t.CleanupDeniedByIPMatch()
@@ -195,6 +194,7 @@ func performCommand(cmd *cobra.Command, args []string) chan error {
 	}
 
 	go func() {
+		defer cleanupDeniedTicker.Stop()
 		errChan <- server.Start(config.BindIP, config.Port, config.Cert, config.Key, config.Debug, t, m, false, limit)
 	}()
 

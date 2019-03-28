@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cashshuffle/cashshuffle/message"
+	"github.com/cculianu/cashshuffle/message"
 
 	"github.com/avast/retry-go"
 	"github.com/stretchr/testify/assert"
