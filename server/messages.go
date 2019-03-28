@@ -6,6 +6,7 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net"
 	"os"
 	"time"
@@ -35,7 +36,7 @@ func startPacketInfoChan(c chan *packetInfo) {
 		err := pi.processReceivedMessage()
 		if err != nil {
 			pi.conn.Close()
-			fmt.Fprintf(os.Stderr, "[Error] %s\n", err.Error())
+			fmt.Fprintf(os.Stderr, "[Error] receive message loop: %s\n", err)
 		}
 	}
 }
@@ -114,12 +115,12 @@ func processMessages(conn net.Conn, c chan *packetInfo, t *Tracker) {
 					validMagic, numReadBytes = processFrame(&b)
 
 					if !validMagic {
-						fmt.Fprintf(os.Stderr, "[Error] %s\n", "invalid magic")
+						fmt.Fprint(os.Stderr, "[Error] invalid magic")
 						return
 					}
 
 					if numReadBytes <= 0 || numReadBytes > maxMessageLength {
-						fmt.Fprintf(os.Stderr, "[Error] %s\n", "invalid message length")
+						fmt.Fprintf(os.Stderr, "[Error] invalid message length: %d\n", numReadBytes)
 						return
 					}
 
@@ -131,7 +132,10 @@ func processMessages(conn net.Conn, c chan *packetInfo, t *Tracker) {
 
 			if b.Len() >= numReadBytes {
 				msg := make([]byte, numReadBytes)
-				b.Read(msg)
+				if _, err := b.Read(msg); (err != nil) && (err != io.EOF) {
+					fmt.Fprintf(os.Stderr, "[Error] reading from message buffer: %s\n", err)
+					return
+				}
 
 				mb.Write(msg)
 
@@ -141,20 +145,24 @@ func processMessages(conn net.Conn, c chan *packetInfo, t *Tracker) {
 		}
 
 		if err := scanner.Err(); err != nil {
-			fmt.Fprintf(os.Stderr, "[Error] %s\n", err.Error())
-			break
+			fmt.Fprintf(os.Stderr, "[Error] message scanner: %s\n", err)
+			return
 		}
 
 		if mb.Len() == 0 {
-			break
+			fmt.Fprint(os.Stderr, "[Error] 0-length message")
+			return
 		}
 
 		// Extend the deadline, we got a valid full message.
-		conn.SetDeadline(time.Now().Add(deadline))
+		if err := conn.SetDeadline(time.Now().Add(deadline)); err != nil {
+			fmt.Printf("[Error] received message but unable to extend deadline: %s\n", err)
+			return
+		}
 
 		if err := sendToPacketInfoChan(&mb, conn, c, t); err != nil {
-			fmt.Fprintf(os.Stderr, "[Error] %s\n", err.Error())
-			break
+			fmt.Fprintf(os.Stderr, "[Error] sending packet: %s\n", err)
+			return
 		}
 	}
 }
