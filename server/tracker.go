@@ -177,7 +177,7 @@ func (t *Tracker) CleanupDeniedByIPMatch() {
 		if deniedTime.Add(denyIPTime).Before(time.Now()) {
 			delete(t.denyIPMatch, pair)
 			if debugMode {
-				fmt.Printf("[CleanupDenyIPMatch] %s %s\n", pair.left, pair.right)
+				fmt.Printf("[CleanupDenyIPMatch] remove match %s %s\n", pair.left, pair.right)
 			}
 		}
 	}
@@ -217,6 +217,9 @@ func (t *Tracker) cleanupBan(ip string) {
 
 	if t.banData[ip].score == 0 {
 		delete(t.banData, ip)
+		if debugMode {
+			fmt.Printf("[CleanupDenyIP] remove server ban %s\n", ip)
+		}
 	}
 }
 
