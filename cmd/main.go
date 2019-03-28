@@ -194,7 +194,6 @@ func performCommand(cmd *cobra.Command, args []string) chan error {
 	}
 
 	go func() {
-		defer cleanupDeniedTicker.Stop()
 		errChan <- server.Start(config.BindIP, config.Port, config.Cert, config.Key, config.Debug, t, m, false, limit)
 	}()
 

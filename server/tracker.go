@@ -173,10 +173,16 @@ func (t *Tracker) CleanupDeniedByIPMatch() {
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
 
+	ct := 0
+
 	for pair, deniedTime := range t.denyIPMatch {
 		if deniedTime.Add(denyIPTime).Before(time.Now()) {
 			delete(t.denyIPMatch, pair)
+			ct++
 		}
+	}
+	if debugMode {
+		fmt.Printf("[DenyIP] Reaped %d denyIP entries\n", ct)
 	}
 }
 
