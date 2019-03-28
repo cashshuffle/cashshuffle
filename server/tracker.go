@@ -302,7 +302,9 @@ func (t *Tracker) unassignPool(p *PlayerData) {
 		if debugMode {
 			fmt.Printf("[DenyIP] Passive user disconnected: %s\n", p.verificationKey)
 		}
-		t.addDenyIPMatch(p.conn, p.pool, true)
+		// NB: this has been taken out for now until we can better characterize
+		// how often this happens and/or if it would do more harm than good. -Calin
+		//t.addDenyIPMatch(p.conn, p.pool, true)
 	}
 
 	pool := p.pool
