@@ -33,6 +33,13 @@ func (pi *packetInfo) broadcastMessage() {
 			pi.broadcastAll(msgs)
 		} else {
 			sendingPlayer := pi.tracker.playerByConnection(pi.conn)
+			if sendingPlayer == nil {
+				if debugMode {
+					fmt.Printf("[DirectMessage] Ignoring from %s because player no longer exists\n", getIP(pi.conn))
+				}
+				return
+			}
+
 			player := pi.tracker.playerByVerificationKey(strings.TrimLeft(vk, playerPrefix))
 			if player == nil {
 				if debugMode {
