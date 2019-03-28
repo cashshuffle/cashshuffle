@@ -63,7 +63,7 @@ func Start(ip string, port int, cert string, key string, debug bool, t *Tracker,
 
 		if context.Reached {
 			if debugMode {
-				fmt.Println("[Listener] %s broke the rate limit", ip)
+				fmt.Printf("[Listener] %s broke the rate limit\n", ip)
 			}
 			conn.Close()
 			continue
