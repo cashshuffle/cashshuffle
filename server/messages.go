@@ -156,7 +156,7 @@ func processMessages(conn net.Conn, c chan *packetInfo, t *Tracker) {
 
 		// Extend the deadline, we got a valid full message.
 		if err := conn.SetDeadline(time.Now().Add(deadline)); err != nil {
-			fmt.Printf("[Error] received message but unable to extend deadline: %s\n", err)
+			fmt.Fprintf(os.Stderr, "[Error] received message but unable to extend deadline: %s\n", err)
 			return
 		}
 
