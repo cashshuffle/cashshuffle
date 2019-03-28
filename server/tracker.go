@@ -295,7 +295,7 @@ func (t *Tracker) unassignPool(p *PlayerData) {
 		t.increaseBanScore(p.conn, true)
 		if debugMode {
 			fmt.Printf("[DenyIP] Passive user disconnected: %s (IP: %s)\n", p.verificationKey, p.conn.RemoteAddr().String())
-			fmt.PrintF("[DenyIP] For now, due to bugs, we are NOT applying an IP ban to this player...\n")
+			fmt.Printf("[DenyIP] For now, due to bugs, we are NOT applying an IP ban to this player...\n")
 		}
 		//t.addDenyIPMatch(p.conn, p.pool, true)
 	}
