@@ -43,7 +43,10 @@ func writeMessage(conn net.Conn, msgs []*message.Signed) error {
 	}
 
 	// Extend the deadline, we just sent a message.
-	conn.SetDeadline(time.Now().Add(deadline))
+	err = conn.SetDeadline(time.Now().Add(deadline))
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
