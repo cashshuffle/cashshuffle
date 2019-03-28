@@ -44,9 +44,14 @@ func (pi *packetInfo) checkBlameMessage() error {
 		}
 	}
 
-	if validBlame {
+	if !validBlame {
+		return fmt.Errorf("unknown blame reason: %s", packet.GetMessage().GetBlame().GetReason())
+	} else {
 		blamer := pi.tracker.playerByConnection(pi.conn)
 		if blamer == nil {
+			if debugMode {
+				fmt.Printf("[Blame] Ignoring blame from %s because player no longer exists\n", getIP(pi.conn))
+			}
 			return nil
 		}
 		accusedKey := packet.Message.Blame.Accused.String()
@@ -62,11 +67,17 @@ func (pi *packetInfo) checkBlameMessage() error {
 		// After validating everything, we can skip the actual ban
 		// if the pool already has banned someone.
 		if blamer.pool.firstBan != nil {
+			if debugMode {
+				fmt.Printf("[Blame] Ignoring blame in pool %d because a player is already banned\n", blamer.pool.num)
+			}
 			return nil
 		}
 
 		added := accused.addBlame(blamer.verificationKey)
 		if !added {
+			if debugMode {
+				fmt.Printf("[Blame] Duplicate blame A(%s) --> B(%s)\n", blamer, accused)
+			}
 			return nil
 		}
 
@@ -74,7 +85,7 @@ func (pi *packetInfo) checkBlameMessage() error {
 			blamer.pool.firstBan = accused
 			pi.tracker.increaseBanScore(accused.conn, false)
 			if debugMode {
-				fmt.Printf("[DenyIP] User blamed out of round: %s\n", accused.verificationKey)
+				fmt.Printf("[DenyIP] User blamed out of round: %s\n", accused)
 			}
 			pi.tracker.addDenyIPMatch(accused.conn, accused.pool, false)
 			pi.tracker.remove(accused.conn)

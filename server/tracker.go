@@ -122,7 +122,7 @@ func (t *Tracker) bannedByServer(conn net.Conn) bool {
 	t.mutex.RLock()
 	defer t.mutex.RUnlock()
 
-	ip, _, _ := net.SplitHostPort(conn.RemoteAddr().String())
+	ip := getIP(conn)
 
 	banData := t.banData[ip]
 	if banData != nil && banData.score >= maxBanScore {
@@ -140,7 +140,7 @@ func (t *Tracker) addDenyIPMatch(player1 net.Conn, pool *Pool, haveLock bool) {
 		defer t.mutex.Unlock()
 	}
 
-	ip, _, _ := net.SplitHostPort(player1.RemoteAddr().String())
+	ip := getIP(player1)
 
 	for _, otherPlayer := range pool.frozenSnapshot {
 		otherIP, _, _ := net.SplitHostPort(otherPlayer.conn.RemoteAddr().String())
@@ -156,7 +156,7 @@ func (t *Tracker) addDenyIPMatch(player1 net.Conn, pool *Pool, haveLock bool) {
 // deniedByIPMatch returns true if an IP should be denied access to a pool.
 // Caller should hold the mutex.
 func (t *Tracker) deniedByIPMatch(player net.Conn, pool *Pool) bool {
-	ip, _, _ := net.SplitHostPort(player.RemoteAddr().String())
+	ip := getIP(player)
 	for _, otherPlayer := range pool.players {
 		otherIP, _, _ := net.SplitHostPort(otherPlayer.conn.RemoteAddr().String())
 
@@ -187,7 +187,7 @@ func (t *Tracker) increaseBanScore(conn net.Conn, haveLock bool) {
 		defer t.mutex.Unlock()
 	}
 
-	ip, _, _ := net.SplitHostPort(conn.RemoteAddr().String())
+	ip := getIP(conn)
 
 	if _, ok := t.banData[ip]; ok {
 		t.banData[ip].score += banScoreTick

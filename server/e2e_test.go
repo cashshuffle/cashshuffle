@@ -665,7 +665,7 @@ type testServerBanData struct {
 func (h *testHarness) AssertServerBans(cbs []testServerBanData) {
 	expectedBanData := make(map[string]banData)
 	for _, bd := range cbs {
-		ip, _, _ := net.SplitHostPort(bd.client.remoteConn.RemoteAddr().String())
+		ip := getIP(bd.client.remoteConn)
 		expectedBanData[ip] = bd.banData
 	}
 

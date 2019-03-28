@@ -50,7 +50,7 @@ func Start(ip string, port int, cert string, key string, debug bool, t *Tracker,
 			continue
 		}
 
-		ip, _, _ := net.SplitHostPort(conn.RemoteAddr().String())
+		ip := getIP(conn)
 
 		context, err := limit.Get(nil, ip)
 		if err != nil {
@@ -130,4 +130,9 @@ func handleConnection(conn net.Conn, c chan *packetInfo, tracker *Tracker) {
 	if !tracker.bannedByServer(conn) {
 		processMessages(conn, c, tracker)
 	}
+}
+
+func getIP(conn net.Conn) string {
+	ip, _, _ := net.SplitHostPort(conn.RemoteAddr().String())
+	return ip
 }
