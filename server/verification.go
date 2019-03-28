@@ -18,7 +18,7 @@ func (pi *packetInfo) verifyMessage() error {
 			return errors.New("invalid session")
 		}
 
-		if packet.GetFromKey().GetKey() != player.verificationKey {
+		if packet.GetFromKey().String() != player.verificationKey {
 			return errors.New("invalid verification key")
 		}
 
@@ -28,7 +28,7 @@ func (pi *packetInfo) verifyMessage() error {
 
 		to := packet.GetToKey()
 		if to != nil {
-			if pi.tracker.playerByVerificationKey(to.GetKey()) == nil {
+			if pi.tracker.playerByVerificationKey(to.String()) == nil {
 				return errors.New("invalid destination")
 			}
 		}

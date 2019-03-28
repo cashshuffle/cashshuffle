@@ -28,14 +28,18 @@ func (pi *packetInfo) checkBlameMessage() error {
 	pkt := pi.message.Packet[0]
 	packet := pkt.GetPacket()
 
-	if packet.GetMessage().GetBlame() == nil {
+	if packet.Message == nil {
+		return nil
+	}
+
+	if packet.Message.Blame == nil {
 		return nil
 	}
 
 	validBlame := false
 
 	for _, reason := range validBlamereasons {
-		if packet.GetMessage().GetBlame().GetReason() == reason {
+		if packet.Message.Blame.Reason == reason {
 			validBlame = true
 		}
 	}
@@ -45,7 +49,7 @@ func (pi *packetInfo) checkBlameMessage() error {
 		if blamer == nil {
 			return nil
 		}
-		accusedKey := packet.GetMessage().GetBlame().GetAccused().GetKey()
+		accusedKey := packet.Message.Blame.Accused.String()
 		accused := blamer.pool.PlayerFromSnapshot(accusedKey)
 		if accused == nil {
 			return errors.New("invalid blame")
