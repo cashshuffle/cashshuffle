@@ -176,6 +176,9 @@ func (t *Tracker) CleanupDeniedByIPMatch() {
 	for pair, deniedTime := range t.denyIPMatch {
 		if deniedTime.Add(denyIPTime).Before(time.Now()) {
 			delete(t.denyIPMatch, pair)
+			if debugMode {
+				fmt.Printf("[CleanupDenyIPMatch] %s %s\n", pair.left, pair.right)
+			}
 		}
 	}
 }
