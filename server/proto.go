@@ -28,6 +28,11 @@ func writeMessage(conn net.Conn, msgs []*message.Signed) error {
 		return err
 	}
 
+	_, err = conn.Write(frameMessage(reply))
+	if err != nil {
+		return err
+	}
+
 	if debugMode {
 		fmt.Println("[Sent]", packets)
 		jsonData, err := json.MarshalIndent(packets, "", "  ")
@@ -35,11 +40,6 @@ func writeMessage(conn net.Conn, msgs []*message.Signed) error {
 			return err
 		}
 		fmt.Printf("%s\n", jsonData)
-	}
-
-	_, err = conn.Write(frameMessage(reply))
-	if err != nil {
-		return err
 	}
 
 	// Extend the deadline, we just sent a message.
