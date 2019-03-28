@@ -49,14 +49,14 @@ var MainCmd = &cobra.Command{
 func init() {
 	err := config.Load()
 	if err != nil {
-		bail(fmt.Errorf("Failed to load configuration: %s", err))
+		bail(fmt.Errorf("failed to load configuration: %s", err))
 	}
 
 	prepareFlags()
 }
 
 func bail(err error) {
-	fmt.Fprintf(os.Stderr, "[Error] %s\n", err)
+	fmt.Fprintf(os.Stderr, "[Error] stopping server: %s\n", err)
 	os.Exit(1)
 }
 
@@ -149,7 +149,7 @@ func performCommand(cmd *cobra.Command, args []string) chan error {
 		}
 	}()
 
-	m, err := getLetsEncryptManager()
+	m, err := getLetsEncryptManager(errChan)
 	if err != nil {
 		errChan <- err
 		return errChan
@@ -220,7 +220,7 @@ func getLimiters() (*limiter.Limiter, *limiter.Limiter, error) {
 	return limit, torLimit, nil
 }
 
-func getLetsEncryptManager() (*autocert.Manager, error) {
+func getLetsEncryptManager(errChan chan error) (*autocert.Manager, error) {
 	configDir, err := config.configDir()
 	if err != nil {
 		return nil, err
@@ -244,7 +244,9 @@ func getLetsEncryptManager() (*autocert.Manager, error) {
 		HostPolicy: autocert.HostWhitelist(config.AutoCert),
 	}
 
-	go http.ListenAndServe(":http", m.HTTPHandler(nil))
+	go func() {
+		errChan <- http.ListenAndServe(":http", m.HTTPHandler(nil))
+	}()
 
 	return m, nil
 }
