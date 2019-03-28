@@ -35,16 +35,24 @@ func (pi *packetInfo) broadcastMessage() {
 			sendingPlayer := pi.tracker.playerByConnection(pi.conn)
 			player := pi.tracker.playerByVerificationKey(strings.TrimLeft(vk, playerPrefix))
 			if player == nil {
+				if debugMode {
+					fmt.Printf("[DirectMessage] Ignoring to %s because player no longer exists\n", vk)
+				}
 				return
 			}
 
 			if player == sendingPlayer {
-				// Don't allow players to send messages to themselves.
+				if debugMode {
+					fmt.Printf("[DirectMessage] Ignoring to self from %s\n", sendingPlayer)
+				}
 				return
 			}
 
 			// stop sending messages after the first error
 			if err := writeMessage(player.conn, msgs); err != nil {
+				if debugMode {
+					fmt.Printf("[DirectMessage] interrupting packet send after failed write: %s\n", err)
+				}
 				return
 			}
 		}
@@ -61,12 +69,18 @@ func (pi *packetInfo) broadcastAll(msgs []*message.Signed) {
 	// If the user has disconnected, then no need to send
 	// the broadcast.
 	if sender == nil {
+		if debugMode {
+			fmt.Printf("[Broadcast] Ignoring from %s because player no longer exists\n", getIP(pi.conn))
+		}
 		return
 	}
 
 	for _, player := range sender.pool.players {
 		// Try to send the message to remaining players even if errors.
-		_ = writeMessage(player.conn, msgs)
+		err := writeMessage(player.conn, msgs)
+		if (err != nil) && debugMode {
+			fmt.Printf("[Broadcast] Continuing to send after write error (%s) to (%s)\n", err, player)
+		}
 	}
 }
 
@@ -81,6 +95,9 @@ func (pi *packetInfo) announceStart() {
 	// If the user has disconnected, then no need to send
 	// the broadcast.
 	if sender == nil {
+		if debugMode {
+			fmt.Printf("[ANNOUNCE] Ignoring from %s because player no longer exists\n", getIP(pi.conn))
+		}
 		return
 	}
 
@@ -97,7 +114,10 @@ func (pi *packetInfo) announceStart() {
 		player.isPassive = true
 
 		// Try to send the message to remaining players even if errors.
-		_ = writeMessage(player.conn, []*message.Signed{&m})
+		err := writeMessage(player.conn, []*message.Signed{&m})
+		if (err != nil) && debugMode {
+			fmt.Printf("[ANNOUNCE] Continuing to send after write error (%s) to (%s)\n", err, player)
+		}
 	}
 }
 
