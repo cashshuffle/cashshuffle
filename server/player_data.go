@@ -7,8 +7,8 @@ import (
 	"github.com/cashshuffle/cashshuffle/message"
 )
 
-// playerData is data needed about each connection.
-type playerData struct {
+// PlayerData is data needed about each connection.
+type PlayerData struct {
 	mutex           sync.RWMutex
 	sessionID       []byte
 	number          uint32
@@ -23,7 +23,7 @@ type playerData struct {
 }
 
 // addBlame adds a verification key to the blamedBy map.
-func (p *playerData) addBlame(verificationKey string) bool {
+func (p *PlayerData) addBlame(verificationKey string) bool {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 

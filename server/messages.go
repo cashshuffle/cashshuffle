@@ -42,7 +42,7 @@ func startPacketInfoChan(c chan *packetInfo) {
 
 // processReceivedMessage reads the message and processes it.
 func (pi *packetInfo) processReceivedMessage() error {
-	var player *playerData
+	var player *PlayerData
 	// If we are not tracking the connection yet, the user must be
 	// registering with the server.
 	if pi.tracker.playerByConnection(pi.conn) == nil {
@@ -54,7 +54,7 @@ func (pi *packetInfo) processReceivedMessage() error {
 		player = pi.tracker.playerByConnection(pi.conn)
 
 		// If a malicious client is connecting and disconnecting
-		// quickly it is possible that playerData will be nil.
+		// quickly it is possible that PlayerData will be nil.
 		// No need to return an error, just don't register them.
 		if player == nil {
 			return nil

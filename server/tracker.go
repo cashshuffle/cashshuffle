@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"net"
 	"sync"
 	"time"
@@ -31,7 +32,7 @@ const (
 // Tracker is used to track connections to the server.
 type Tracker struct {
 	banData                 map[string]*banData
-	connections             map[net.Conn]*playerData
+	connections             map[net.Conn]*PlayerData
 	verificationKeys        map[string]net.Conn
 	mutex                   sync.RWMutex
 	denyIPMatch             map[ipPair]time.Time
@@ -66,7 +67,7 @@ func NewTracker(poolSize int, shufflePort int, shuffleWebSocketPort int, torShuf
 	return &Tracker{
 		poolSize:                poolSize,
 		banData:                 make(map[string]*banData),
-		connections:             make(map[net.Conn]*playerData),
+		connections:             make(map[net.Conn]*PlayerData),
 		verificationKeys:        make(map[string]net.Conn),
 		denyIPMatch:             make(map[ipPair]time.Time),
 		pools:                   make(map[int]*Pool),
@@ -78,7 +79,7 @@ func NewTracker(poolSize int, shufflePort int, shuffleWebSocketPort int, torShuf
 }
 
 // add adds a connection to the tracker.
-func (t *Tracker) add(p *playerData) {
+func (t *Tracker) add(p *PlayerData) {
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
 
@@ -217,7 +218,7 @@ func (t *Tracker) cleanupBan(ip string) {
 }
 
 // playerByVerificationKey gets the player for a verification key.
-func (t *Tracker) playerByVerificationKey(key string) *playerData {
+func (t *Tracker) playerByVerificationKey(key string) *PlayerData {
 	t.mutex.RLock()
 	defer t.mutex.RUnlock()
 
@@ -229,7 +230,7 @@ func (t *Tracker) playerByVerificationKey(key string) *playerData {
 }
 
 // playerByConnection gets the player for a connection.
-func (t *Tracker) playerByConnection(c net.Conn) *playerData {
+func (t *Tracker) playerByConnection(c net.Conn) *PlayerData {
 	t.mutex.RLock()
 	defer t.mutex.RUnlock()
 
@@ -246,7 +247,7 @@ func (t *Tracker) generateSessionID() []byte {
 
 // assignPool assigns a user to a pool.
 // This method assumes the caller is holding the mutex.
-func (t *Tracker) assignPool(p *playerData) {
+func (t *Tracker) assignPool(p *PlayerData) {
 	pool := t.assignExistingPool(p)
 	if pool == nil {
 		t.assignNewPool(p)
@@ -256,7 +257,7 @@ func (t *Tracker) assignPool(p *playerData) {
 // assignExistingPool finds an existing pool and places the player or returns
 // nil if there is not an available slot
 // This method assumes the caller is holding the mutex.
-func (t *Tracker) assignExistingPool(p *playerData) *Pool {
+func (t *Tracker) assignExistingPool(p *PlayerData) *Pool {
 	for _, pool := range t.pools {
 		if t.deniedByIPMatch(p.conn, pool) {
 			continue
@@ -271,7 +272,7 @@ func (t *Tracker) assignExistingPool(p *playerData) *Pool {
 
 // assignNewPool assigns player to the lowest empty pool number >=1
 // This method assumes the caller is holding the mutex.
-func (t *Tracker) assignNewPool(player *playerData) {
+func (t *Tracker) assignNewPool(player *PlayerData) {
 	num := firstPoolNum
 	for {
 		if _, ok := t.pools[num]; !ok {
@@ -285,13 +286,16 @@ func (t *Tracker) assignNewPool(player *playerData) {
 
 // unassignPool removes a user from a pool.
 // This method assumes the caller is holding the mutex.
-func (t *Tracker) unassignPool(p *playerData) {
+func (t *Tracker) unassignPool(p *PlayerData) {
 	// A passive player gets ban score and p2p ban because they never
 	// attempted to announce their verification key,
 	// are unblameable by other players,
 	// and probably caused the failure of a shuffle.
 	if p.isPassive {
 		t.increaseBanScore(p.conn, true)
+		if debugMode {
+			fmt.Printf("[DenyIP] Passive user disconnected: %s\n", p.verificationKey)
+		}
 		t.addDenyIPMatch(p.conn, p.pool, true)
 	}
 

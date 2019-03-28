@@ -2,6 +2,7 @@ package server
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/cashshuffle/cashshuffle/message"
 )
@@ -72,6 +73,9 @@ func (pi *packetInfo) checkBlameMessage() error {
 		if blamer.pool.IsBanned(accused) {
 			blamer.pool.firstBan = accused
 			pi.tracker.increaseBanScore(accused.conn, false)
+			if debugMode {
+				fmt.Printf("[DenyIP] User blamed out of round: %s\n", accused.verificationKey)
+			}
 			pi.tracker.addDenyIPMatch(accused.conn, accused.pool, false)
 			pi.tracker.remove(accused.conn)
 		}

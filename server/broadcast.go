@@ -101,7 +101,7 @@ func (pi *packetInfo) announceStart() {
 	}
 }
 
-func (pi *packetInfo) broadcastJoinedPool(p *playerData) {
+func (pi *packetInfo) broadcastJoinedPool(p *PlayerData) {
 	m := message.Signed{
 		Packet: &message.Packet{
 			Number: p.number,

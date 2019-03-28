@@ -10,7 +10,7 @@ import (
 
 func TestTrackStats(t *testing.T) {
 	tracker := &Tracker{
-		connections: map[net.Conn]*playerData{
+		connections: map[net.Conn]*PlayerData{
 			&fakeConn{}: {},
 			&fakeConn{}: {},
 			&fakeConn{}: {},
@@ -24,7 +24,7 @@ func TestTrackStats(t *testing.T) {
 		pools: map[int]*Pool{
 			1: {
 				num: 1,
-				players: map[uint32]*playerData{
+				players: map[uint32]*PlayerData{
 					1: nil,
 					2: nil,
 					3: nil,
@@ -35,7 +35,7 @@ func TestTrackStats(t *testing.T) {
 				amount:      100,
 				shuffleType: 0,
 				version:     0,
-				frozenSnapshot: map[string]*playerData{
+				frozenSnapshot: map[string]*PlayerData{
 					"1": nil,
 					"2": nil,
 					"3": nil,
@@ -45,7 +45,7 @@ func TestTrackStats(t *testing.T) {
 			},
 			2: {
 				num: 2,
-				players: map[uint32]*playerData{
+				players: map[uint32]*PlayerData{
 					6: nil,
 					7: nil,
 					8: nil,
@@ -54,7 +54,7 @@ func TestTrackStats(t *testing.T) {
 				amount:         1000,
 				shuffleType:    1,
 				version:        1,
-				frozenSnapshot: map[string]*playerData{},
+				frozenSnapshot: map[string]*PlayerData{},
 			},
 		},
 		poolSize:                5,

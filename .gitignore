@@ -6,6 +6,9 @@
 # The binary.
 cashshuffle
 
+# VSCode
+.vscode
+
 # Folders
 _obj
 _test

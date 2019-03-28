@@ -9,7 +9,7 @@ import (
 
 // registerClient registers a new session.
 func (pi *packetInfo) registerClient() error {
-	var player *playerData
+	var player *PlayerData
 	if len(pi.message.Packet) == 1 {
 		signed := pi.message.Packet[0]
 
@@ -25,7 +25,7 @@ func (pi *packetInfo) registerClient() error {
 			}
 
 			if verificationKey != "" && registration != nil {
-				player = &playerData{
+				player = &PlayerData{
 					verificationKey: verificationKey,
 					conn:            pi.conn,
 					blamedBy:        make(map[string]interface{}),
@@ -54,7 +54,7 @@ func (pi *packetInfo) registerClient() error {
 }
 
 // registrationSuccess sends a registration success reply.
-func (pi *packetInfo) registrationSuccess(p *playerData) error {
+func (pi *packetInfo) registrationSuccess(p *PlayerData) error {
 	m := message.Signed{
 		Packet: &message.Packet{
 			Session: p.sessionID,

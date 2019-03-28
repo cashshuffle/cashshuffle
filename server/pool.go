@@ -15,28 +15,28 @@ const (
 type Pool struct {
 	num            int
 	mutex          sync.RWMutex
-	players        map[uint32]*playerData
+	players        map[uint32]*PlayerData
 	size           int
 	amount         uint64
-	firstBan       *playerData
+	firstBan       *PlayerData
 	version        uint64
 	shuffleType    message.ShuffleType
-	frozenSnapshot map[string]*playerData // vk > player
+	frozenSnapshot map[string]*PlayerData // vk > player
 }
 
 // newPool creates a new pool and enforces the rule that pools only exist
 // with at least one player.
-func newPool(num int, player *playerData, size int) *Pool {
+func newPool(num int, player *PlayerData, size int) *Pool {
 	pool := &Pool{
 		num:            num,
 		size:           size,
 		mutex:          sync.RWMutex{},
-		players:        make(map[uint32]*playerData),
+		players:        make(map[uint32]*PlayerData),
 		amount:         player.amount,
 		firstBan:       nil,
 		version:        player.version,
 		shuffleType:    player.shuffleType,
-		frozenSnapshot: make(map[string]*playerData),
+		frozenSnapshot: make(map[string]*PlayerData),
 	}
 	pool.AddPlayer(player)
 	return pool
@@ -52,7 +52,7 @@ func (pool *Pool) IsFrozen() bool {
 
 // IsBanned returns true if the player has been banned by their pool.
 // This assumes that only one ban will happen per pool.
-func (pool *Pool) IsBanned(player *playerData) bool {
+func (pool *Pool) IsBanned(player *PlayerData) bool {
 	pool.mutex.RLock()
 	defer pool.mutex.RUnlock()
 
@@ -69,7 +69,7 @@ func (pool *Pool) PlayerCount() int {
 }
 
 // AddPlayer attempts to place player in the pool and returns success boolean
-func (pool *Pool) AddPlayer(player *playerData) bool {
+func (pool *Pool) AddPlayer(player *PlayerData) bool {
 	pool.mutex.Lock()
 	defer pool.mutex.Unlock()
 
@@ -110,7 +110,7 @@ func (pool *Pool) AddPlayer(player *playerData) bool {
 
 // RemovePlayer removes a player from the pool
 // This method depends on the caller discard the pool if empty.
-func (pool *Pool) RemovePlayer(player *playerData) {
+func (pool *Pool) RemovePlayer(player *PlayerData) {
 	pool.mutex.Lock()
 	defer pool.mutex.Unlock()
 
@@ -119,7 +119,7 @@ func (pool *Pool) RemovePlayer(player *playerData) {
 
 // PlayerFromSnapshot returns the user for the key or nil if they
 // are not in the snapshot.
-func (pool *Pool) PlayerFromSnapshot(verificationKey string) *playerData {
+func (pool *Pool) PlayerFromSnapshot(verificationKey string) *PlayerData {
 	pool.mutex.RLock()
 	defer pool.mutex.RUnlock()
 
@@ -131,8 +131,8 @@ func (pool *Pool) PlayerFromSnapshot(verificationKey string) *playerData {
 
 // takeSnapshot gets a static lookup of all players in the pool
 // This method assumes the caller is holding the mutex.
-func (pool *Pool) takeSnapshot() map[string]*playerData {
-	snapshot := make(map[string]*playerData)
+func (pool *Pool) takeSnapshot() map[string]*PlayerData {
+	snapshot := make(map[string]*PlayerData)
 	for _, p := range pool.players {
 		snapshot[p.verificationKey] = p
 	}
