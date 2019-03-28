@@ -23,7 +23,7 @@ func (pi *packetInfo) broadcastMessage() {
 		if to == nil {
 			msgMap[broadcastKey] = append(msgMap[broadcastKey], signed)
 		} else {
-			k := fmt.Sprintf("%s%s", playerPrefix, signed.GetPacket().GetToKey().String())
+			k := fmt.Sprintf("%s%s", playerPrefix, signed.GetPacket().GetToKey().GetKey())
 			msgMap[k] = append(msgMap[k], signed)
 		}
 	}
