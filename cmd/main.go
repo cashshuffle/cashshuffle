@@ -56,7 +56,7 @@ func init() {
 }
 
 func bail(err error) {
-	fmt.Fprintf(os.Stderr, "[Error] stopping server: %s\n", err)
+	fmt.Fprintf(os.Stderr, "[Error] Stopping server: %s\n", err)
 	os.Exit(1)
 }
 

@@ -55,7 +55,7 @@ func Start(ip string, port int, cert string, key string, debug bool, t *Tracker,
 		context, err := limit.Get(nil, ip)
 		if err != nil {
 			if debugMode {
-				fmt.Printf("[Listener] unable to get connection limit: %s\n", err)
+				fmt.Printf("[Listener] Unable to get connection limit: %s\n", err)
 			}
 			conn.Close()
 			continue
@@ -133,7 +133,7 @@ func handleConnection(conn net.Conn, c chan *packetInfo, tracker *Tracker) {
 	// They just connected, set the deadline to prevent leaked connections.
 	err := conn.SetDeadline(time.Now().Add(connectDeadline))
 	if (err != nil) && debugMode {
-		fmt.Printf("[Error] received message but unable to extend deadline: %s\n", err)
+		fmt.Printf("[Error] Received message but unable to extend deadline: %s\n", err)
 	}
 
 	if !tracker.bannedByServer(conn) {

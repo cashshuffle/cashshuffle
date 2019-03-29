@@ -58,7 +58,7 @@ func (pi *packetInfo) broadcastMessage() {
 			// stop sending messages after the first error
 			if err := writeMessage(player.conn, msgs); err != nil {
 				if debugMode {
-					fmt.Printf("[DirectMessage] interrupting packet send after failed write: %s\n", err)
+					fmt.Printf("[DirectMessage] Interrupting packet send after failed write: %s\n", err)
 				}
 				return
 			}
