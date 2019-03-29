@@ -143,7 +143,7 @@ func (t *Tracker) addDenyIPMatch(player1 net.Conn, pool *Pool, haveLock bool) {
 	ip := getIP(player1)
 
 	for _, otherPlayer := range pool.frozenSnapshot {
-		otherIP, _, _ := net.SplitHostPort(otherPlayer.conn.RemoteAddr().String())
+		otherIP := getIP(otherPlayer.conn)
 		if ip == otherIP {
 			continue
 		}
@@ -158,7 +158,7 @@ func (t *Tracker) addDenyIPMatch(player1 net.Conn, pool *Pool, haveLock bool) {
 func (t *Tracker) deniedByIPMatch(player net.Conn, pool *Pool) bool {
 	ip := getIP(player)
 	for _, otherPlayer := range pool.players {
-		otherIP, _, _ := net.SplitHostPort(otherPlayer.conn.RemoteAddr().String())
+		otherIP := getIP(otherPlayer.conn)
 
 		if _, ok := t.denyIPMatch[newIPPair(ip, otherIP)]; ok {
 			return true

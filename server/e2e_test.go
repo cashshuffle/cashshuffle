@@ -663,8 +663,8 @@ type testP2PBan struct {
 func (h *testHarness) AssertP2PBans(bans []testP2PBan) {
 	expectedPairs := make([]ipPair, 0)
 	for _, ban := range bans {
-		ipA, _, _ := net.SplitHostPort(ban.a.remoteConn.RemoteAddr().String())
-		ipB, _, _ := net.SplitHostPort(ban.b.remoteConn.RemoteAddr().String())
+		ipA := getIP(ban.a.remoteConn)
+		ipB := getIP(ban.b.remoteConn)
 		expectedPairs = append(expectedPairs, newIPPair(ipA, ipB))
 	}
 
