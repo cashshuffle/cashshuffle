@@ -73,7 +73,6 @@ func (pi *packetInfo) checkBlameMessage() error {
 				fmt.Printf("[DenyIP] User blamed out of round: %s\n", accused.verificationKey)
 			}
 			pi.tracker.addDenyIPMatch(accused.conn, accused.pool, false)
-			pi.tracker.remove(accused.conn)
 		}
 	}
 
