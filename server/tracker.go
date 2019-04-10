@@ -176,6 +176,9 @@ func (t *Tracker) CleanupDeniedByIPMatch() {
 	for pair, deniedTime := range t.denyIPMatch {
 		if deniedTime.Add(denyIPTime).Before(time.Now()) {
 			delete(t.denyIPMatch, pair)
+			if debugMode {
+				fmt.Printf("[CleanupDenyIPMatch] Remove match %s %s\n", pair.left, pair.right)
+			}
 		}
 	}
 }
@@ -214,6 +217,9 @@ func (t *Tracker) cleanupBan(ip string) {
 
 	if t.banData[ip].score == 0 {
 		delete(t.banData, ip)
+		if debugMode {
+			fmt.Printf("[CleanupDenyIP] Remove server ban %s\n", ip)
+		}
 	}
 }
 
@@ -294,9 +300,8 @@ func (t *Tracker) unassignPool(p *PlayerData) {
 	if p.isPassive {
 		t.increaseBanScore(p.conn, true)
 		if debugMode {
-			fmt.Printf("[DenyIP] Passive user disconnected: %s\n", p.verificationKey)
+			fmt.Printf("[DenyIP] Passive user disconnected: %s (IP: %s)\n", p.verificationKey, p.conn.RemoteAddr().String())
 		}
-		t.addDenyIPMatch(p.conn, p.pool, true)
 	}
 
 	pool := p.pool

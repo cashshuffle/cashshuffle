@@ -18,7 +18,7 @@ import (
 
 const (
 	appName                 = "cashshuffle"
-	version                 = "0.6.16"
+	version                 = "0.6.18"
 	defaultPort             = 1337
 	defaultWebSocketPort    = 1338
 	defaultTorPort          = 1339
@@ -142,7 +142,7 @@ func performCommand(cmd *cobra.Command, args []string) chan error {
 	t := server.NewTracker(config.PoolSize, config.Port, config.WebSocketPort, config.TorPort, config.TorWebSocketPort)
 
 	cleanupDeniedTicker := time.NewTicker(time.Minute)
-	defer cleanupDeniedTicker.Stop()
+	// let the ticker die when the server exits
 	go func() {
 		for range cleanupDeniedTicker.C {
 			t.CleanupDeniedByIPMatch()

@@ -107,8 +107,6 @@ func TestUnanimousBlamesLeadToServerBan(t *testing.T) {
 			expectedBanData[0].banData.score++
 		}
 		h.AssertServerBans(expectedBanData)
-		// troubleClient should be actively disconnected from the server
-		h.WaitNotConnected(troubleClient)
 
 		// remaining players try to blame one of themselves, but the pool
 		// only allows one ban even with a full vote.

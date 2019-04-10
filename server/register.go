@@ -17,7 +17,7 @@ func (pi *packetInfo) registerClient() error {
 			p := signed.GetPacket()
 			registration := p.GetRegistration()
 
-			verificationKey := p.FromKey.String()
+			verificationKey := p.GetFromKey().GetKey()
 			player = pi.tracker.playerByVerificationKey(verificationKey)
 			if player != nil {
 				return fmt.Errorf("server already has a player "+
