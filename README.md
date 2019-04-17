@@ -1,7 +1,11 @@
 [![License][License-Image]][License-URL] [![ReportCard][ReportCard-Image]][ReportCard-URL] [![Build][Build-Status-Image]][Build-Status-URL]
 # cashshuffle
 
-A CashShuffle server implented in Go. For more information on CashShuffle visit [https://cashshuffle.com](https://cashshuffle.com).
+A CashShuffle server implented in Go.
+
+For more information on CashShuffle visit [cashshuffle.com](https://cashshuffle.com).
+
+Technical specification and documentation are at [github.com/cashshuffle/spec](https://github.com/cashshuffle/spec).
 
 ## Install
 
