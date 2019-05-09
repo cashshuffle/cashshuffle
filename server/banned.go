@@ -46,7 +46,7 @@ func (pi *packetInfo) checkBlameMessage() error {
 		blamer := pi.tracker.playerByConnection(pi.conn)
 		if blamer == nil {
 			if debugMode {
-				fmt.Printf("[Blame] Ignoring blame from %s because player no longer exists\n", getIP(pi.conn))
+				fmt.Printf("[Blame] Ignoring blame from %s because they disconnected\n", getIP(pi.conn))
 			}
 			return nil
 		}
@@ -72,7 +72,7 @@ func (pi *packetInfo) checkBlameMessage() error {
 		added := accused.addBlame(blamer.verificationKey)
 		if !added {
 			if debugMode {
-				fmt.Printf("[Blame] Duplicate blame A(%s) --> B(%s)\n", blamer, accused)
+				fmt.Printf("[Blame] Duplicate blame from (%s) to (%s)\n", blamer, accused)
 			}
 			return nil
 		}

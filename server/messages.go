@@ -36,7 +36,7 @@ func startPacketInfoChan(c chan *packetInfo) {
 		err := pi.processReceivedMessage()
 		if err != nil {
 			pi.conn.Close()
-			fmt.Fprintf(os.Stderr, "[Error] Receive message loop: %s\n", err)
+			fmt.Fprintf(os.Stderr, "[Error] Message processor: %s\n", err)
 		}
 	}
 }
@@ -115,7 +115,7 @@ func processMessages(conn net.Conn, c chan *packetInfo, t *Tracker) {
 					validMagic, numReadBytes = processFrame(&b)
 
 					if !validMagic {
-						fmt.Fprint(os.Stderr, "[Error] Invalid magic")
+						fmt.Fprint(os.Stderr, "[Error] Invalid magic\n")
 						return
 					}
 
@@ -150,7 +150,7 @@ func processMessages(conn net.Conn, c chan *packetInfo, t *Tracker) {
 		}
 
 		if mb.Len() == 0 {
-			fmt.Fprint(os.Stderr, "[Error] 0-length message")
+			fmt.Fprint(os.Stderr, "[Error] 0-length message\n")
 			return
 		}
 
