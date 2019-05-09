@@ -42,7 +42,7 @@ func (pi *packetInfo) checkBlameMessage() error {
 	}
 
 	if !validBlame {
-		return fmt.Errorf("unknown blame reason: %s", packet.GetMessage().GetBlame().GetReason())
+		return fmt.Errorf("unknown blame reason: %s", reason)
 	} else {
 		blamer := pi.tracker.playerByConnection(pi.conn)
 		if blamer == nil {
