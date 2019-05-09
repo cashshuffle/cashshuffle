@@ -6,7 +6,6 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net"
 	"os"
 	"time"
@@ -132,8 +131,8 @@ func processMessages(conn net.Conn, c chan *packetInfo, t *Tracker) {
 
 			if b.Len() >= numReadBytes {
 				msg := make([]byte, numReadBytes)
-				if _, err := b.Read(msg); (err != nil) && (err != io.EOF) {
-					fmt.Fprintf(os.Stderr, logCommunication+"Reading from message buffer: %s\n", err)
+				if _, err := b.Read(msg); err != nil {
+					fmt.Fprintf(os.Stderr, logCommunication+"Error reading from message buffer: %s\n", err)
 					return
 				}
 
