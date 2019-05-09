@@ -34,7 +34,7 @@ func writeMessage(conn net.Conn, msgs []*message.Signed) error {
 	}
 
 	if debugMode {
-		fmt.Println("[Sent]", packets)
+		fmt.Printf("[Sent] by %s: %s\n", getIP(conn), packets)
 		jsonData, err := json.MarshalIndent(packets, "", "  ")
 		if err != nil {
 			return err

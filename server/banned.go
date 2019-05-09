@@ -72,7 +72,7 @@ func (pi *packetInfo) checkBlameMessage() error {
 		added := accused.addBlame(blamer.verificationKey)
 		if !added {
 			if debugMode {
-				fmt.Printf("[Blame] Duplicate blame from (%s) to (%s)\n", blamer, accused)
+				fmt.Printf("[Blame] Duplicate blame from %s to %s\n", blamer, accused)
 			}
 			return nil
 		}

@@ -38,15 +38,11 @@ func (p *PlayerData) addBlame(verificationKey string) bool {
 }
 
 func (p *PlayerData) String() string {
-	return fmt.Sprintf(""+
+	return fmt.Sprintf("("+
 		"vk:%s, "+
-		"ip:%s"+
 		"pool:%d, "+
 		"num:%d, "+
-		"blames:%d "+
-		"amount:%d "+
-		"version:%d "+
-		"isPassive:%t\n",
-		p.verificationKey, getIP(p.conn), p.pool.num, p.number, len(p.blamedBy),
-		p.amount, p.version, p.isPassive)
+		"ip:%s, "+
+		")",
+		p.verificationKey, p.pool.num, p.number, getIP(p.conn))
 }

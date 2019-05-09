@@ -35,7 +35,7 @@ func (pi *packetInfo) broadcastMessage() {
 			sendingPlayer := pi.tracker.playerByConnection(pi.conn)
 			if sendingPlayer == nil {
 				if debugMode {
-					fmt.Printf("[DirectMessage] Ignoring from %s because player no longer exists\n", getIP(pi.conn))
+					fmt.Printf("[DirectMessage] Ignoring message from %s because player no longer exists\n", getIP(pi.conn))
 				}
 				return
 			}
@@ -43,7 +43,7 @@ func (pi *packetInfo) broadcastMessage() {
 			player := pi.tracker.playerByVerificationKey(strings.TrimLeft(vk, playerPrefix))
 			if player == nil {
 				if debugMode {
-					fmt.Printf("[DirectMessage] Ignoring message to %s because player no longer exists\n", vk)
+					fmt.Printf("[DirectMessage] Ignoring message to vk:%s because player no longer exists\n", vk)
 				}
 				return
 			}
@@ -58,7 +58,7 @@ func (pi *packetInfo) broadcastMessage() {
 			// stop sending messages after the first error
 			if err := writeMessage(player.conn, msgs); err != nil {
 				if debugMode {
-					fmt.Printf("[DirectMessage] Error writing message to %s: %s\n", getIP(player.conn), err)
+					fmt.Printf("[DirectMessage] Error writing message to %s: %s\n", player, err)
 				}
 				return
 			}
@@ -86,7 +86,7 @@ func (pi *packetInfo) broadcastAll(msgs []*message.Signed) {
 		// Try to send the message to remaining players even if errors.
 		err := writeMessage(player.conn, msgs)
 		if (err != nil) && debugMode {
-			fmt.Printf("[Broadcast] Continuing to send after write error to (%s): %s\n", player, err)
+			fmt.Printf("[Broadcast] Continuing to send after write error to %s: %s\n", player, err)
 		}
 	}
 }
@@ -123,7 +123,7 @@ func (pi *packetInfo) announceStart() {
 		// Try to send the message to remaining players even if errors.
 		err := writeMessage(player.conn, []*message.Signed{&m})
 		if (err != nil) && debugMode {
-			fmt.Printf("[Broadcast] Continuing to send after write error to %s: %s\n", getIP(player.conn), err)
+			fmt.Printf("[Broadcast] Continuing to send after write error to %s: %s\n", player, err)
 		}
 	}
 }

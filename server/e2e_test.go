@@ -711,7 +711,7 @@ func (h *testHarness) WaitEmptyInboxes(clients []*testClient) {
 				if len(c.inbox.packets) != 0 {
 					lines = append(lines, fmt.Sprintf("inbox #%d not empty:", c.playerNum))
 					for _, pkt := range c.inbox.packets {
-						lines = append(lines, fmt.Sprintf("  %+v\n", pkt.message.GetPacket()))
+						lines = append(lines, fmt.Sprintf("  %+v", pkt.message.GetPacket()))
 					}
 				}
 				c.inbox.mutex.Unlock()

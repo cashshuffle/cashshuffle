@@ -218,7 +218,7 @@ func (t *Tracker) cleanupBan(ip string) {
 	if t.banData[ip].score == 0 {
 		delete(t.banData, ip)
 		if debugMode {
-			fmt.Printf("[CleanupDenyIP] Remove server ban %s\n", ip)
+			fmt.Printf("[CleanupDenyIP] Remove server ban for %s\n", ip)
 		}
 	}
 }
@@ -300,7 +300,7 @@ func (t *Tracker) unassignPool(p *PlayerData) {
 	if p.isPassive {
 		t.increaseBanScore(p.conn, true)
 		if debugMode {
-			fmt.Printf("[DenyIP] Passive user disconnected: %s (IP: %s)\n", p.verificationKey, p.conn.RemoteAddr().String())
+			fmt.Printf("[DenyIP] Passive user disconnected: %s\n", p)
 		}
 	}
 

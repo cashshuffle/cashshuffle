@@ -197,7 +197,7 @@ func sendToPacketInfoChan(b *bytes.Buffer, conn net.Conn, c chan *packetInfo, t 
 	}
 
 	if debugMode {
-		fmt.Println("[Received]", pdata)
+		fmt.Printf("[Received] from %s: %s\n", getIP(conn), pdata)
 		jsonData, err := json.MarshalIndent(pdata, "", "  ")
 		if err != nil {
 			return err
