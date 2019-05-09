@@ -55,6 +55,10 @@ func (pi *packetInfo) broadcastMessage() {
 				return
 			}
 
+			if debugMode {
+				fmt.Printf("[DirectMessage] from %s to %s\n", sendingPlayer, player)
+			}
+
 			// stop sending messages after the first error
 			if err := writeMessage(player.conn, msgs); err != nil {
 				if debugMode {
@@ -80,6 +84,10 @@ func (pi *packetInfo) broadcastAll(msgs []*message.Signed) {
 			fmt.Printf("[Broadcast] Ignoring message from %s because player no longer exists\n", getIP(pi.conn))
 		}
 		return
+	}
+
+	if debugMode {
+		fmt.Printf("[Broadcast] Message from %s\n", sender)
 	}
 
 	for _, player := range sender.pool.players {
