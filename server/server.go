@@ -55,7 +55,7 @@ func Start(ip string, port int, cert string, key string, debug bool, t *Tracker,
 		context, err := limit.Get(nil, ip)
 		if err != nil {
 			if debugMode {
-				fmt.Printf("[Listener] Unable to get connection limit: %s\n", err)
+				fmt.Printf(logListener+"Unable to get connection limit: %s\n", err)
 			}
 			conn.Close()
 			continue
@@ -63,7 +63,7 @@ func Start(ip string, port int, cert string, key string, debug bool, t *Tracker,
 
 		if context.Reached {
 			if debugMode {
-				fmt.Printf("[Listener] Rate limit exceeded by %s\n", ip)
+				fmt.Printf(logListener+"Rate limit exceeded by %s\n", ip)
 			}
 			conn.Close()
 			continue
@@ -110,7 +110,7 @@ func StartWebsocket(ip string, port int, cert string, key string, debug bool, t 
 		torStr = "Tor"
 	}
 
-	fmt.Printf("%sShuffle Listening via Websockets on %s:%d\n", torStr, ip, port)
+	fmt.Printf(logListener+"%sShuffle Listening via Websockets on %s:%d\n", torStr, ip, port)
 
 	if tlsEnabled(cert, key, m) {
 		err = srv.ListenAndServeTLS(cert, key)
@@ -133,7 +133,7 @@ func handleConnection(conn net.Conn, c chan *packetInfo, tracker *Tracker) {
 	// They just connected, set the deadline to prevent leaked connections.
 	err := conn.SetDeadline(time.Now().Add(connectDeadline))
 	if (err != nil) && debugMode {
-		fmt.Printf("[Error] Received message but unable to extend deadline: %s\n", err)
+		fmt.Printf(logCommunication+"Received message but unable to extend deadline: %s\n", err)
 	}
 
 	if !tracker.bannedByServer(conn) {

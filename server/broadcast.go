@@ -35,7 +35,7 @@ func (pi *packetInfo) broadcastMessage() {
 			sendingPlayer := pi.tracker.playerByConnection(pi.conn)
 			if sendingPlayer == nil {
 				if debugMode {
-					fmt.Printf("[DirectMessage] Ignoring message from %s because player no longer exists\n", getIP(pi.conn))
+					fmt.Printf(logDirectMessage+"Ignoring message from %s because player no longer exists\n", getIP(pi.conn))
 				}
 				return
 			}
@@ -43,26 +43,26 @@ func (pi *packetInfo) broadcastMessage() {
 			player := pi.tracker.playerByVerificationKey(strings.TrimLeft(vk, playerPrefix))
 			if player == nil {
 				if debugMode {
-					fmt.Printf("[DirectMessage] Ignoring message to vk:%s because player no longer exists\n", vk)
+					fmt.Printf(logDirectMessage+"Ignoring message to vk:%s because player no longer exists\n", vk)
 				}
 				return
 			}
 
 			if player == sendingPlayer {
 				if debugMode {
-					fmt.Printf("[DirectMessage] Ignoring message to self from %s\n", sendingPlayer)
+					fmt.Printf(logDirectMessage+"Ignoring message to self from %s\n", sendingPlayer)
 				}
 				return
 			}
 
 			if debugMode {
-				fmt.Printf("[DirectMessage] from %s to %s\n", sendingPlayer, player)
+				fmt.Printf(logDirectMessage+"from %s to %s\n", sendingPlayer, player)
 			}
 
 			// stop sending messages after the first error
 			if err := writeMessage(player.conn, msgs); err != nil {
 				if debugMode {
-					fmt.Printf("[DirectMessage] Error writing message to %s: %s\n", player, err)
+					fmt.Printf(logDirectMessage+"Error writing message: %s\n", err)
 				}
 				return
 			}
@@ -81,20 +81,20 @@ func (pi *packetInfo) broadcastAll(msgs []*message.Signed) {
 	// the broadcast.
 	if sender == nil {
 		if debugMode {
-			fmt.Printf("[Broadcast] Ignoring message from %s because player no longer exists\n", getIP(pi.conn))
+			fmt.Printf(logBroadcast+"Ignoring message from %s because player no longer exists\n", getIP(pi.conn))
 		}
 		return
 	}
 
 	if debugMode {
-		fmt.Printf("[Broadcast] Message from %s\n", sender)
+		fmt.Printf(logBroadcast+"Message from %s\n", sender)
 	}
 
 	for _, player := range sender.pool.players {
 		// Try to send the message to remaining players even if errors.
 		err := writeMessage(player.conn, msgs)
 		if (err != nil) && debugMode {
-			fmt.Printf("[Broadcast] Continuing to send after write error to %s: %s\n", player, err)
+			fmt.Printf(logBroadcast+"Continuing to send after write error to %s: %s\n", player, err)
 		}
 	}
 }
@@ -116,22 +116,25 @@ func (pi *packetInfo) announceStart() {
 		return
 	}
 
-	for _, player := range sender.pool.players {
-		m := message.Signed{
+	announcement := []*message.Signed{
+		{
 			Packet: &message.Packet{
 				Phase:  message.Phase_ANNOUNCEMENT,
 				Number: uint32(pi.tracker.poolSize),
 			},
-		}
+		},
+	}
+
+	for _, player := range sender.pool.players {
 		// The player now has an obligation to send verification key.
 		// Since we cannot differentiate between a user ignoring the message
 		// and an honest miss, we assume the user always receives the message.
 		player.isPassive = true
 
 		// Try to send the message to remaining players even if errors.
-		err := writeMessage(player.conn, []*message.Signed{&m})
+		err := writeMessage(player.conn, announcement)
 		if (err != nil) && debugMode {
-			fmt.Printf("[Broadcast] Continuing to send after write error to %s: %s\n", player, err)
+			fmt.Printf(logBroadcast+"Continuing to send after write error to %s: %s\n", player, err)
 		}
 	}
 }

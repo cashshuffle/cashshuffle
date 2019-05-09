@@ -27,6 +27,14 @@ const (
 
 	// firstPoolNum is the starting number for pools
 	firstPoolNum = 1
+
+	// log buckets
+	logBan           = "[Ban] "
+	logBlame         = "[Blame] "
+	logBroadcast     = "[Broadcast] "
+	logCommunication = "[CommunicationError] "
+	logDirectMessage = "[DirectMessage] "
+	logListener      = "[Listener] "
 )
 
 // Tracker is used to track connections to the server.
@@ -177,7 +185,7 @@ func (t *Tracker) CleanupDeniedByIPMatch() {
 		if deniedTime.Add(denyIPTime).Before(time.Now()) {
 			delete(t.denyIPMatch, pair)
 			if debugMode {
-				fmt.Printf("[CleanupDenyIPMatch] Remove match %s %s\n", pair.left, pair.right)
+				fmt.Printf(logBan+"Remove player pair %s, %s\n", pair.left, pair.right)
 			}
 		}
 	}
@@ -218,7 +226,7 @@ func (t *Tracker) cleanupBan(ip string) {
 	if t.banData[ip].score == 0 {
 		delete(t.banData, ip)
 		if debugMode {
-			fmt.Printf("[CleanupDenyIP] Remove server ban for %s\n", ip)
+			fmt.Printf(logBan+"Remove server ban for %s\n", ip)
 		}
 	}
 }
@@ -300,7 +308,7 @@ func (t *Tracker) unassignPool(p *PlayerData) {
 	if p.isPassive {
 		t.increaseBanScore(p.conn, true)
 		if debugMode {
-			fmt.Printf("[DenyIP] Passive user disconnected: %s\n", p)
+			fmt.Printf(logBan+"Passive player disconnected: %s\n", p)
 		}
 	}
 

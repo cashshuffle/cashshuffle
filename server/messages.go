@@ -36,7 +36,7 @@ func startPacketInfoChan(c chan *packetInfo) {
 		err := pi.processReceivedMessage()
 		if err != nil {
 			pi.conn.Close()
-			fmt.Fprintf(os.Stderr, "[Error] Message processor: %s\n", err)
+			fmt.Fprintf(os.Stderr, logCommunication+"Message processor: %s\n", err)
 		}
 	}
 }
@@ -115,12 +115,12 @@ func processMessages(conn net.Conn, c chan *packetInfo, t *Tracker) {
 					validMagic, numReadBytes = processFrame(&b)
 
 					if !validMagic {
-						fmt.Fprint(os.Stderr, "[Error] Invalid magic\n")
+						fmt.Fprint(os.Stderr, logCommunication+"Invalid magic\n")
 						return
 					}
 
 					if numReadBytes <= 0 || numReadBytes > maxMessageLength {
-						fmt.Fprintf(os.Stderr, "[Error] Invalid message length: %d\n", numReadBytes)
+						fmt.Fprintf(os.Stderr, logCommunication+"Invalid message length: %d\n", numReadBytes)
 						return
 					}
 
@@ -133,7 +133,7 @@ func processMessages(conn net.Conn, c chan *packetInfo, t *Tracker) {
 			if b.Len() >= numReadBytes {
 				msg := make([]byte, numReadBytes)
 				if _, err := b.Read(msg); (err != nil) && (err != io.EOF) {
-					fmt.Fprintf(os.Stderr, "[Error] Reading from message buffer: %s\n", err)
+					fmt.Fprintf(os.Stderr, logCommunication+"Reading from message buffer: %s\n", err)
 					return
 				}
 
@@ -145,23 +145,23 @@ func processMessages(conn net.Conn, c chan *packetInfo, t *Tracker) {
 		}
 
 		if err := scanner.Err(); err != nil {
-			fmt.Fprintf(os.Stderr, "[Error] Message scanner: %s\n", err)
+			fmt.Fprintf(os.Stderr, logCommunication+"Message scanner: %s\n", err)
 			return
 		}
 
 		if mb.Len() == 0 {
-			fmt.Fprint(os.Stderr, "[Error] 0-length message\n")
+			fmt.Fprint(os.Stderr, logCommunication+"0-length message\n")
 			return
 		}
 
 		// Extend the deadline, we got a valid full message.
 		if err := conn.SetDeadline(time.Now().Add(deadline)); err != nil {
-			fmt.Fprintf(os.Stderr, "[Error] Received message but unable to extend deadline: %s\n", err)
+			fmt.Fprintf(os.Stderr, logCommunication+"Received message but unable to extend deadline: %s\n", err)
 			return
 		}
 
 		if err := sendToPacketInfoChan(&mb, conn, c, t); err != nil {
-			fmt.Fprintf(os.Stderr, "[Error] Sending packet: %s\n", err)
+			fmt.Fprintf(os.Stderr, logCommunication+"Sending packet: %s\n", err)
 			return
 		}
 	}
@@ -191,7 +191,7 @@ func sendToPacketInfoChan(b *bytes.Buffer, conn net.Conn, c chan *packetInfo, t 
 	err := proto.Unmarshal(b.Bytes(), pdata)
 	if err != nil {
 		if debugMode {
-			fmt.Println("[Error] Unmarshal failed:", b.Bytes())
+			fmt.Println(logCommunication+"Unmarshal failed:", b.Bytes())
 		}
 		return err
 	}

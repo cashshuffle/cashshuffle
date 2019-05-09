@@ -32,10 +32,11 @@ func (pi *packetInfo) checkBlameMessage() error {
 		return nil
 	}
 
+	reason := packet.GetMessage().GetBlame().GetReason()
 	validBlame := false
 
-	for _, reason := range validBlamereasons {
-		if packet.GetMessage().GetBlame().GetReason() == reason {
+	for _, r := range validBlamereasons {
+		if reason == r {
 			validBlame = true
 		}
 	}
@@ -46,7 +47,7 @@ func (pi *packetInfo) checkBlameMessage() error {
 		blamer := pi.tracker.playerByConnection(pi.conn)
 		if blamer == nil {
 			if debugMode {
-				fmt.Printf("[Blame] Ignoring blame from %s because they disconnected\n", getIP(pi.conn))
+				fmt.Printf(logBlame+"Ignoring blame from %s because they disconnected\n", getIP(pi.conn))
 			}
 			return nil
 		}
@@ -64,24 +65,25 @@ func (pi *packetInfo) checkBlameMessage() error {
 		// if the pool already has banned someone.
 		if blamer.pool.firstBan != nil {
 			if debugMode {
-				fmt.Printf("[Blame] Ignoring blame in pool %d because a player is already banned\n", blamer.pool.num)
+				fmt.Printf(logBlame+"Ignoring blame in pool %d because a player is already banned\n", blamer.pool.num)
 			}
 			return nil
 		}
 
 		added := accused.addBlame(blamer.verificationKey)
-		if !added {
-			if debugMode {
-				fmt.Printf("[Blame] Duplicate blame from %s to %s\n", blamer, accused)
+		if debugMode {
+			if !added {
+				fmt.Printf(logBlame+"Duplicate blame from %s to %s\n", blamer, accused)
+			} else {
+				fmt.Printf(logBlame+"%s blamed %s for %s", blamer, accused, reason)
 			}
-			return nil
 		}
 
 		if blamer.pool.IsBanned(accused) {
 			blamer.pool.firstBan = accused
 			pi.tracker.increaseBanScore(accused.conn, false)
 			if debugMode {
-				fmt.Printf("[DenyIP] User blamed out of round: %s\n", accused)
+				fmt.Printf(logBan+"User blamed out of round: %s\n", accused)
 			}
 			pi.tracker.addDenyIPMatch(accused.conn, accused.pool, false)
 		}

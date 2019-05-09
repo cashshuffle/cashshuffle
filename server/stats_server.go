@@ -27,7 +27,7 @@ func StartStatsServer(ip string, port int, cert string, key string, si StatsInfo
 		torStr = "Tor"
 	}
 
-	fmt.Printf("%sStats Listening on TCP %s:%d (tls: %v)\n", torStr, ip, port, isTLS)
+	fmt.Printf(logListener+"%sStats Listening on TCP %s:%d (tls: %v)\n", torStr, ip, port, isTLS)
 	if isTLS {
 		return s.ListenAndServeTLS(cert, key)
 	}
