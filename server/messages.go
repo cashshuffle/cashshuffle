@@ -200,9 +200,10 @@ func sendToPacketInfoChan(b *bytes.Buffer, conn net.Conn, c chan *packetInfo, t 
 		fmt.Printf("[Received] from %s: %s\n", getIP(conn), pdata)
 		jsonData, err := json.MarshalIndent(pdata, "", "  ")
 		if err != nil {
-			return err
+			fmt.Printf("Unable to marshal debug json data: %s\n", err)
+		} else {
+			fmt.Println(jsonData)
 		}
-		fmt.Printf("%s\n", jsonData)
 	}
 
 	data := &packetInfo{

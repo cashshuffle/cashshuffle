@@ -37,9 +37,10 @@ func writeMessage(conn net.Conn, msgs []*message.Signed) error {
 		fmt.Printf("[Sent] by %s: %s\n", getIP(conn), packets)
 		jsonData, err := json.MarshalIndent(packets, "", "  ")
 		if err != nil {
-			return err
+			fmt.Printf("Unable to marshal debug json data: %s\n", err)
+		} else {
+			fmt.Println(jsonData)
 		}
-		fmt.Printf("%s\n", jsonData)
 	}
 
 	// Extend the deadline, we just sent a message.
