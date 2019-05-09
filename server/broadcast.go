@@ -37,7 +37,6 @@ func (pi *packetInfo) broadcastMessage() {
 				if debugMode {
 					fmt.Printf(logDirectMessage+"Ignoring message from %s because player no longer exists\n", getIP(pi.conn))
 				}
-				return
 			}
 
 			player := pi.tracker.playerByVerificationKey(strings.TrimLeft(vk, playerPrefix))
