@@ -35,7 +35,7 @@ func startPacketInfoChan(c chan *packetInfo) {
 		err := pi.processReceivedMessage()
 		if err != nil {
 			pi.conn.Close()
-			fmt.Fprintf(os.Stderr, logCommunication+"Message processor: %s\n", err)
+			fmt.Fprintf(os.Stderr, logCommunication+"Message processor error: %s\n", err)
 		}
 	}
 }
@@ -144,7 +144,7 @@ func processMessages(conn net.Conn, c chan *packetInfo, t *Tracker) {
 		}
 
 		if err := scanner.Err(); err != nil {
-			fmt.Fprintf(os.Stderr, logCommunication+"Message scanner: %s\n", err)
+			fmt.Fprintf(os.Stderr, logCommunication+"Error scanning message: %s\n", err)
 			return
 		}
 
@@ -160,7 +160,7 @@ func processMessages(conn net.Conn, c chan *packetInfo, t *Tracker) {
 		}
 
 		if err := sendToPacketInfoChan(&mb, conn, c, t); err != nil {
-			fmt.Fprintf(os.Stderr, logCommunication+"Sending packet: %s\n", err)
+			fmt.Fprintf(os.Stderr, logCommunication+"Error sending packet: %s\n", err)
 			return
 		}
 	}

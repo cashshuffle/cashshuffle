@@ -32,7 +32,7 @@ const (
 	logBan           = "[Ban] "
 	logBlame         = "[Blame] "
 	logBroadcast     = "[Broadcast] "
-	logCommunication = "[CommunicationError] "
+	logCommunication = "[Communication] "
 	logDirectMessage = "[DirectMessage] "
 	logListener      = "[Listener] "
 )
