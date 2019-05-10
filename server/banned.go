@@ -38,6 +38,7 @@ func (pi *packetInfo) checkBlameMessage() error {
 	for _, r := range validBlamereasons {
 		if reason == r {
 			validBlame = true
+			break
 		}
 	}
 
