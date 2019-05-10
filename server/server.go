@@ -16,7 +16,7 @@ import (
 
 func init() {
 	log.SetFormatter(&log.TextFormatter{
-		ForceColors: true,  // much more readable format for normal use
+		ForceColors: true, // much more readable format for normal use
 	})
 }
 
