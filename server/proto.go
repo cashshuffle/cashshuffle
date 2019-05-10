@@ -38,7 +38,12 @@ func writeMessage(conn net.Conn, msgs []*message.Signed) error {
 
 	// Extend the deadline, we just sent a message.
 	err = conn.SetDeadline(time.Now().Add(deadline))
-	if err != nil {
+	if (err != nil) && debugMode {
+		// Failing to set the deadline could be due to the client getting
+		// ignored due to some bad behavior. Do not consider the write itself
+		// a failure due to failure to set the deadline. The client will drop
+		// off eventually after connection is broken anyway.
+		fmt.Printf(logCommunication+"Error setting deadline after successful write: %s", err)
 		return err
 	}
 

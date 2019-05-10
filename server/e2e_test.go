@@ -149,6 +149,7 @@ func TestBlameAndBroadcastOnlyWithinPool(t *testing.T) {
 	// but no notifications should be generated
 	noNotifications := make([]*testClient, 0)
 	for _, cA := range poolA {
+		// Note: Sending the invalid blame causes client to be forgotten
 		cA.Blame(poolB[0], noNotifications)
 	}
 	// and no ban scores should appear
@@ -414,7 +415,6 @@ func (c *testClient) BroadcastVerificationKey(shouldBeNotified []*testClient) {
 	if err != nil {
 		c.h.t.Fatal(err)
 	}
-
 	c.h.WaitBroadcastVerificationKey(c.verificationKey, shouldBeNotified)
 }
 
