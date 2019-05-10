@@ -154,8 +154,11 @@ func processMessages(conn net.Conn, c chan *packetInfo, t *Tracker) {
 
 		// Extend the deadline, we got a valid full message.
 		if err := conn.SetDeadline(time.Now().Add(deadline)); err != nil {
-			fmt.Fprintf(os.Stderr, logCommunication+"Received message but unable to extend deadline: %s\n", err)
-			return
+			// Failing to set the deadline could be due to the client getting
+			// disconnected for some reason. Do not consider the read itself
+			// a failure due to failure to set the deadline. The client will drop
+			// off eventually after connection is broken anyway.
+			fmt.Printf(logCommunication+"Error setting deadline after successful receive: %s\n", err)
 		}
 
 		if err := sendToPacketInfoChan(&mb, conn, c, t); err != nil {
