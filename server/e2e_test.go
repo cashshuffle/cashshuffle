@@ -14,6 +14,7 @@ import (
 	"github.com/cashshuffle/cashshuffle/message"
 
 	"github.com/avast/retry-go"
+	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -240,7 +241,7 @@ type testHarness struct {
 
 // newTestHarness sets up the required parts for automating a shuffle.
 func newTestHarness(t *testing.T, poolSize int) *testHarness {
-	debugMode = true
+	log.SetLevel(log.DebugLevel)
 	// prepare shuffle environment: tracker, packet channel, connections
 	anyPort := 0
 	tracker := NewTracker(poolSize, anyPort, anyPort, anyPort, anyPort)

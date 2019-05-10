@@ -2,13 +2,13 @@ package server
 
 import (
 	"encoding/binary"
-	"fmt"
 	"net"
 	"time"
 
 	"github.com/cashshuffle/cashshuffle/message"
 
 	"github.com/golang/protobuf/proto"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -32,18 +32,15 @@ func writeMessage(conn net.Conn, msgs []*message.Signed) error {
 		return err
 	}
 
-	if debugMode {
-		fmt.Printf("[Sent] by %s: %s\n", getIP(conn), packets)
-	}
+	log.Debugf("[Sent] by %s: %s\n", getIP(conn), packets)
 
 	// Extend the deadline, we just sent a message.
-	err = conn.SetDeadline(time.Now().Add(deadline))
-	if (err != nil) && debugMode {
+	if err = conn.SetDeadline(time.Now().Add(deadline)); err != nil {
 		// Failing to set the deadline could be due to the client getting
 		// ignored due to some bad behavior. Do not consider the write itself
 		// a failure due to failure to set the deadline. The client will drop
 		// off eventually after connection is broken anyway.
-		fmt.Printf(logCommunication+"Error setting deadline after successful write: %s\n", err)
+		log.Debugf(logCommunication+"Error setting deadline after successful write: %s\n", err)
 	}
 
 	return nil

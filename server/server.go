@@ -7,19 +7,26 @@ import (
 	"net/http"
 	"time"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/ulule/limiter/v3"
 	"github.com/ulule/limiter/v3/drivers/middleware/stdlib"
 	"golang.org/x/crypto/acme/autocert"
 	"golang.org/x/net/websocket"
 )
 
-var debugMode bool
+func init() {
+	log.SetFormatter(&log.TextFormatter{
+		ForceColors: true,  // much more readable format for normal use
+	})
+}
 
 // Start brings up the TCP server.
 func Start(ip string, port int, cert string, key string, debug bool, t *Tracker, m *autocert.Manager, tor bool, limit *limiter.Limiter) (err error) {
 	var listener net.Listener
 
-	debugMode = debug
+	if debug {
+		log.SetLevel(log.DebugLevel)
+	}
 
 	if tlsEnabled(cert, key, m) {
 		listener, err = createTLSListener(ip, port, cert, key, m)
@@ -43,7 +50,7 @@ func Start(ip string, port int, cert string, key string, debug bool, t *Tracker,
 		torStr = "Tor"
 	}
 
-	fmt.Printf("%sShuffle Listening on TCP %s:%d (pool size: %d)\n", torStr, ip, port, t.poolSize)
+	log.Infof("%sShuffle Listening on TCP %s:%d (pool size: %d)\n", torStr, ip, port, t.poolSize)
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
@@ -54,17 +61,13 @@ func Start(ip string, port int, cert string, key string, debug bool, t *Tracker,
 
 		context, err := limit.Get(nil, ip)
 		if err != nil {
-			if debugMode {
-				fmt.Printf(logListener+"Unable to get connection limit: %s\n", err)
-			}
+			log.Debugf(logListener+"Unable to get connection limit: %s\n", err)
 			conn.Close()
 			continue
 		}
 
 		if context.Reached {
-			if debugMode {
-				fmt.Printf(logListener+"Rate limit exceeded by %s\n", ip)
-			}
+			log.Debugf(logListener+"Rate limit exceeded by %s\n", ip)
 			conn.Close()
 			continue
 		}
@@ -110,7 +113,7 @@ func StartWebsocket(ip string, port int, cert string, key string, debug bool, t 
 		torStr = "Tor"
 	}
 
-	fmt.Printf(logListener+"%sShuffle Listening via Websockets on %s:%d\n", torStr, ip, port)
+	log.Infof(logListener+"%sShuffle Listening via Websockets on %s:%d\n", torStr, ip, port)
 
 	if tlsEnabled(cert, key, m) {
 		err = srv.ListenAndServeTLS(cert, key)
@@ -131,9 +134,8 @@ func handleConnection(conn net.Conn, c chan *packetInfo, tracker *Tracker) {
 	defer conn.Close()
 
 	// They just connected, set the deadline to prevent leaked connections.
-	err := conn.SetDeadline(time.Now().Add(connectDeadline))
-	if (err != nil) && debugMode {
-		fmt.Printf(logCommunication+"Received message but unable to extend deadline: %s\n", err)
+	if err := conn.SetDeadline(time.Now().Add(connectDeadline)); err != nil {
+		log.Debugf(logCommunication+"Received message but unable to extend deadline: %s\n", err)
 	}
 
 	if !tracker.bannedByServer(conn) {

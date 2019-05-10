@@ -4,14 +4,13 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/binary"
-	"fmt"
 	"net"
-	"os"
 	"time"
 
 	"github.com/cashshuffle/cashshuffle/message"
 
 	"github.com/golang/protobuf/proto"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -34,7 +33,7 @@ func startPacketInfoChan(c chan *packetInfo) {
 		err := pi.processReceivedMessage()
 		if err != nil {
 			pi.conn.Close()
-			fmt.Fprintf(os.Stderr, logCommunication+"Message processor error: %s\n", err)
+			log.Warnf(logCommunication+"Message processor error: %s\n", err)
 		}
 	}
 }
@@ -113,12 +112,12 @@ func processMessages(conn net.Conn, c chan *packetInfo, t *Tracker) {
 					validMagic, numReadBytes = processFrame(&b)
 
 					if !validMagic {
-						fmt.Fprint(os.Stderr, logCommunication+"Invalid magic\n")
+						log.Warn(logCommunication + "Invalid magic\n")
 						return
 					}
 
 					if numReadBytes <= 0 || numReadBytes > maxMessageLength {
-						fmt.Fprintf(os.Stderr, logCommunication+"Invalid message length: %d\n", numReadBytes)
+						log.Warnf(logCommunication+"Invalid message length: %d\n", numReadBytes)
 						return
 					}
 
@@ -131,7 +130,7 @@ func processMessages(conn net.Conn, c chan *packetInfo, t *Tracker) {
 			if b.Len() >= numReadBytes {
 				msg := make([]byte, numReadBytes)
 				if _, err := b.Read(msg); err != nil {
-					fmt.Fprintf(os.Stderr, logCommunication+"Error reading from message buffer: %s\n", err)
+					log.Warnf(logCommunication+"Error reading from message buffer: %s\n", err)
 					return
 				}
 
@@ -143,12 +142,12 @@ func processMessages(conn net.Conn, c chan *packetInfo, t *Tracker) {
 		}
 
 		if err := scanner.Err(); err != nil {
-			fmt.Fprintf(os.Stderr, logCommunication+"Error scanning message: %s\n", err)
+			log.Warnf(logCommunication+"Error scanning message: %s\n", err)
 			return
 		}
 
 		if mb.Len() == 0 {
-			fmt.Fprint(os.Stderr, logCommunication+"0-length message\n")
+			log.Warn(logCommunication + "0-length message\n")
 			return
 		}
 
@@ -158,11 +157,11 @@ func processMessages(conn net.Conn, c chan *packetInfo, t *Tracker) {
 			// disconnected for some reason. Do not consider the read itself
 			// a failure due to failure to set the deadline. The client will drop
 			// off eventually after connection is broken anyway.
-			fmt.Printf(logCommunication+"Error setting deadline after successful receive: %s\n", err)
+			log.Warnf(logCommunication+"Error setting deadline after successful receive: %s\n", err)
 		}
 
 		if err := sendToPacketInfoChan(&mb, conn, c, t); err != nil {
-			fmt.Fprintf(os.Stderr, logCommunication+"Error sending packet: %s\n", err)
+			log.Warnf(logCommunication+"Error sending packet: %s\n", err)
 			return
 		}
 	}
@@ -191,15 +190,11 @@ func sendToPacketInfoChan(b *bytes.Buffer, conn net.Conn, c chan *packetInfo, t 
 
 	err := proto.Unmarshal(b.Bytes(), pdata)
 	if err != nil {
-		if debugMode {
-			fmt.Println(logCommunication+"Unmarshal failed:", b.Bytes())
-		}
+		log.Debugf(logCommunication+"Unmarshal failed: %v\n", b.Bytes())
 		return err
 	}
 
-	if debugMode {
-		fmt.Printf("[Received] from %s: %s\n", getIP(conn), pdata)
-	}
+	log.Debugf("[Received] from %s: %s\n", getIP(conn), pdata)
 
 	data := &packetInfo{
 		message: pdata,

@@ -5,6 +5,8 @@ import (
 	"fmt"
 
 	"github.com/cashshuffle/cashshuffle/message"
+
+	log "github.com/sirupsen/logrus"
 )
 
 var validBlamereasons = []message.Reason{
@@ -47,9 +49,7 @@ func (pi *packetInfo) checkBlameMessage() error {
 	} else {
 		blamer := pi.tracker.playerByConnection(pi.conn)
 		if blamer == nil {
-			if debugMode {
-				fmt.Printf(logBlame+"Ignoring blame from %s because they disconnected\n", getIP(pi.conn))
-			}
+			log.Debugf(logBlame+"Ignoring blame from %s because they disconnected\n", getIP(pi.conn))
 			return nil
 		}
 		accusedKey := packet.GetMessage().GetBlame().GetAccused().GetKey()
@@ -61,27 +61,21 @@ func (pi *packetInfo) checkBlameMessage() error {
 		// After validating everything, we can skip the actual ban
 		// if the pool already has banned someone.
 		if blamer.pool.firstBan != nil {
-			if debugMode {
-				fmt.Printf(logBlame+"Ignoring blame in pool %d because a player is already banned\n", blamer.pool.num)
-			}
+			log.Debugf(logBlame+"Ignoring blame in pool %d because a player is already banned\n", blamer.pool.num)
 			return nil
 		}
 
 		added := accused.addBlame(blamer.verificationKey)
-		if debugMode {
-			if !added {
-				fmt.Printf(logBlame+"Duplicate blame from %s to %s\n", blamer, accused)
-			} else {
-				fmt.Printf(logBlame+"%s blamed %s for %s", blamer, accused, reason)
-			}
+		if !added {
+			log.Debugf(logBlame+"Duplicate blame from %s to %s\n", blamer, accused)
+		} else {
+			log.Debugf(logBlame+"%s blamed %s for %s", blamer, accused, reason)
 		}
 
 		if blamer.pool.IsBanned(accused) {
 			blamer.pool.firstBan = accused
 			pi.tracker.increaseBanScore(accused.conn, false)
-			if debugMode {
-				fmt.Printf(logBan+"User blamed out of round: %s\n", accused)
-			}
+			log.Debugf(logBan+"User blamed out of round: %s\n", accused)
 			pi.tracker.addDenyIPMatch(accused.conn, accused.pool, false)
 		}
 	}

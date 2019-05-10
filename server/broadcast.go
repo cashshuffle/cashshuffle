@@ -5,6 +5,8 @@ import (
 	"strings"
 
 	"github.com/cashshuffle/cashshuffle/message"
+
+	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -35,35 +37,25 @@ func (pi *packetInfo) broadcastMessage() {
 			sendingPlayer := pi.tracker.playerByConnection(pi.conn)
 			if sendingPlayer == nil {
 				sendingPlayer = pi.tracker.findPlayerInPoolSnapshots(pi.conn)
-				if debugMode {
-					fmt.Printf(logDirectMessage+"Found %v for missing direct message sender\n", sendingPlayer)
-				}
+				log.Debugf(logDirectMessage+"Found %v for missing direct message sender\n", sendingPlayer)
 			}
 
 			player := pi.tracker.playerByVerificationKey(strings.TrimLeft(vk, playerPrefix))
 			if player == nil {
-				if debugMode {
-					fmt.Printf(logDirectMessage+"Ignoring message to vk:%s because player no longer exists\n", vk)
-				}
+				log.Debugf(logDirectMessage+"Ignoring message to vk:%s because player no longer exists\n", vk)
 				return
 			}
 
 			if player == sendingPlayer {
-				if debugMode {
-					fmt.Printf(logDirectMessage+"Ignoring message to self from %s\n", sendingPlayer)
-				}
+				log.Debugf(logDirectMessage+"Ignoring message to self from %s\n", sendingPlayer)
 				return
 			}
 
-			if debugMode {
-				fmt.Printf(logDirectMessage+"from %s to %s\n", sendingPlayer, player)
-			}
+			log.Debugf(logDirectMessage+"from %s to %s\n", sendingPlayer, player)
 
 			// stop sending messages after the first error
 			if err := writeMessage(player.conn, msgs); err != nil {
-				if debugMode {
-					fmt.Printf(logDirectMessage+"Error writing message: %s\n", err)
-				}
+				log.Debugf(logDirectMessage+"Error writing message: %s\n", err)
 				return
 			}
 		}
@@ -78,28 +70,21 @@ func (pi *packetInfo) broadcastAll(msgs []*message.Signed) {
 	sender := pi.tracker.connections[pi.conn]
 	if sender == nil {
 		sender = pi.tracker.findPlayerInPoolSnapshots(pi.conn)
-		if debugMode {
-			fmt.Printf(logDirectMessage+"Found %v for missing broadcast message sender\n", sender)
-		}
+		log.Debugf(logDirectMessage+"Found %v for missing broadcast message sender\n", sender)
 	}
 
 	// If the user has disconnected and cannot be found, there is no way to broadcast
 	if sender == nil {
-		if debugMode {
-			fmt.Printf(logBroadcast+"Ignoring message from %s because player is missing and pool cannot be identified\n", getIP(pi.conn))
-		}
+		log.Debugf(logBroadcast+"Ignoring message from %s because player is missing and pool cannot be identified\n", getIP(pi.conn))
 		return
 	}
 
-	if debugMode {
-		fmt.Printf(logBroadcast+"Message from %s\n", sender)
-	}
+	log.Debugf(logBroadcast+"Message from %s\n", sender)
 
 	for _, player := range sender.pool.players {
 		// Try to send the message to remaining players even if errors.
-		err := writeMessage(player.conn, msgs)
-		if (err != nil) && debugMode {
-			fmt.Printf(logBroadcast+"Continuing to send after write error to %s: %s\n", player, err)
+		if err := writeMessage(player.conn, msgs); err != nil {
+			log.Debugf(logBroadcast+"Continuing to send after write error to %s: %s\n", player, err)
 		}
 	}
 }
@@ -115,9 +100,7 @@ func (pi *packetInfo) announceStart() {
 	// If the user has disconnected, then no need to send
 	// the broadcast.
 	if sender == nil {
-		if debugMode {
-			fmt.Printf("[ANNOUNCE] Ignoring message from %s because player no longer exists\n", getIP(pi.conn))
-		}
+		log.Debugf("[ANNOUNCE] Ignoring message from %s because player no longer exists\n", getIP(pi.conn))
 		return
 	}
 
@@ -137,9 +120,8 @@ func (pi *packetInfo) announceStart() {
 		player.isPassive = true
 
 		// Try to send the message to remaining players even if errors.
-		err := writeMessage(player.conn, announcement)
-		if (err != nil) && debugMode {
-			fmt.Printf(logBroadcast+"Continuing to send after write error to %s: %s\n", player, err)
+		if err := writeMessage(player.conn, announcement); err != nil {
+			log.Debugf(logBroadcast+"Continuing to send after write error to %s: %s\n", player, err)
 		}
 	}
 }

@@ -1,12 +1,12 @@
 package server
 
 import (
-	"fmt"
 	"net"
 	"sync"
 	"time"
 
 	"github.com/nats-io/nuid"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -184,9 +184,7 @@ func (t *Tracker) CleanupDeniedByIPMatch() {
 	for pair, deniedTime := range t.denyIPMatch {
 		if deniedTime.Add(denyIPTime).Before(time.Now()) {
 			delete(t.denyIPMatch, pair)
-			if debugMode {
-				fmt.Printf(logBan+"Remove player pair %s, %s\n", pair.left, pair.right)
-			}
+			log.Debugf(logBan+"Remove player pair %s, %s\n", pair.left, pair.right)
 		}
 	}
 }
@@ -225,9 +223,7 @@ func (t *Tracker) cleanupBan(ip string) {
 
 	if t.banData[ip].score == 0 {
 		delete(t.banData, ip)
-		if debugMode {
-			fmt.Printf(logBan+"Remove server ban for %s\n", ip)
-		}
+		log.Debugf(logBan+"Remove server ban for %s\n", ip)
 	}
 }
 
@@ -307,9 +303,7 @@ func (t *Tracker) unassignPool(p *PlayerData) {
 	// and probably caused the failure of a shuffle.
 	if p.isPassive {
 		t.increaseBanScore(p.conn, true)
-		if debugMode {
-			fmt.Printf(logBan+"Passive player disconnected: %s\n", p)
-		}
+		log.Debugf(logBan+"Passive player disconnected: %s\n", p)
 	}
 
 	pool := p.pool

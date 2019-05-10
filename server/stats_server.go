@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"time"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/ulule/limiter/v3"
 	"github.com/ulule/limiter/v3/drivers/middleware/stdlib"
 	"golang.org/x/crypto/acme/autocert"
@@ -27,7 +28,7 @@ func StartStatsServer(ip string, port int, cert string, key string, si StatsInfo
 		torStr = "Tor"
 	}
 
-	fmt.Printf(logListener+"%sStats Listening on TCP %s:%d (tls: %v)\n", torStr, ip, port, isTLS)
+	log.Infof(logListener+"%sStats Listening on TCP %s:%d (tls: %v)\n", torStr, ip, port, isTLS)
 	if isTLS {
 		return s.ListenAndServeTLS(cert, key)
 	}
