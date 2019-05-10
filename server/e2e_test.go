@@ -27,6 +27,10 @@ var (
 	testTempKey int
 )
 
+func init() {
+	debugMode = true
+}
+
 // TestHappyShuffle simulates a complete shuffle.
 func TestHappyShuffle(t *testing.T) {
 	h := newTestHarness(t, basicPoolSize)
