@@ -54,11 +54,7 @@ func (pi *packetInfo) checkBlameMessage() error {
 		accusedKey := packet.GetMessage().GetBlame().GetAccused().GetKey()
 		accused := blamer.pool.PlayerFromSnapshot(accusedKey)
 		if accused == nil {
-			return errors.New("invalid blame")
-		}
-
-		if accused.pool != blamer.pool {
-			return errors.New("invalid blame")
+			return errors.New("invalid blame - accused not in pool snapshot")
 		}
 
 		// After validating everything, we can skip the actual ban
