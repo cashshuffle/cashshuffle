@@ -44,7 +44,6 @@ func writeMessage(conn net.Conn, msgs []*message.Signed) error {
 		// a failure due to failure to set the deadline. The client will drop
 		// off eventually after connection is broken anyway.
 		fmt.Printf(logCommunication+"Error setting deadline after successful write: %s", err)
-		return err
 	}
 
 	return nil
