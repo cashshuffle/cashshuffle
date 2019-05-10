@@ -42,7 +42,7 @@ func (p *PlayerData) String() string {
 		"vk:%s, "+
 		"pool:%d, "+
 		"num:%d, "+
-		"ip:%s, "+
+		"ip:%s"+
 		")",
 		p.verificationKey, p.pool.num, p.number, getIP(p.conn))
 }
