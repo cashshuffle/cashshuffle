@@ -27,10 +27,6 @@ var (
 	testTempKey int
 )
 
-func init() {
-	debugMode = true
-}
-
 // TestHappyShuffle simulates a complete shuffle.
 func TestHappyShuffle(t *testing.T) {
 	h := newTestHarness(t, basicPoolSize)
@@ -244,6 +240,7 @@ type testHarness struct {
 
 // newTestHarness sets up the required parts for automating a shuffle.
 func newTestHarness(t *testing.T, poolSize int) *testHarness {
+	debugMode = true
 	// prepare shuffle environment: tracker, packet channel, connections
 	anyPort := 0
 	tracker := NewTracker(poolSize, anyPort, anyPort, anyPort, anyPort)
