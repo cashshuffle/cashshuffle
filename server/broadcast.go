@@ -34,8 +34,9 @@ func (pi *packetInfo) broadcastMessage() {
 		} else {
 			sendingPlayer := pi.tracker.playerByConnection(pi.conn)
 			if sendingPlayer == nil {
+				sendingPlayer = pi.tracker.findPlayerInPoolSnapshots(pi.conn)
 				if debugMode {
-					fmt.Printf(logDirectMessage+"Ignoring message from %s because player no longer exists\n", getIP(pi.conn))
+					fmt.Printf(logDirectMessage+"Found %v for missing direct message sender\n", sendingPlayer)
 				}
 			}
 
@@ -75,12 +76,17 @@ func (pi *packetInfo) broadcastAll(msgs []*message.Signed) {
 	defer pi.tracker.mutex.RUnlock()
 
 	sender := pi.tracker.connections[pi.conn]
+	if sender == nil {
+		sender = pi.tracker.findPlayerInPoolSnapshots(pi.conn)
+		if debugMode {
+			fmt.Printf(logDirectMessage+"Found %v for missing broadcast message sender\n", sender)
+		}
+	}
 
-	// If the user has disconnected, then no need to send
-	// the broadcast.
+	// If the user has disconnected and cannot be found, there is no way to broadcast
 	if sender == nil {
 		if debugMode {
-			fmt.Printf(logBroadcast+"Ignoring message from %s because player no longer exists\n", getIP(pi.conn))
+			fmt.Printf(logBroadcast+"Ignoring message from %s because player is missing and pool cannot be identified\n", getIP(pi.conn))
 		}
 		return
 	}

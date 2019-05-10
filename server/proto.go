@@ -43,7 +43,7 @@ func writeMessage(conn net.Conn, msgs []*message.Signed) error {
 		// ignored due to some bad behavior. Do not consider the write itself
 		// a failure due to failure to set the deadline. The client will drop
 		// off eventually after connection is broken anyway.
-		fmt.Printf(logCommunication+"Error setting deadline after successful write: %s", err)
+		fmt.Printf(logCommunication+"Error setting deadline after successful write: %s\n", err)
 	}
 
 	return nil

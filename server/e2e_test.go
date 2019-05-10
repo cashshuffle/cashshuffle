@@ -219,28 +219,20 @@ func TestPassivePlayersGetBanEffects(t *testing.T) {
 	h.WaitEmptyInboxes(allClients)
 }
 
-func TestDirectMessageFromDisconnectedUserIsIgnored(t *testing.T) {
+// TestAbleToFindDisconnectedPlayerInFrozenSnapshots confirms that even if a
+// user disconnects after sending a message, the server will still be able to
+// find them if they were in a frozen pool.
+func TestAbleToFindDisconnectedPlayerInFrozenSnapshots(t *testing.T) {
 	h := newTestHarness(t, basicPoolSize)
 	clients := h.NewPool(basicPoolSize, testAmount, testVersion, nil)
-	c0 := clients[0]
-	c1 := clients[1]
+	disconnecter := clients[0]
+	expectedSession := disconnecter.session
+	assert.NotEmpty(t, expectedSession)
 
-	// confirm DM works
-	testMessage := makeDirectMessage(c0, c1, "asdf")
-	err := writeMessage(c0.conn, testMessage)
-	packet, err := c1.inbox.PopOldest()
-	if err != nil {
-		t.Fatal(err)
-	}
-	received := packet.message.GetPacket()
-	assert.Equal(t, testMessage, received)
-
-	// disconnect and confirm DM does not send a message
-	c0.Disconnect()
-	err = writeMessage(c0.conn, testMessage)
-	// don't know a better way than sleep without adding ugly hooks in main code
-	time.Sleep(100 * time.Millisecond)
-	h.WaitEmptyInboxes([]*testClient{c1})
+	// disconnect and see if we can find the player
+	disconnecter.Disconnect()
+	found := h.tracker.findPlayerInPoolSnapshots(disconnecter.remoteConn)
+	assert.Equal(t, expectedSession, found.sessionID)
 }
 
 // testHarness holds the pieces required for automating a shuffle.
@@ -733,24 +725,4 @@ func (h *testHarness) WaitEmptyInboxes(clients []*testClient) {
 	if err != nil {
 		h.t.Fatal(err)
 	}
-}
-
-func makeDirectMessage(fromClient, toClient *testClient, text string) []*message.Signed {
-	msg := &message.Signed{
-		Packet: &message.Packet{
-			Number:  fromClient.playerNum,
-			Session: fromClient.session,
-			FromKey: &message.VerificationKey{
-				Key: fromClient.verificationKey,
-			},
-			ToKey: &message.VerificationKey{
-				Key: toClient.verificationKey,
-			},
-			Message: &message.Message{
-				Str: text,
-			},
-		},
-		Signature: nil,
-	}
-	return []*message.Signed{msg}
 }
