@@ -10,6 +10,7 @@ import (
 
 	"github.com/cashshuffle/cashshuffle/server"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/ulule/limiter/v3"
 	"github.com/ulule/limiter/v3/drivers/store/memory"
@@ -56,7 +57,7 @@ func init() {
 }
 
 func bail(err error) {
-	fmt.Fprintf(os.Stderr, "[Error] Stopping server: %s\n", err)
+	log.Errorf("[Error] Stopping server: %s\n", err)
 	os.Exit(1)
 }
 
