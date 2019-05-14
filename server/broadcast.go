@@ -100,7 +100,7 @@ func (pi *packetInfo) announceStart() {
 	// If the user has disconnected, then no need to send
 	// the broadcast.
 	if sender == nil {
-		log.Debugf("[ANNOUNCE] Ignoring message from %s because player no longer exists\n", getIP(pi.conn))
+		log.Debugf(logPhaseAnnounce+"Ignoring message from %s because player no longer exists\n", getIP(pi.conn))
 		return
 	}
 

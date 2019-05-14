@@ -29,6 +29,7 @@ const (
 	firstPoolNum = 1
 
 	// log buckets
+	logPhaseAnnounce = "[Announce] "
 	logBan           = "[Ban] "
 	logBlame         = "[Blame] "
 	logBroadcast     = "[Broadcast] "
