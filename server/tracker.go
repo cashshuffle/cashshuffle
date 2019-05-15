@@ -304,7 +304,7 @@ func (t *Tracker) unassignPool(p *PlayerData) {
 	// and probably caused the failure of a shuffle.
 	if p.isPassive {
 		t.increaseBanScore(p.conn, true)
-		log.Debugf(logBan+"Passive player disconnected: %s\n", p)
+		log.Debugf(logBan+"Disconnecting passive player\nPlayer: %s\n", p)
 	}
 
 	pool := p.pool

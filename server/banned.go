@@ -67,15 +67,15 @@ func (pi *packetInfo) checkBlameMessage() error {
 
 		added := accused.addBlame(blamer.verificationKey)
 		if !added {
-			log.Debugf(logBlame+"Duplicate blame from %s to %s\n", blamer, accused)
+			log.Debugf(logBlame+"Duplicate blame\nFrom player: %s\nTo player: %s\n", blamer, accused)
 		} else {
-			log.Debugf(logBlame+"%s blamed %s for %s\n", blamer, accused, reason)
+			log.Debugf(logBlame+"Blame applied for reason: %s\nFrom player: %s\nTo player: %s\n", reason, blamer, accused)
 		}
 
 		if blamer.pool.IsBanned(accused) {
 			blamer.pool.firstBan = accused
 			pi.tracker.increaseBanScore(accused.conn, false)
-			log.Debugf(logBan+"User blamed out of round: %s\n", accused)
+			log.Debugf(logBan+"User blamed out of round\nPlayer: %s\n", accused)
 			pi.tracker.addDenyIPMatch(accused.conn, accused.pool, false)
 		}
 	}
