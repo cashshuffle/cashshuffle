@@ -216,22 +216,6 @@ func TestPassivePlayersGetBanEffects(t *testing.T) {
 	h.WaitEmptyInboxes(allClients)
 }
 
-// TestAbleToFindDisconnectedPlayerInFrozenSnapshots confirms that even if a
-// user disconnects after sending a message, the server will still be able to
-// find them if they were in a frozen pool.
-func TestAbleToFindDisconnectedPlayerInFrozenSnapshots(t *testing.T) {
-	h := newTestHarness(t, basicPoolSize)
-	clients := h.NewPool(basicPoolSize, testAmount, testVersion, nil)
-	disconnecter := clients[0]
-	expectedSession := disconnecter.session
-	assert.NotEmpty(t, expectedSession)
-
-	// disconnect and see if we can find the player
-	disconnecter.Disconnect()
-	found := h.tracker.findPlayerInPoolSnapshots(disconnecter.remoteConn)
-	assert.Equal(t, expectedSession, found.sessionID)
-}
-
 // testHarness holds the pieces required for automating a shuffle.
 type testHarness struct {
 	tracker *Tracker

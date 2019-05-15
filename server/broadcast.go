@@ -36,8 +36,7 @@ func (pi *packetInfo) broadcastMessage() {
 		} else {
 			sendingPlayer := pi.tracker.playerByConnection(pi.conn)
 			if sendingPlayer == nil {
-				sendingPlayer = pi.tracker.findPlayerInPoolSnapshots(pi.conn)
-				log.Debugf(logDirectMessage+"Found %v for missing direct message sender\n", sendingPlayer)
+				log.Debug(logDirectMessage + "Sending message from disconnected player\n")
 			}
 
 			player := pi.tracker.playerByVerificationKey(strings.TrimLeft(vk, playerPrefix))
@@ -69,13 +68,7 @@ func (pi *packetInfo) broadcastAll(msgs []*message.Signed) {
 
 	sender := pi.tracker.connections[pi.conn]
 	if sender == nil {
-		sender = pi.tracker.findPlayerInPoolSnapshots(pi.conn)
-		log.Debugf(logDirectMessage+"Found %v for missing broadcast message sender\n", sender)
-	}
-
-	// If the user has disconnected and cannot be found, there is no way to broadcast
-	if sender == nil {
-		log.Debugf(logBroadcast+"Ignoring message from %s because player is missing and pool cannot be identified\n", getIP(pi.conn))
+		log.Debugf(logBroadcast+"Ignoring message from %s because player has disconnected\n", getIP(pi.conn))
 		return
 	}
 

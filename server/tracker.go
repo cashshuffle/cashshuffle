@@ -313,18 +313,3 @@ func (t *Tracker) unassignPool(p *PlayerData) {
 		delete(t.pools, pool.num)
 	}
 }
-
-// findPlayerInPoolSnapshots searches for a player when they do not exist
-// in the primary connection list any more. If not found, return nil.
-func (t *Tracker) findPlayerInPoolSnapshots(conn net.Conn) *PlayerData {
-	for _, pool := range t.pools {
-		if pool.IsFrozen() {
-			for _, player := range pool.frozenSnapshot {
-				if conn == player.conn {
-					return player
-				}
-			}
-		}
-	}
-	return nil
-}
