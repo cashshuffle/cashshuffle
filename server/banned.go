@@ -49,7 +49,7 @@ func (pi *packetInfo) checkBlameMessage() error {
 	} else {
 		blamer := pi.tracker.playerByConnection(pi.conn)
 		if blamer == nil {
-			log.Debugf(logBlame+"Ignoring blame from %s because they disconnected\n", getIP(pi.conn))
+			log.Debugf(logBlame+"Ignoring blame from %s because they have disconnected\n", getIP(pi.conn))
 			return nil
 		}
 		accusedKey := packet.GetMessage().GetBlame().GetAccused().GetKey()
@@ -69,7 +69,7 @@ func (pi *packetInfo) checkBlameMessage() error {
 		if !added {
 			log.Debugf(logBlame+"Duplicate blame from %s to %s\n", blamer, accused)
 		} else {
-			log.Debugf(logBlame+"%s blamed %s for %s", blamer, accused, reason)
+			log.Debugf(logBlame+"%s blamed %s for %s\n", blamer, accused, reason)
 		}
 
 		if blamer.pool.IsBanned(accused) {

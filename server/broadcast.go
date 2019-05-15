@@ -42,7 +42,7 @@ func (pi *packetInfo) broadcastMessage() {
 
 			player := pi.tracker.playerByVerificationKey(strings.TrimLeft(vk, playerPrefix))
 			if player == nil {
-				log.Debugf(logDirectMessage+"Ignoring message to vk:%s because player no longer exists\n", vk)
+				log.Debugf(logDirectMessage+"Ignoring message to vk:%s because player has disconnected\n", vk)
 				return
 			}
 
@@ -100,7 +100,7 @@ func (pi *packetInfo) announceStart() {
 	// If the user has disconnected, then no need to send
 	// the broadcast.
 	if sender == nil {
-		log.Debugf(logPhaseAnnounce+"Ignoring message from %s because player no longer exists\n", getIP(pi.conn))
+		log.Debugf(logPhaseAnnounce+"Ignoring message from %s because player has disconnected\n", getIP(pi.conn))
 		return
 	}
 
