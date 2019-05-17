@@ -68,6 +68,7 @@ func (pi *packetInfo) checkBlameMessage() error {
 		added := accused.addBlame(blamer.verificationKey)
 		if !added {
 			log.Debugf(logBlame+"Duplicate blame\nFrom player: %s\nTo player: %s\n", blamer, accused)
+			return nil
 		} else {
 			log.Debugf(logBlame+"Blame applied for reason: %s\nFrom player: %s\nTo player: %s\n", reason, blamer, accused)
 		}
