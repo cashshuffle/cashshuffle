@@ -32,7 +32,7 @@ func writeMessage(conn net.Conn, msgs []*message.Signed) error {
 		return err
 	}
 
-	log.Debugf("[Sent] by %s: %s\n", getIP(conn), packets)
+	log.Debugf(logCommunication+"Sent by %s: %s\n", getIP(conn), packets)
 
 	// Extend the deadline, we just sent a message.
 	if err = conn.SetDeadline(time.Now().Add(deadline)); err != nil {

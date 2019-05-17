@@ -194,7 +194,7 @@ func sendToPacketInfoChan(b *bytes.Buffer, conn net.Conn, c chan *packetInfo, t 
 		return err
 	}
 
-	log.Debugf("[Received] from %s: %s\n", getIP(conn), pdata)
+	log.Debugf(logCommunication+"Received from %s: %s\n", getIP(conn), pdata)
 
 	data := &packetInfo{
 		message: pdata,

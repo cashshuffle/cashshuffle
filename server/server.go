@@ -50,7 +50,7 @@ func Start(ip string, port int, cert string, key string, debug bool, t *Tracker,
 		torStr = "Tor"
 	}
 
-	log.Infof("%sShuffle Listening on TCP %s:%d (pool size: %d)\n", torStr, ip, port, t.poolSize)
+	log.Infof(logListener+"%sShuffle Listening on TCP %s:%d (pool size: %d)\n", torStr, ip, port, t.poolSize)
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
