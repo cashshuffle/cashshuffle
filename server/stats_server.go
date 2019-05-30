@@ -39,6 +39,8 @@ func statsJSON(si StatsInformer, tor bool) func(http.ResponseWriter, *http.Reque
 		ip, _, _ := net.SplitHostPort(r.RemoteAddr)
 		b, _ := json.Marshal(si.Stats(ip, tor))
 		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
 		w.Write(b)
 	}
 }
