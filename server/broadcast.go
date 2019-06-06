@@ -5,6 +5,8 @@ import (
 	"strings"
 
 	"github.com/cashshuffle/cashshuffle/message"
+
+	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -33,18 +35,26 @@ func (pi *packetInfo) broadcastMessage() {
 			pi.broadcastAll(msgs)
 		} else {
 			sendingPlayer := pi.tracker.playerByConnection(pi.conn)
+			if sendingPlayer == nil {
+				log.Debug(logDirectMessage + "Sending message from disconnected player\n")
+			}
+
 			player := pi.tracker.playerByVerificationKey(strings.TrimLeft(vk, playerPrefix))
 			if player == nil {
+				log.Debugf(logDirectMessage+"Ignoring message to vk:%s because player has disconnected\n", vk)
 				return
 			}
 
 			if player == sendingPlayer {
-				// Don't allow players to send messages to themselves.
+				log.Debugf(logDirectMessage+"Ignoring message to self\nPlayer: %s\n", sendingPlayer)
 				return
 			}
 
+			log.Debugf(logDirectMessage+"\n	From: %s\nTo: %s\n", sendingPlayer, player)
+
 			// stop sending messages after the first error
 			if err := writeMessage(player.conn, msgs); err != nil {
+				log.Debugf(logDirectMessage+"Error writing message: %s\n", err)
 				return
 			}
 		}
@@ -57,16 +67,18 @@ func (pi *packetInfo) broadcastAll(msgs []*message.Signed) {
 	defer pi.tracker.mutex.RUnlock()
 
 	sender := pi.tracker.connections[pi.conn]
-
-	// If the user has disconnected, then no need to send
-	// the broadcast.
 	if sender == nil {
+		log.Debugf(logBroadcast+"Ignoring message from %s because player has disconnected\n", getIP(pi.conn))
 		return
 	}
 
+	log.Debugf(logBroadcast+"\nFrom: %s\n", sender)
+
 	for _, player := range sender.pool.players {
 		// Try to send the message to remaining players even if errors.
-		_ = writeMessage(player.conn, msgs)
+		if err := writeMessage(player.conn, msgs); err != nil {
+			log.Debugf(logBroadcast+"Continuing to send after write error: %s\nTo: %s\n", err, player)
+		}
 	}
 }
 
@@ -81,23 +93,29 @@ func (pi *packetInfo) announceStart() {
 	// If the user has disconnected, then no need to send
 	// the broadcast.
 	if sender == nil {
+		log.Debugf(logPhaseAnnounce+"Ignoring message from %s because player has disconnected\n", getIP(pi.conn))
 		return
 	}
 
-	for _, player := range sender.pool.players {
-		m := message.Signed{
+	announcement := []*message.Signed{
+		{
 			Packet: &message.Packet{
 				Phase:  message.Phase_ANNOUNCEMENT,
 				Number: uint32(pi.tracker.poolSize),
 			},
-		}
+		},
+	}
+
+	for _, player := range sender.pool.players {
 		// The player now has an obligation to send verification key.
 		// Since we cannot differentiate between a user ignoring the message
 		// and an honest miss, we assume the user always receives the message.
 		player.isPassive = true
 
 		// Try to send the message to remaining players even if errors.
-		_ = writeMessage(player.conn, []*message.Signed{&m})
+		if err := writeMessage(player.conn, announcement); err != nil {
+			log.Debugf(logBroadcast+"Continuing to send after write error: %s\nTo: %s\n", err, player)
+		}
 	}
 }
 

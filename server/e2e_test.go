@@ -15,6 +15,8 @@ import (
 
 	"github.com/avast/retry-go"
 	"github.com/stretchr/testify/assert"
+
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -145,6 +147,7 @@ func TestBlameAndBroadcastOnlyWithinPool(t *testing.T) {
 	// but no notifications should be generated
 	noNotifications := make([]*testClient, 0)
 	for _, cA := range poolA {
+		// Note: Sending the invalid blame causes client to be forgotten
 		cA.Blame(poolB[0], noNotifications)
 	}
 	// and no ban scores should appear
@@ -223,6 +226,7 @@ type testHarness struct {
 
 // newTestHarness sets up the required parts for automating a shuffle.
 func newTestHarness(t *testing.T, poolSize int) *testHarness {
+	log.SetLevel(log.DebugLevel)
 	// prepare shuffle environment: tracker, packet channel, connections
 	anyPort := 0
 	tracker := NewTracker(poolSize, anyPort, anyPort, anyPort, anyPort)
@@ -386,7 +390,6 @@ func (c *testClient) BroadcastVerificationKey(shouldBeNotified []*testClient) {
 	if err != nil {
 		c.h.t.Fatal(err)
 	}
-
 	c.h.WaitBroadcastVerificationKey(c.verificationKey, shouldBeNotified)
 }
 
@@ -637,8 +640,8 @@ type testP2PBan struct {
 func (h *testHarness) AssertP2PBans(bans []testP2PBan) {
 	expectedPairs := make([]ipPair, 0)
 	for _, ban := range bans {
-		ipA, _, _ := net.SplitHostPort(ban.a.remoteConn.RemoteAddr().String())
-		ipB, _, _ := net.SplitHostPort(ban.b.remoteConn.RemoteAddr().String())
+		ipA := getIP(ban.a.remoteConn)
+		ipB := getIP(ban.b.remoteConn)
 		expectedPairs = append(expectedPairs, newIPPair(ipA, ipB))
 	}
 
@@ -663,7 +666,7 @@ type testServerBanData struct {
 func (h *testHarness) AssertServerBans(cbs []testServerBanData) {
 	expectedBanData := make(map[string]banData)
 	for _, bd := range cbs {
-		ip, _, _ := net.SplitHostPort(bd.client.remoteConn.RemoteAddr().String())
+		ip := getIP(bd.client.remoteConn)
 		expectedBanData[ip] = bd.banData
 	}
 
@@ -687,7 +690,7 @@ func (h *testHarness) WaitEmptyInboxes(clients []*testClient) {
 				if len(c.inbox.packets) != 0 {
 					lines = append(lines, fmt.Sprintf("inbox #%d not empty:", c.playerNum))
 					for _, pkt := range c.inbox.packets {
-						lines = append(lines, fmt.Sprintf("  %+v\n", pkt.message.GetPacket()))
+						lines = append(lines, fmt.Sprintf("  %+v", pkt.message.GetPacket()))
 					}
 				}
 				c.inbox.mutex.Unlock()

@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"net"
 	"sync"
 
@@ -34,4 +35,14 @@ func (p *PlayerData) addBlame(verificationKey string) bool {
 	p.blamedBy[verificationKey] = nil
 
 	return true
+}
+
+func (p *PlayerData) String() string {
+	return fmt.Sprintf("("+
+		"vk:%s, "+
+		"pool:%d, "+
+		"num:%d, "+
+		"ip:%s"+
+		")",
+		p.verificationKey, p.pool.num, p.number, getIP(p.conn))
 }

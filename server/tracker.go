@@ -1,12 +1,13 @@
 package server
 
 import (
-	"fmt"
 	"net"
 	"sync"
 	"time"
 
 	"github.com/nats-io/nuid"
+
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -27,6 +28,15 @@ const (
 
 	// firstPoolNum is the starting number for pools
 	firstPoolNum = 1
+
+	// log buckets
+	logPhaseAnnounce = "[Announce] "
+	logBan           = "[Ban] "
+	logBlame         = "[Blame] "
+	logBroadcast     = "[Broadcast] "
+	logCommunication = "[Communication] "
+	logDirectMessage = "[DirectMessage] "
+	logListener      = "[Listener] "
 )
 
 // Tracker is used to track connections to the server.
@@ -122,7 +132,7 @@ func (t *Tracker) bannedByServer(conn net.Conn) bool {
 	t.mutex.RLock()
 	defer t.mutex.RUnlock()
 
-	ip, _, _ := net.SplitHostPort(conn.RemoteAddr().String())
+	ip := getIP(conn)
 
 	banData := t.banData[ip]
 	if banData != nil && banData.score >= maxBanScore {
@@ -140,10 +150,10 @@ func (t *Tracker) addDenyIPMatch(player1 net.Conn, pool *Pool, haveLock bool) {
 		defer t.mutex.Unlock()
 	}
 
-	ip, _, _ := net.SplitHostPort(player1.RemoteAddr().String())
+	ip := getIP(player1)
 
 	for _, otherPlayer := range pool.frozenSnapshot {
-		otherIP, _, _ := net.SplitHostPort(otherPlayer.conn.RemoteAddr().String())
+		otherIP := getIP(otherPlayer.conn)
 		if ip == otherIP {
 			continue
 		}
@@ -156,9 +166,9 @@ func (t *Tracker) addDenyIPMatch(player1 net.Conn, pool *Pool, haveLock bool) {
 // deniedByIPMatch returns true if an IP should be denied access to a pool.
 // Caller should hold the mutex.
 func (t *Tracker) deniedByIPMatch(player net.Conn, pool *Pool) bool {
-	ip, _, _ := net.SplitHostPort(player.RemoteAddr().String())
+	ip := getIP(player)
 	for _, otherPlayer := range pool.players {
-		otherIP, _, _ := net.SplitHostPort(otherPlayer.conn.RemoteAddr().String())
+		otherIP := getIP(otherPlayer.conn)
 
 		if _, ok := t.denyIPMatch[newIPPair(ip, otherIP)]; ok {
 			return true
@@ -176,9 +186,7 @@ func (t *Tracker) CleanupDeniedByIPMatch() {
 	for pair, deniedTime := range t.denyIPMatch {
 		if deniedTime.Add(denyIPTime).Before(time.Now()) {
 			delete(t.denyIPMatch, pair)
-			if debugMode {
-				fmt.Printf("[CleanupDenyIPMatch] Remove match %s %s\n", pair.left, pair.right)
-			}
+			log.Debugf(logBan+"Remove player pair %s, %s\n", pair.left, pair.right)
 		}
 	}
 }
@@ -190,7 +198,7 @@ func (t *Tracker) increaseBanScore(conn net.Conn, haveLock bool) {
 		defer t.mutex.Unlock()
 	}
 
-	ip, _, _ := net.SplitHostPort(conn.RemoteAddr().String())
+	ip := getIP(conn)
 
 	if _, ok := t.banData[ip]; ok {
 		t.banData[ip].score += banScoreTick
@@ -217,9 +225,7 @@ func (t *Tracker) cleanupBan(ip string) {
 
 	if t.banData[ip].score == 0 {
 		delete(t.banData, ip)
-		if debugMode {
-			fmt.Printf("[CleanupDenyIP] Remove server ban %s\n", ip)
-		}
+		log.Debugf(logBan+"Remove server ban for %s\n", ip)
 	}
 }
 
@@ -299,9 +305,7 @@ func (t *Tracker) unassignPool(p *PlayerData) {
 	// and probably caused the failure of a shuffle.
 	if p.isPassive {
 		t.increaseBanScore(p.conn, true)
-		if debugMode {
-			fmt.Printf("[DenyIP] Passive user disconnected: %s (IP: %s)\n", p.verificationKey, p.conn.RemoteAddr().String())
-		}
+		log.Debugf(logBan+"Disconnecting passive player\nPlayer: %s\n", p)
 	}
 
 	pool := p.pool

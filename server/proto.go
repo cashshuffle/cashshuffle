@@ -2,14 +2,14 @@ package server
 
 import (
 	"encoding/binary"
-	"encoding/json"
-	"fmt"
 	"net"
 	"time"
 
 	"github.com/cashshuffle/cashshuffle/message"
 
 	"github.com/golang/protobuf/proto"
+
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -28,22 +28,21 @@ func writeMessage(conn net.Conn, msgs []*message.Signed) error {
 		return err
 	}
 
-	if debugMode {
-		fmt.Println("[Sent]", packets)
-		jsonData, err := json.MarshalIndent(packets, "", "  ")
-		if err != nil {
-			return err
-		}
-		fmt.Printf("%s\n", jsonData)
-	}
-
 	_, err = conn.Write(frameMessage(reply))
 	if err != nil {
 		return err
 	}
 
+	log.Debugf(logCommunication+"Sent by %s: %s\n", getIP(conn), packets)
+
 	// Extend the deadline, we just sent a message.
-	conn.SetDeadline(time.Now().Add(deadline))
+	if err = conn.SetDeadline(time.Now().Add(deadline)); err != nil {
+		// Failing to set the deadline could be due to the client getting
+		// ignored due to some bad behavior. Do not consider the write itself
+		// a failure due to failure to set the deadline. The client will drop
+		// off eventually after connection is broken anyway.
+		log.Debugf(logCommunication+"Error setting deadline after successful write: %s\n", err)
+	}
 
 	return nil
 }

@@ -5,6 +5,8 @@ import (
 	"fmt"
 
 	"github.com/cashshuffle/cashshuffle/message"
+
+	log "github.com/sirupsen/logrus"
 )
 
 var validBlamereasons = []message.Reason{
@@ -32,46 +34,49 @@ func (pi *packetInfo) checkBlameMessage() error {
 		return nil
 	}
 
+	reason := packet.GetMessage().GetBlame().GetReason()
 	validBlame := false
 
-	for _, reason := range validBlamereasons {
-		if packet.GetMessage().GetBlame().GetReason() == reason {
+	for _, r := range validBlamereasons {
+		if reason == r {
 			validBlame = true
+			break
 		}
 	}
 
-	if validBlame {
+	if !validBlame {
+		return fmt.Errorf("unknown blame reason: %s", reason)
+	} else {
 		blamer := pi.tracker.playerByConnection(pi.conn)
 		if blamer == nil {
+			log.Debugf(logBlame+"Ignoring blame from %s because they have disconnected\n", getIP(pi.conn))
 			return nil
 		}
 		accusedKey := packet.GetMessage().GetBlame().GetAccused().GetKey()
 		accused := blamer.pool.PlayerFromSnapshot(accusedKey)
 		if accused == nil {
-			return errors.New("invalid blame")
-		}
-
-		if accused.pool != blamer.pool {
-			return errors.New("invalid blame")
+			return errors.New("invalid blame - accused not in pool snapshot")
 		}
 
 		// After validating everything, we can skip the actual ban
 		// if the pool already has banned someone.
 		if blamer.pool.firstBan != nil {
+			log.Debugf(logBlame+"Ignoring blame in pool %d because a player is already banned\n", blamer.pool.num)
 			return nil
 		}
 
 		added := accused.addBlame(blamer.verificationKey)
 		if !added {
+			log.Debugf(logBlame+"Duplicate blame\nFrom: %s\nTo: %s\n", blamer, accused)
 			return nil
+		} else {
+			log.Debugf(logBlame+"Blame applied for reason: %s\nFrom: %s\nTo: %s\n", reason, blamer, accused)
 		}
 
 		if blamer.pool.IsBanned(accused) {
 			blamer.pool.firstBan = accused
 			pi.tracker.increaseBanScore(accused.conn, false)
-			if debugMode {
-				fmt.Printf("[DenyIP] User blamed out of round: %s\n", accused.verificationKey)
-			}
+			log.Debugf(logBan+"User blamed out of round\nPlayer: %s\n", accused)
 			pi.tracker.addDenyIPMatch(accused.conn, accused.pool, false)
 		}
 	}

@@ -11,6 +11,8 @@ import (
 	"github.com/ulule/limiter/v3"
 	"github.com/ulule/limiter/v3/drivers/middleware/stdlib"
 	"golang.org/x/crypto/acme/autocert"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // StartStatsServer creates a new server to serve stats
@@ -20,15 +22,15 @@ func StartStatsServer(ip string, port int, cert string, key string, si StatsInfo
 	statsJSONHandler := http.HandlerFunc(statsJSON(si, tor))
 	mux.Handle("/stats", middleware.Handler(statsJSONHandler))
 	s := newStatsServer(fmt.Sprintf("%s:%d", ip, port), mux, m)
-	tls := tlsEnabled(cert, key, m)
+	isTLS := tlsEnabled(cert, key, m)
 
 	torStr := ""
 	if tor {
 		torStr = "Tor"
 	}
 
-	fmt.Printf("%sStats Listening on TCP %s:%d (tls: %v)\n", torStr, ip, port, tls)
-	if tls {
+	log.Infof(logListener+"%sStats Listening on TCP %s:%d (tls: %v)\n", torStr, ip, port, isTLS)
+	if isTLS {
 		return s.ListenAndServeTLS(cert, key)
 	}
 	return s.ListenAndServe()
