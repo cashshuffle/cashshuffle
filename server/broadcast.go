@@ -50,7 +50,7 @@ func (pi *packetInfo) broadcastMessage() {
 				return
 			}
 
-			log.Debugf(logDirectMessage+"\nFrom player: %s\nTo player: %s\n", sendingPlayer, player)
+			log.Debugf(logDirectMessage+"\n	From: %s\nTo: %s\n", sendingPlayer, player)
 
 			// stop sending messages after the first error
 			if err := writeMessage(player.conn, msgs); err != nil {
@@ -72,12 +72,12 @@ func (pi *packetInfo) broadcastAll(msgs []*message.Signed) {
 		return
 	}
 
-	log.Debugf(logBroadcast+"\nFrom player: %s\n", sender)
+	log.Debugf(logBroadcast+"\nFrom: %s\n", sender)
 
 	for _, player := range sender.pool.players {
 		// Try to send the message to remaining players even if errors.
 		if err := writeMessage(player.conn, msgs); err != nil {
-			log.Debugf(logBroadcast+"Continuing to send after write error: %s\nTo player: %s\n", err, player)
+			log.Debugf(logBroadcast+"Continuing to send after write error: %s\nTo: %s\n", err, player)
 		}
 	}
 }
@@ -114,7 +114,7 @@ func (pi *packetInfo) announceStart() {
 
 		// Try to send the message to remaining players even if errors.
 		if err := writeMessage(player.conn, announcement); err != nil {
-			log.Debugf(logBroadcast+"Continuing to send after write error: %s\nTo player: %s\n", err, player)
+			log.Debugf(logBroadcast+"Continuing to send after write error: %s\nTo: %s\n", err, player)
 		}
 	}
 }
