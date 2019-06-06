@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/nats-io/nuid"
+
 	log "github.com/sirupsen/logrus"
 )
 

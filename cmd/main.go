@@ -10,11 +10,12 @@ import (
 
 	"github.com/cashshuffle/cashshuffle/server"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/ulule/limiter/v3"
 	"github.com/ulule/limiter/v3/drivers/store/memory"
 	"golang.org/x/crypto/acme/autocert"
+
+	log "github.com/sirupsen/logrus"
 )
 
 const (

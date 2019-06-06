@@ -8,10 +8,11 @@ import (
 	"net/http"
 	"time"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/ulule/limiter/v3"
 	"github.com/ulule/limiter/v3/drivers/middleware/stdlib"
 	"golang.org/x/crypto/acme/autocert"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // StartStatsServer creates a new server to serve stats

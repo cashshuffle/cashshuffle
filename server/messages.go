@@ -10,6 +10,7 @@ import (
 	"github.com/cashshuffle/cashshuffle/message"
 
 	"github.com/golang/protobuf/proto"
+
 	log "github.com/sirupsen/logrus"
 )
 
