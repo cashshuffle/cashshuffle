@@ -74,7 +74,7 @@ func newIPPair(a, b string) ipPair {
 
 // NewTracker instantiates a new tracker
 func NewTracker(poolSize int, shufflePort int, shuffleWebSocketPort int, torShufflePort int, torShuffleWebSocketPort int) *Tracker {
-	return &Tracker{
+	t := &Tracker{
 		poolSize:                poolSize,
 		banData:                 make(map[string]*banData),
 		connections:             make(map[net.Conn]*PlayerData),
@@ -86,6 +86,16 @@ func NewTracker(poolSize int, shufflePort int, shuffleWebSocketPort int, torShuf
 		torShufflePort:          torShufflePort,
 		torShuffleWebSocketPort: torShuffleWebSocketPort,
 	}
+
+	cleanupDeniedTicker := time.NewTicker(time.Minute)
+	// let the ticker die when the server exits
+	go func() {
+		for range cleanupDeniedTicker.C {
+			t.CleanupDeniedByIPMatch()
+		}
+	}()
+
+	return t
 }
 
 // add adds a connection to the tracker.
