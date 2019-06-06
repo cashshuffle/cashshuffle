@@ -46,39 +46,42 @@ func (pi *packetInfo) checkBlameMessage() error {
 
 	if !validBlame {
 		return fmt.Errorf("unknown blame reason: %s", reason)
-	} else {
-		blamer := pi.tracker.playerByConnection(pi.conn)
-		if blamer == nil {
-			log.Debugf(logBlame+"Ignoring blame from %s because they have disconnected\n", getIP(pi.conn))
-			return nil
-		}
-		accusedKey := packet.GetMessage().GetBlame().GetAccused().GetKey()
-		accused := blamer.pool.PlayerFromSnapshot(accusedKey)
-		if accused == nil {
-			return errors.New("invalid blame - accused not in pool snapshot")
-		}
+	}
 
-		// After validating everything, we can skip the actual ban
-		// if the pool already has banned someone.
-		if blamer.pool.firstBan != nil {
-			log.Debugf(logBlame+"Ignoring blame in pool %d because a player is already banned\n", blamer.pool.num)
-			return nil
-		}
+	blamer := pi.tracker.playerByConnection(pi.conn)
+	if blamer == nil {
+		log.Debugf(logBlame+"Ignoring blame from %s because they have disconnected\n", getIP(pi.conn))
+		return nil
+	}
+	accusedKey := packet.GetMessage().GetBlame().GetAccused().GetKey()
+	accused := blamer.pool.PlayerFromSnapshot(accusedKey)
+	if accused == nil {
+		return errors.New("invalid blame - accused not in pool snapshot")
+	}
 
-		added := accused.addBlame(blamer.verificationKey)
-		if !added {
-			log.Debugf(logBlame+"Duplicate blame\nFrom: %s\nTo: %s\n", blamer, accused)
-			return nil
-		} else {
-			log.Debugf(logBlame+"Blame applied for reason: %s\nFrom: %s\nTo: %s\n", reason, blamer, accused)
-		}
+	// After validating everything, we can skip the actual ban
+	// if the pool already has banned someone.
+	if blamer.pool.firstBan != nil {
+		log.Debugf(logBlame+"Ignoring blame in pool %d because a player is already banned\n", blamer.pool.num)
+		return nil
+	}
 
-		if blamer.pool.IsBanned(accused) {
-			blamer.pool.firstBan = accused
-			pi.tracker.increaseBanScore(accused.conn, false)
-			log.Debugf(logBan+"User blamed out of round\nPlayer: %s\n", accused)
-			pi.tracker.addDenyIPMatch(accused.conn, accused.pool, false)
-		}
+	added := accused.addBlame(blamer.verificationKey)
+	if !added {
+		log.Debugf(logBlame+"Duplicate From: %s\n", blamer)
+		log.Debugf(logBlame+"Duplicate To: %s\n", accused)
+		return nil
+	}
+
+	log.Debugf(logBlame+"Blame applied for reason: %s\n", reason)
+	log.Debugf(logBlame+"From: %s\n", blamer)
+	log.Debugf(logBlame+"To: %s\n", accused)
+
+	if blamer.pool.IsBanned(accused) {
+		blamer.pool.firstBan = accused
+		pi.tracker.increaseBanScore(accused.conn, false)
+		log.Debugf(logBan+"User blamed out of round: %s\n", accused)
+		pi.tracker.addDenyIPMatch(accused.conn, accused.pool, false)
 	}
 
 	return nil
