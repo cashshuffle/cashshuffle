@@ -14,8 +14,9 @@ import (
 	"github.com/cashshuffle/cashshuffle/message"
 
 	"github.com/avast/retry-go"
-	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
+
+	log "github.com/sirupsen/logrus"
 )
 
 const (
