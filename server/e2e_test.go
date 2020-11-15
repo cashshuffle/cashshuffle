@@ -549,15 +549,19 @@ func (h *testHarness) WaitBroadcastVerificationKey(vk string, pool []*testClient
 // WaitBroadcastBlame confirms and consumes the blame broadcast to all
 // pool players.
 func (h *testHarness) WaitBroadcastBlame(expected *message.Signed, pool []*testClient) {
-	for _, c := range pool {
+	for playerInd, c := range pool {
+		fmt.Println("WAITING", playerInd)
 		actualPacket, err := c.inbox.PopOldest()
 		if err != nil {
 			h.t.Fatal(err)
 		}
 		assert.Len(h.t, actualPacket.message.GetPacket(), 1)
 		actualMsg := actualPacket.message.GetPacket()[0]
-		assert.Equal(h.t, expected, actualMsg)
+		// Can't compare the exact object, as there are protobuf related fields that should
+		// not be compared! Instead just make sure the accused key matches!
+		assert.Equal(h.t, expected.Packet.Message.Blame.Accused.Key, actualMsg.Packet.Message.Blame.Accused.Key)
 	}
+
 }
 
 // WaitNotConnected confirms that client's connection is not

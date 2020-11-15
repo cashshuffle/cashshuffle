@@ -25,3 +25,6 @@ uninstall:
 
 docker:
 	docker build -t $(APPNAME) .
+
+proto:
+	protoc -I=message --go_out=message --go_opt=paths=source_relative message/message.proto
