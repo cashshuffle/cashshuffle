@@ -556,8 +556,11 @@ func (h *testHarness) WaitBroadcastBlame(expected *message.Signed, pool []*testC
 		}
 		assert.Len(h.t, actualPacket.message.GetPacket(), 1)
 		actualMsg := actualPacket.message.GetPacket()[0]
-		assert.Equal(h.t, expected, actualMsg)
+		// Can't compare the exact object, as there are protobuf related fields that should
+		// not be compared! Instead just make sure the accused key matches!
+		assert.Equal(h.t, expected.Packet.Message.Blame.Accused.Key, actualMsg.Packet.Message.Blame.Accused.Key)
 	}
+
 }
 
 // WaitNotConnected confirms that client's connection is not

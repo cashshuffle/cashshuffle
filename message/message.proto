@@ -1,4 +1,5 @@
 syntax="proto3";
+option go_package="github.com/cashshuffle/cashshuffle/message";
 
 message Signed {
     Packet packet = 1;
