@@ -549,8 +549,7 @@ func (h *testHarness) WaitBroadcastVerificationKey(vk string, pool []*testClient
 // WaitBroadcastBlame confirms and consumes the blame broadcast to all
 // pool players.
 func (h *testHarness) WaitBroadcastBlame(expected *message.Signed, pool []*testClient) {
-	for playerInd, c := range pool {
-		fmt.Println("WAITING", playerInd)
+	for _, c := range pool {
 		actualPacket, err := c.inbox.PopOldest()
 		if err != nil {
 			h.t.Fatal(err)
