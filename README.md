@@ -85,5 +85,5 @@ cashshuffle is released under the MIT license.
 [License-Image]: https://img.shields.io/npm/l/express.svg
 [ReportCard-URL]: http://goreportcard.com/report/cashshuffle/cashshuffle
 [ReportCard-Image]: https://goreportcard.com/badge/github.com/cashshuffle/cashshuffle
-[Build-Status-URL]: http://travis-ci.org/cashshuffle/cashshuffle
-[Build-Status-Image]: https://travis-ci.org/cashshuffle/cashshuffle.svg?branch=master
+[Build-Status-URL]: http://travis-ci.com/cashshuffle/cashshuffle
+[Build-Status-Image]: https://travis-ci.com/cashshuffle/cashshuffle.svg?branch=master
